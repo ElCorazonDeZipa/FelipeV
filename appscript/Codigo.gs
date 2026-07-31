@@ -6,7 +6,7 @@
 // ============================================================
 
 // ID del Google Sheets principal — reemplaza con tu ID real
-const SHEETS_ID = 'PEGA_AQUI_EL_ID_DE_TU_GOOGLE_SHEETS';
+const SHEETS_ID = '18oCKARfHEAWW6LA8uUXPS45SGcOuwkWT6rDGViiVh-M';
 
 // Calendarios
 const CAL_CAMPANA  = 'corazonzipa@gmail.com';
