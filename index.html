@@ -232,13 +232,42 @@ textarea.fc{resize:vertical;min-height:72px;}
     <div class="ll">🧡</div>
     <div class="lt">Zipa con el Corazón</div>
     <div class="ls">Centro de Operaciones · 2028</div>
-    <input type="password" class="li" id="pi" placeholder="Contraseña de acceso" autocomplete="off">
-    <button class="lb" id="login-btn">Ingresar al sistema</button>
+    <input type="password" class="li" id="pi" placeholder="Contraseña de acceso" autocomplete="off" onkeypress="if(event.key==='Enter')document.querySelector('.lb').click()">
+    <button class="lb" onclick="(function(){var v=document.getElementById('pi').value.trim();if(v==='4LC4LD32028*'){document.getElementById('LS').style.display='none';document.getElementById('APP').style.display='block';if(window.init)window.init(Date.now());}else{var e=document.getElementById('le');e.style.display='block';setTimeout(function(){e.style.display='none';},3000);document.getElementById('pi').value='';document.getElementById('pi').focus();}})()">Ingresar al sistema</button>
     <div class="le" id="le">⚠ Contraseña incorrecta</div>
     <div class="lbg">🔒 Sistema privado — acceso restringido</div>
   </div>
 </div>
 
+<script>
+// Login setup - runs immediately, no dependency on other scripts
+(function(){
+  function tryLogin(){
+    var inp=document.getElementById('pi');
+    var v=inp?inp.value.trim():'';
+    if(v==='4LC4LD32028*'){
+      document.getElementById('LS').style.display='none';
+      document.getElementById('APP').style.display='block';
+      if(typeof init==='function') init(Date.now());
+      else setTimeout(function(){ if(typeof init==='function') init(Date.now()); },500);
+    } else {
+      var le=document.getElementById('le');
+      if(le){le.style.display='block';setTimeout(function(){le.style.display='none';},3000);}
+      if(inp){inp.value='';inp.focus();}
+    }
+  }
+  window.doLogin=tryLogin;
+  document.addEventListener('DOMContentLoaded',function(){
+    var btn=document.getElementById('login-btn');
+    var pi=document.getElementById('pi');
+    if(btn) btn.onclick=tryLogin;
+    if(pi){
+      pi.onkeypress=function(e){if(e.key==='Enter')tryLogin();};
+      pi.focus();
+    }
+  });
+})();
+</script>
 <div id="APP">
 <div id="ov" onclick="closeMob()" style="display:none;position:fixed;inset:0;z-index:99;background:rgba(0,0,0,.4);"></div>
 
@@ -941,44 +970,16 @@ const GA = {
 // ══════════════════════════════════════════
 // AUTH
 // ══════════════════════════════════════════
-// ── AUTH — funciones globales explícitas ──
-window.doLogin = function() {
-  var inp = document.getElementById('pi');
-  var v = inp ? inp.value.trim() : '';
-  if(!v) return;
-  if(v === C.PWD) {
-    document.getElementById('LS').style.display='none';
-    document.getElementById('APP').style.display='block';
-    if(inp) inp.value='';
-    init(Date.now());
-  } else {
-    var le=document.getElementById('le');
-    if(le){ le.style.display='block'; setTimeout(function(){le.style.display='none';},3000); }
-    if(inp){ inp.value=''; inp.focus(); }
-  }
-};
-
-window.doLogout = function() {
+// ── AUTH ──
+// Login handled by inline script before APP div
+// doLogout defined here
+function doLogout() {
   document.getElementById('LS').style.display='flex';
   document.getElementById('APP').style.display='none';
   var pi=document.getElementById('pi');
-  if(pi){ pi.value=''; pi.focus(); }
-};
-
-// Alias sin window. para compatibilidad
-var doLogin = window.doLogin;
-var doLogout = window.doLogout;
-
-// Setup login button y Enter key
-(function setupLogin() {
-  var btn = document.getElementById('login-btn');
-  var pi  = document.getElementById('pi');
-  if(btn) btn.addEventListener('click', window.doLogin);
-  if(pi) {
-    pi.addEventListener('keypress', function(e){ if(e.key==='Enter') window.doLogin(); });
-    pi.focus();
-  }
-})();
+  if(pi){ pi.value=''; setTimeout(function(){pi.focus();},100); }
+}
+window.doLogout = doLogout;
 
 // ══════════════════════════════════════════
 // INIT
@@ -1002,6 +1003,7 @@ function init(ts) {
     toast('Error al iniciar: '+e.message);
   }
 }
+window.init = init;
 
 function loadLocalCfg() {
   try {
