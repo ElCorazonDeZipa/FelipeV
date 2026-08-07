@@ -942,44 +942,69 @@ const GA = {
 // AUTH
 // ══════════════════════════════════════════
 function doLogin() {
-  const v = gv('pi');
+  const inp = gid('pi');
+  const v = inp ? inp.value.trim() : '';
+  if(!v) { toast('⚠ Ingresa la contraseña'); return; }
   if(v === C.PWD) {
     const ts = Date.now();
-    try { ls('zipa_s',{a:true,t:ts}); } catch(_){}
-    document.getElementById('LS').style.display='none';
-    document.getElementById('APP').style.display='block';
+    try { ls('zipa_s',{a:true,t:ts,pwd:btoa(v)}); } catch(_){}
+    gid('LS').style.display='none';
+    gid('APP').style.display='block';
+    if(inp) inp.value='';
     init(ts);
   } else {
-    sh('le'); gid('pi').value=''; gid('pi').focus();
-    setTimeout(()=>hd('le'),3000);
+    const le=gid('le'); if(le) le.style.display='block';
+    if(inp){ inp.value=''; inp.focus(); }
+    setTimeout(()=>{ const le=gid('le'); if(le) le.style.display='none'; },3000);
   }
 }
-gid('pi').addEventListener('keypress',e=>{ if(e.key==='Enter') doLogin(); });
 
 function doLogout() {
   if(!confirm('¿Cerrar sesión?')) return;
   try { localStorage.removeItem('zipa_s'); } catch(_){}
   gid('LS').style.display='flex';
   gid('APP').style.display='none';
-  gid('pi').value='';
+  const pi=gid('pi'); if(pi) pi.value='';
 }
 
-// Auto-login
-(()=>{
+// Auto-login al cargar — sesión válida por 24 horas
+(function checkSession() {
   try {
-    const s = JSON.parse(localStorage.getItem('zipa_s')||'{}');
-    if(s.a && Date.now()-s.t<8*3600000) {
+    const raw = localStorage.getItem('zipa_s');
+    if(!raw) return; // sin sesión guardada
+    const s = JSON.parse(raw);
+    const DURACION = 24 * 3600000; // 24 horas
+    if(s && s.a && s.t && (Date.now() - s.t) < DURACION) {
+      // Sesión válida
       gid('LS').style.display='none';
       gid('APP').style.display='block';
       init(s.t);
+    } else {
+      // Sesión expirada — limpiar
+      localStorage.removeItem('zipa_s');
     }
-  } catch(_){}
+  } catch(e) {
+    // localStorage bloqueado o dato corrupto — continuar normalmente
+    console.warn('Session check error:', e);
+  }
+})();
+
+// Enter en el campo de contraseña
+(function bindEnter() {
+  const pi = gid('pi');
+  if(pi) {
+    pi.addEventListener('keypress', function(e) {
+      if(e.key === 'Enter') doLogin();
+    });
+    pi.focus();
+  }
 })();
 
 // ══════════════════════════════════════════
 // INIT
 // ══════════════════════════════════════════
 function init(ts) {
+  try {
   const d = new Date();
   const hoy = d.toISOString().split('T')[0];
   sv('dfecha', d.toLocaleDateString('es-CO',{weekday:'long',year:'numeric',month:'long',day:'numeric'}).replace(/^\w/,c=>c.toUpperCase()));
@@ -991,7 +1016,11 @@ function init(ts) {
   });
   loadLocalCfg();
   renderCal();
-  setTimeout(initAll, 400);
+  setTimeout(initAll, 600);
+  } catch(e) {
+    console.error('init error:', e);
+    toast('Error al iniciar: '+e.message);
+  }
 }
 
 function loadLocalCfg() {
