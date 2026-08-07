@@ -308,7 +308,7 @@ textarea.fc{resize:vertical;min-height:72px;}
         <div class="cb">
           <div class="mb12"><div class="fx jb mb8"><span class="f12 fw6">Referidos</span><span class="f12 tm3" id="p-ref-l">0/100</span></div><div class="pb"><div class="pf" id="p-ref" style="width:0%;background:var(--n)"></div></div></div>
           <div class="mb12"><div class="fx jb mb8"><span class="f12 fw6">Compromisos cumplidos</span><span class="f12 tm3" id="p-com-l">0/0</span></div><div class="pb"><div class="pf" id="p-com" style="width:0%;background:var(--ve)"></div></div></div>
-          <div class="mb12"><div class="fx jb mb8"><span class="f12 fw6">Barrios visitados</span><span class="f12 tm3">12/28</span></div><div class="pb"><div class="pf" style="width:43%;background:var(--az)"></div></div></div>
+          <div class="mb12"><div class="fx jb mb8"><span class="f12 fw6">Barrios visitados</span><span class="f12 tm3" id="p-bar-l">0/28</span></div><div class="pb"><div class="pf" id="p-bar" style="width:0%;background:var(--az)"></div></div></div>
           <div><div class="fx jb mb8"><span class="f12 fw6">Líderes activos</span><span class="f12 tm3" id="p-lid-l">0/0</span></div><div class="pb"><div class="pf" id="p-lid" style="width:0%;background:var(--am)"></div></div></div>
         </div>
       </div>
@@ -516,8 +516,8 @@ textarea.fc{resize:vertical;min-height:72px;}
     </div>
   </div>
   <div class="g2c mb16">
-    <div class="sc"><div class="si sv">✅</div><div><div class="sl">Barrios visitados</div><div class="sv2">12</div><div class="pb mt8"><div class="pf" style="width:43%;background:var(--ve)"></div></div></div></div>
-    <div class="sc"><div class="si sr">🎯</div><div><div class="sl">Barrios pendientes</div><div class="sv2">16</div><div class="pb mt8"><div class="pf" style="width:57%;background:var(--n)"></div></div></div></div>
+    <div class="sc"><div class="si sv">✅</div><div><div class="sl">Barrios visitados (con equipo)</div><div class="sv2" id="mapa-vis">0</div><div class="pb mt8"><div class="pf" id="mapa-vis-bar" style="width:0%;background:var(--ve)"></div></div></div></div>
+    <div class="sc"><div class="si sn">🎯</div><div><div class="sl">Barrios con referidos</div><div class="sv2" id="mapa-ref">0</div><div class="pb mt8"><div class="pf" id="mapa-ref-bar" style="width:0%;background:#E91E63"></div></div></div></div>
   </div>
   <div class="cd">
     <div class="ch"><span>🗺</span><div class="ct">Mapa de Zipaquirá</div><span class="gs wn" id="mapa-st">⏳ Cargando API Key...</span></div>
@@ -534,11 +534,10 @@ textarea.fc{resize:vertical;min-height:72px;}
   <div class="cd mt16">
     <div class="ch"><span>🏷</span><div class="ct">Leyenda</div></div>
     <div class="cb"><div class="fx g16" style="flex-wrap:wrap">
-      <div class="fx ic g8"><div style="width:12px;height:12px;border-radius:50%;background:var(--ve)"></div><span class="f12">Barrios visitados</span></div>
-      <div class="fx ic g8"><div style="width:12px;height:12px;border-radius:50%;background:var(--n)"></div><span class="f12">Barrios pendientes</span></div>
-      <div class="fx ic g8"><div style="width:12px;height:12px;border-radius:50%;background:var(--az)"></div><span class="f12">Referidos</span></div>
+      <div class="fx ic g8"><div style="width:12px;height:12px;border-radius:50%;background:#E91E63"></div><span class="f12">Barrio del equipo (rosado)</span></div>
+      <div class="fx ic g8"><div style="width:12px;height:12px;border-radius:50%;background:#FFD600"></div><span class="f12">Barrio de referidos (amarillo)</span></div>
       <div class="fx ic g8"><div style="width:12px;height:12px;border-radius:50%;background:var(--am)"></div><span class="f12">Líderes estratégicos</span></div>
-      <div class="fx ic g8"><div style="width:12px;height:12px;border-radius:50%;background:var(--ro)"></div><span class="f12">Compromisos</span></div>
+      <div class="fx ic g8"><div style="width:12px;height:12px;border-radius:50%;background:var(--n)"></div><span class="f12">Sin visitar</span></div>
     </div></div>
   </div>
 </div>
@@ -1004,17 +1003,30 @@ function loadLocalCfg() {
 }
 
 async function initAll() {
-  const ping = await GA.ping();
   const gs = gid('GS');
-  if(ping.ok) {
-    gs.className='gs ok'; gs.textContent='✅ Google conectado';
-    gid('g-badge').className='gs ok'; gid('g-badge').textContent='✅ Conectado';
-    await Promise.all(['Equipos','Referidos','Tareas','Reuniones','Compromisos','Lideres','Redes','Bitacora'].map(loadSheet));
-    syncCal();
-    updateDash();
-  } else {
-    gs.className='gs er'; gs.textContent='⚙ Configura Sheets ID';
-    toast('ℹ️ Configura el Google Sheets ID en Configuración para sincronizar');
+  if(gs){gs.className='gs wn';gs.textContent='⏳ Conectando...';}
+  try {
+    const ping = await Promise.race([
+      GA.ping(),
+      new Promise((_,rej)=>setTimeout(()=>rej(new Error('timeout')),8000))
+    ]);
+    if(ping && ping.ok) {
+      if(gs){gs.className='gs ok';gs.textContent='✅ Google conectado';}
+      const gb=gid('g-badge'); if(gb){gb.className='gs ok';gb.textContent='✅ Conectado';}
+      // Cargar hojas en secuencia para mejor feedback
+      const hojas=['Equipos','Referidos','Tareas','Reuniones','Compromisos','Lideres','Redes','Bitacora'];
+      for(const h of hojas){ await loadSheet(h); }
+      updateDash();
+      syncCal();
+    } else {
+      throw new Error(ping?.error||'Sin respuesta');
+    }
+  } catch(e) {
+    if(gs){gs.className='gs er';gs.textContent='⚠ Sin conexión';}
+    const isTimeout = e.message==='timeout';
+    toast(isTimeout
+      ? '⚠ El Apps Script no respondió en 8 segundos. Verifica que esté desplegado correctamente.'
+      : '⚠ Sin conexión: '+e.message+'. Los datos se guardarán localmente.');
   }
   if(C.MKEY) initMap();
 }
@@ -1080,23 +1092,30 @@ function sTab(mod,t,el) {
 async function syncCal() {
   const ag=gid('ag-sync'), cs=gid('cal-st');
   if(ag){ag.className='gs wn';ag.textContent='⏳ Sincronizando...';}
+  if(cs){cs.className='gs wn';cs.textContent='⏳ Cargando...';}
   try {
     const hoy=new Date();
     const ini=new Date(hoy.getFullYear(),hoy.getMonth(),1).toISOString();
     const fin=new Date(hoy.getFullYear(),hoy.getMonth()+2,0).toISOString();
-    const r=await GA.eventos(ini,fin);
-    if(r.ok && r.eventos) {
+    const r = await Promise.race([
+      GA.eventos(ini,fin),
+      new Promise((_,rej)=>setTimeout(()=>rej(new Error('timeout')),10000))
+    ]);
+    if(r && r.ok && r.eventos) {
       DB.cal=r.eventos;
       renderAgHoy(); renderAgProx(); renderCal();
       const now=new Date().toLocaleString('es-CO');
       if(ag){ag.className='gs ok';ag.textContent='✅ '+r.eventos.length+' eventos';}
       if(cs){cs.className='gs ok';cs.textContent='● Google Calendar';}
       const ul=gid('cal-ul-sync'); if(ul) ul.textContent='Última sync: '+now;
-      toast('✅ '+r.eventos.length+' eventos cargados del calendario');
-    } else throw new Error(r.error||'Sin respuesta');
+    } else {
+      throw new Error(r?.error||'Sin respuesta');
+    }
   } catch(e) {
-    if(ag){ag.className='gs er';ag.textContent='⚠ Error Calendar';}
-    toast('⚠ Calendar sin respuesta. Verifica Apps Script y permisos.');
+    if(ag){ag.className='gs er';ag.textContent='⚠ Sin eventos';}
+    if(cs){cs.className='gs er';cs.textContent='⚠ Error Calendar';}
+    // Mostrar calendario vacío igual
+    renderAgHoy(); renderAgProx(); renderCal();
   }
 }
 
@@ -1185,24 +1204,34 @@ function clickDia(d){openM('m-actividad');const f=gid('act-fec');if(f)f.value=ne
 // CARGAR DATOS GOOGLE SHEETS
 // ══════════════════════════════════════════
 async function loadSheet(hoja) {
-  const r=await GA.leerHoja(hoja);
-  if(r.ok&&r.filas) {
-    const k=hoja.toLowerCase(); DB[k]=r.filas;
-    renderSheet(hoja);
-    return r.filas;
+  try {
+    const r = await GA.leerHoja(hoja);
+    if(r && r.ok && r.filas) {
+      const k = hoja.toLowerCase();
+      DB[k] = r.filas;
+      renderSheet(hoja);
+      return r.filas;
+    } else {
+      console.warn('loadSheet '+hoja+':', r?.error||'sin datos');
+      return [];
+    }
+  } catch(e) {
+    console.error('loadSheet error:', hoja, e);
+    return [];
   }
-  return [];
 }
 
 function renderSheet(h) {
-  if(h==='Equipos') renderEq();
-  if(h==='Referidos') renderRef();
-  if(h==='Tareas') renderTar();
-  if(h==='Reuniones') renderReu();
-  if(h==='Compromisos') renderCom();
-  if(h==='Lideres') renderLid();
-  if(h==='Redes') renderRed();
-  if(h==='Bitacora') renderBit();
+  try {
+    if(h==='Equipos')    renderEq();
+    if(h==='Referidos')  renderRef();
+    if(h==='Tareas')     renderTar();
+    if(h==='Reuniones')  { renderReu(); renderTar(); } // tareas muestran reunión relacionada
+    if(h==='Compromisos') renderCom();
+    if(h==='Lideres')    renderLid();
+    if(h==='Redes')      renderRed();
+    if(h==='Bitacora')   renderBit();
+  } catch(e) { console.error('renderSheet error:', h, e); }
 }
 
 // ══════════════════════════════════════════
@@ -1262,7 +1291,19 @@ function renderTar() {
   const can=DB.tareas.filter(t=>t.Estado==='Cancelada');
   sv('k-pen',pen.length); sv('k-pro',pro.length); sv('k-don',don.length); sv('k-can',can.length);
   sv('bt',pen.length+pro.length);
-  const mkK=(r,i)=>`<div class="kk" onclick="editR('tar',${i})"><div class="kkt">${esc(r.Descripcion)}</div><div class="km"><span>📅 ${r.FechaEntrega||'—'}</span><span>${r.Responsable||''}</span></div>${r.Reunion?`<div class="f11 tm3 mt8">🏛 ${esc(r.Reunion)}</div>`:''}<div class="mt8"><span class="bk ${bPri(r.Prioridad)}" style="font-size:10px">${r.Prioridad||'Normal'}</span></div></div>`;
+  const mkK=(r,i)=>{
+    const desc=r.Descripcion||r.descripcion||'Sin descripción';
+    const fec=r.FechaEntrega||r.fechaEntrega||'—';
+    const resp=r.Responsable||r.responsable||'';
+    const reu=r.Reunion||r.reunion||'';
+    const pri=r.Prioridad||r.prioridad||'Normal';
+    return '<div class="kk" onclick="editR('tar','+i+')">'
+      +'<div class="kkt">'+esc(desc)+'</div>'
+      +'<div class="km"><span>📅 '+fec+'</span><span>'+resp+'</span></div>'
+      +(reu?'<div class="f11 tm3 mt8">🏛 '+esc(reu)+'</div>':'')
+      +'<div class="mt8"><span class="bk '+bPri(pri)+'" style="font-size:10px">'+pri+'</span></div>'
+      +'</div>';
+  };
   const fill=(id,arr)=>{ const e=gid(id); if(e) e.innerHTML=arr.length?arr.map((r,i)=>mkK(r,DB.tareas.indexOf(r))).join(''):'<div class="empty" style="padding:12px">Sin tareas</div>'; };
   fill('kp',pen); fill('kpr',pro); fill('kd',don); fill('kc2',can);
   if(tb) tb.innerHTML=DB.tareas.length?DB.tareas.map((r,i)=>`<tr>
@@ -1284,21 +1325,36 @@ function renderTar() {
 function renderReu() {
   const cont=gid('reu-list'); if(!cont) return;
   sv('d-reu',DB.reuniones.length);
-  if(!DB.reuniones.length){cont.innerHTML='<div class="empty"><div class="ei">🏛</div><div>Sin reuniones registradas.</div></div>';return;}
-  cont.innerHTML=DB.reuniones.map((r,i)=>`<div class="rc">
-    <div class="rh">
-      <div><div class="rti">${esc(r.Nombre)}</div><div class="rm">📅 ${esc(r.Fecha||'')} ${r.Hora?'· '+r.Hora:''} ${r.Lugar?'· 📍 '+r.Lugar:''}</div></div>
-      <div class="fx g8">
-        <span class="bk ${bEst(r.Estado)}">${r.Estado||'Programada'}</span>
-        <button class="btn bs bsm" onclick="editR('reu',${i})">✏️ Editar</button>
-        <button class="btn bp bsm" onclick="tarFromReu(${JSON.stringify(r.Nombre||'')})">+ Tarea</button>
-        <button class="btn bd bsm" onclick="delR('reuniones',${i},${JSON.stringify(r.Nombre||'')})">🗑</button>
-      </div>
-    </div>
-    ${r.Descripcion?`<div class="f12 ts2 mb8">${esc(r.Descripcion)}</div>`:''}
-    ${r.Notas?`<div class="ob">${esc(r.Notas)}</div>`:''}
-    ${r.Invitados?`<div class="f11 tm3 mt8">👥 ${esc(r.Invitados)}</div>`:''}
-  </div>`).join('');
+  if(!DB.reuniones.length){
+    cont.innerHTML='<div class="empty"><div class="ei">🏛</div><div>Sin reuniones registradas. Usa el botón "+ Nueva reunión" para agregar.</div><div class="f12 tm3" style="margin-top:8px">Si ya tienes reuniones guardadas, haz clic en 🔄 Actualizar o espera la sincronización.</div></div>';
+    return;
+  }
+  cont.innerHTML=DB.reuniones.map((r,i)=>{
+    // Manejar tanto nombres de campos directos como los que vienen de Sheets
+    const nombre = r.Nombre||r.nombre||'Sin título';
+    const fecha  = r.Fecha||r.fecha||'';
+    const hora   = r.Hora||r.hora||'';
+    const lugar  = r.Lugar||r.lugar||'';
+    const desc   = r.Descripcion||r.descripcion||'';
+    const notas  = r.Notas||r.notas||'';
+    const inv    = r.Invitados||r.invitados||'';
+    const estado = r.Estado||r.estado||'Programada';
+    return '<div class="rc">'
+      +'<div class="rh"><div>'
+      +'<div class="rti">'+esc(nombre)+'</div>'
+      +'<div class="rm">📅 '+esc(fecha)+(hora?' · '+hora:'')+(lugar?' · 📍 '+lugar:'')+'</div>'
+      +'</div>'
+      +'<div class="fx g8">'
+      +'<span class="bk '+bEst(estado)+'">'+estado+'</span>'
+      +'<button class="btn bs bsm" onclick="editR('reu','+i+')">✏️ Editar</button>'
+      +'<button class="btn bp bsm" onclick="tarFromReu('+JSON.stringify(nombre)+')">+ Tarea</button>'
+      +'<button class="btn bd bsm" onclick="delR('reuniones','+i+','+JSON.stringify(nombre)+')">🗑</button>'
+      +'</div></div>'
+      +(desc?'<div class="f12 ts2 mb8">'+esc(desc)+'</div>':'')
+      +(notas?'<div class="ob">'+esc(notas)+'</div>':'')
+      +(inv?'<div class="f11 tm3 mt8">👥 '+esc(inv)+'</div>':'')
+      +'</div>';
+  }).join('');
 }
 
 // ══════════════════════════════════════════
@@ -1529,7 +1585,7 @@ function tarFromReu(nom) { const el=gid('tar-reu'); if(el) el.value=nom; openM('
 
 async function saveReu() {
   const nom=gv('reu-nom'); if(!nom){toast('⚠ El nombre es requerido');return;}
-  const datos={Nombre:nom,Lugar:gv('reu-lug'),Fecha:gv('reu-fec'),Hora:gv('reu-hor'),Invitados:gv('reu-inv'),Descripcion:gv('reu-des'),Notas:gv('reu-not'),Estado:gv('reu-est')};
+  const datos={Fecha:gv('reu-fec'),Hora:gv('reu-hor'),Lugar:gv('reu-lug'),Nombre:nom,Invitados:gv('reu-inv'),Descripcion:gv('reu-des'),Notas:gv('reu-not'),Estado:gv('reu-est')};
   const idx=getIdx('m-reu');
   if(idx!==null) {
     DB.reuniones[idx]={...DB.reuniones[idx],...datos};
@@ -1537,11 +1593,19 @@ async function saveReu() {
     toast('✅ Reunión actualizada');
   } else {
     if(datos.Fecha) GA.crearEvento({accion:'crearEvento',calendario:C.CAL_C,titulo:nom,fecha:datos.Fecha,horaInicio:datos.Hora||'08:00',horaFin:'10:00',lugar:datos.Lugar,descripcion:datos.Descripcion||''});
-    const r=await GA.guardar('Reuniones',datos); DB.reuniones.push(datos);
-    toast(r.ok?'✅ Reunión guardada':'⚠ Guardado local');
+    const r=await GA.guardar('Reuniones',datos);
+    if(r&&r.ok){
+      DB.reuniones.push(datos);
+      toast('✅ Reunión guardada en Google Sheets');
+    } else {
+      DB.reuniones.push(datos); // guardar local igual
+      toast('⚠ Guardado local ('+(r?.error||'Sin conexión')+') — recarga para ver si quedó en Sheets');
+      console.warn('Reunión guardar error:',r);
+    }
     for(const t of DB.rtTemp){
-      const td={Descripcion:t.des,FechaEntrega:t.fec,Responsable:t.res,Prioridad:t.pri,Estado:'Pendiente',Reunion:nom,Categoria:'Reunión'};
-      await GA.guardar('Tareas',td); DB.tareas.push(td);
+      const td={FechaCreacion:new Date().toISOString().split('T')[0],FechaEntrega:t.fec||'',Responsable:t.res||'',Categoria:'Reunión',Descripcion:t.des,Prioridad:t.pri||'Normal',Estado:'Pendiente',Reunion:nom,Observaciones:''};
+      const rtRes=await GA.guardar('Tareas',td);
+      if(rtRes&&rtRes.ok) DB.tareas.push(td);
     }
     if(DB.rtTemp.length) toast('✅ '+DB.rtTemp.length+' tarea(s) creadas');
     DB.rtTemp=[];
@@ -1552,7 +1616,7 @@ async function saveReu() {
 
 async function saveTar() {
   const des=gv('tar-des'); if(!des){toast('⚠ La descripción es requerida');return;}
-  const datos={Descripcion:des,FechaEntrega:gv('tar-fec'),Responsable:gv('tar-res'),Categoria:gv('tar-cat'),Prioridad:gv('tar-pri'),Estado:gv('tar-est'),Reunion:gv('tar-reu'),Observaciones:gv('tar-obs')};
+  const datos={FechaCreacion:new Date().toISOString().split('T')[0],FechaEntrega:gv('tar-fec'),Responsable:gv('tar-res'),Categoria:gv('tar-cat'),Descripcion:des,Prioridad:gv('tar-pri'),Estado:gv('tar-est'),Reunion:gv('tar-reu'),Observaciones:gv('tar-obs')};
   const idx=getIdx('m-tar');
   if(idx!==null) {
     DB.tareas[idx]={...DB.tareas[idx],...datos};
@@ -1660,31 +1724,118 @@ window.onMapLoad=function(){
   window._ML=true;
   if(st){st.className='gs ok';st.textContent='✅ Mapa activo';}
   toast('✅ Mapa de Zipaquirá cargado');
-  addMapMarkers();
+  // Small delay to ensure DB is loaded
+  setTimeout(addMapMarkers, 300);
 };
+
+// Coordenadas base de barrios de Zipaquirá
+const BARRIOS_ZIPA = [
+  {n:'Centro Histórico',lat:5.0232,lng:-74.0063},{n:'La Unión',lat:5.0190,lng:-74.0100},
+  {n:'San Jorge',lat:5.0280,lng:-74.0040},{n:'La Paz',lat:5.0250,lng:-74.0110},
+  {n:'Arco Iris',lat:5.0160,lng:-74.0130},{n:'El Progreso',lat:5.0310,lng:-74.0020},
+  {n:'Santa Isabel',lat:5.0150,lng:-74.0080},{n:'El Resurgir',lat:5.0200,lng:-74.0020},
+  {n:'El Tejar',lat:5.0270,lng:-74.0080},{n:'Villa del Prado',lat:5.0180,lng:-74.0050},
+  {n:'Funza',lat:5.0300,lng:-74.0100},{n:'Los Cedros',lat:5.0240,lng:-74.0120},
+  {n:'San Nicolás',lat:5.0220,lng:-74.0030},{n:'La Granja',lat:5.0170,lng:-74.0140},
+  {n:'El Carmelo',lat:5.0290,lng:-74.0060},{n:'Olarte',lat:5.0140,lng:-74.0060},
+  {n:'Bello Horizonte',lat:5.0260,lng:-74.0150},{n:'La Estación',lat:5.0210,lng:-74.0090},
+];
+
+window._mapaMarkers = [];
 
 function addMapMarkers(){
   if(!window._map) return;
-  const barrios=[
-    {n:'Centro Histórico',lat:5.0232,lng:-74.0063,v:true},{n:'La Unión',lat:5.0190,lng:-74.0100,v:true},
-    {n:'San Jorge',lat:5.0280,lng:-74.0040,v:true},{n:'La Paz',lat:5.0250,lng:-74.0110,v:true},
-    {n:'Arco Iris',lat:5.0160,lng:-74.0130,v:false},{n:'El Progreso',lat:5.0310,lng:-74.0020,v:false},
-    {n:'Santa Isabel',lat:5.0150,lng:-74.0080,v:false},{n:'El Resurgir',lat:5.0200,lng:-74.0020,v:false},
-  ];
-  barrios.forEach(b=>{
-    const m=new google.maps.Marker({position:{lat:b.lat,lng:b.lng},map:window._map,title:b.n,icon:{path:google.maps.SymbolPath.CIRCLE,scale:10,fillColor:b.v?'#2E7D32':'#FF8C00',fillOpacity:.85,strokeWeight:2,strokeColor:'white'}});
-    const iw=new google.maps.InfoWindow({content:`<div style="font-family:sans-serif;padding:4px 6px"><strong>${b.n}</strong><br><span style="color:${b.v?'#2E7D32':'#FF8C00'};font-size:12px">${b.v?'✅ Visitado':'⏳ Pendiente'}</span></div>`});
+  // Limpiar marcadores previos
+  window._mapaMarkers.forEach(m=>m.setMap(null));
+  window._mapaMarkers = [];
+
+  // Barrios de equipos → ROSADO (#E91E63)
+  const barriosEquipo = [...new Set(DB.equipos.map(r=>r.Barrio||'').filter(b=>b))];
+  // Barrios de referidos → AMARILLO (#FFD600)
+  const barriosReferido = [...new Set(DB.referidos.map(r=>r.Barrio||'').filter(b=>b))];
+
+  // Actualizar stats del mapa
+  const vis = barriosEquipo.length;
+  const refC = barriosReferido.length;
+  sv('mapa-vis', vis);
+  sv('mapa-ref', refC);
+  pct('mapa-vis-bar', Math.min(100, Math.round(vis/28*100)));
+  pct('mapa-ref-bar', Math.min(100, Math.round(refC/28*100)));
+  sv('p-bar-l', vis+'/28');
+  pct('p-bar', Math.min(100, Math.round(vis/28*100)));
+
+  // Dibujar marcadores de barrios base (sin visita = naranja tenue)
+  BARRIOS_ZIPA.forEach(b=>{
+    const enEquipo = barriosEquipo.some(be=>be.toLowerCase().includes(b.n.toLowerCase())||b.n.toLowerCase().includes(be.toLowerCase()));
+    const enReferido = barriosReferido.some(br=>br.toLowerCase().includes(b.n.toLowerCase())||b.n.toLowerCase().includes(br.toLowerCase()));
+    
+    let color = '#BDBDBD'; // sin actividad
+    let label = 'Sin actividad registrada';
+    let scale = 8;
+    if(enEquipo && enReferido) { color='#9C27B0'; label='Equipo + Referidos'; scale=13; }
+    else if(enEquipo)   { color='#E91E63'; label='Barrio del equipo'; scale=12; }
+    else if(enReferido) { color='#FFD600'; label='Barrio de referidos'; scale=11; }
+
+    const m = new google.maps.Marker({
+      position:{lat:b.lat,lng:b.lng}, map:window._map, title:b.n,
+      icon:{path:google.maps.SymbolPath.CIRCLE,scale:scale,fillColor:color,fillOpacity:.9,strokeWeight:2,strokeColor:'white'}
+    });
+    
+    // Equipos en este barrio
+    const eqs = DB.equipos.filter(r=>(r.Barrio||'').toLowerCase().includes(b.n.toLowerCase())||b.n.toLowerCase().includes((r.Barrio||'').toLowerCase()));
+    // Referidos en este barrio
+    const refs = DB.referidos.filter(r=>(r.Barrio||'').toLowerCase().includes(b.n.toLowerCase())||b.n.toLowerCase().includes((r.Barrio||'').toLowerCase()));
+    
+    const eqList = eqs.length ? '<br><b>Equipo:</b> '+eqs.map(e=>e.Nombre||'').join(', ') : '';
+    const refList = refs.length ? '<br><b>Referidos:</b> '+refs.map(r=>r.Nombre||'').join(', ') : '';
+    
+    const iw = new google.maps.InfoWindow({content:
+      '<div style="font-family:sans-serif;padding:6px;min-width:160px">'+
+      '<strong style="font-size:14px">'+b.n+'</strong><br>'+
+      '<span style="color:'+color+';font-size:12px">'+label+'</span>'+
+      eqList+refList+
+      '</div>'
+    });
     m.addListener('click',()=>iw.open(window._map,m));
+    window._mapaMarkers.push(m);
   });
-  // Referidos
+
+  // Marcadores individuales de equipos (rosado pequeño)
+  DB.equipos.forEach(r=>{
+    if(!r.Barrio) return;
+    const base = BARRIOS_ZIPA.find(b=>b.n.toLowerCase().includes((r.Barrio||'').toLowerCase())||(r.Barrio||'').toLowerCase().includes(b.n.toLowerCase()));
+    if(!base) return;
+    const j = (Math.random()-.5)*.003;
+    const m = new google.maps.Marker({
+      position:{lat:base.lat+j,lng:base.lng+j}, map:window._map, title:'👥 '+r.Nombre+' ('+r.Vigia+')',
+      icon:{path:google.maps.SymbolPath.CIRCLE,scale:6,fillColor:'#E91E63',fillOpacity:.85,strokeWeight:1.5,strokeColor:'white'}
+    });
+    const iw = new google.maps.InfoWindow({content:'<div style="font-family:sans-serif;padding:4px"><b>'+r.Nombre+'</b><br>Vigía: '+r.Vigia+'<br>📍 '+r.Barrio+'</div>'});
+    m.addListener('click',()=>iw.open(window._map,m));
+    window._mapaMarkers.push(m);
+  });
+
+  // Marcadores individuales de referidos (amarillo pequeño)
   DB.referidos.forEach(r=>{
     if(!r.Barrio) return;
-    const j=(Math.random()-.5)*.008;
-    new google.maps.Marker({position:{lat:5.0226+j,lng:-74.0059+j},map:window._map,title:'Ref: '+r.Nombre,icon:{path:google.maps.SymbolPath.CIRCLE,scale:7,fillColor:'#1565C0',fillOpacity:.7,strokeWeight:1,strokeColor:'white'}});
+    const base = BARRIOS_ZIPA.find(b=>b.n.toLowerCase().includes((r.Barrio||'').toLowerCase())||(r.Barrio||'').toLowerCase().includes(b.n.toLowerCase()));
+    if(!base) return;
+    const j = (Math.random()-.5)*.003;
+    const m = new google.maps.Marker({
+      position:{lat:base.lat+j,lng:base.lng+j}, map:window._map, title:'🤝 '+r.Nombre,
+      icon:{path:google.maps.SymbolPath.CIRCLE,scale:6,fillColor:'#FFD600',fillOpacity:.9,strokeWeight:1.5,strokeColor:'#E65100'}
+    });
+    const iw = new google.maps.InfoWindow({content:'<div style="font-family:sans-serif;padding:4px"><b>'+r.Nombre+'</b><br>Referido por: '+r.QuienRefiere+'<br>📍 '+r.Barrio+'<br>Estado: '+r.Estado+'</div>'});
+    m.addListener('click',()=>iw.open(window._map,m));
+    window._mapaMarkers.push(m);
   });
 }
 
-function layerMap(tipo){if(!window._map){toast('⚠ El mapa aún no está cargado');return;}toast('ℹ️ Usa los marcadores de colores en el mapa para ver '+tipo);}
+function layerMap(tipo){
+  if(!window._map){toast('⚠ El mapa aún no está cargado. Configura tu Maps API Key en Configuración.');return;}
+  addMapMarkers(); // Refresh markers from current DB
+  toast('🗺 Marcadores actualizados — '+tipo+' en el mapa');
+}
 
 // ══════════════════════════════════════════
 // DOCUMENTOS — Google Drive real
@@ -1717,8 +1868,13 @@ function updateDash() {
   sv('d-alerta-cnt',als.filter(a=>a.c==='ap').length+' urgentes');
   sv2('d-alertas',als.map(a=>`<div class="ali ${a.c}"><div class="aico">${a.i}</div><div class="atx"><div class="atit">${a.t}</div><div>${a.m}</div></div></div>`).join(''));
   // Resumen IA en dash
+  // Barrios reales desde datos de equipos
+  const barriosUnicos = [...new Set(DB.equipos.map(r=>r.Barrio||'').filter(b=>b))].length;
+  pct('p-bar', Math.min(100,Math.round(barriosUnicos/28*100)));
+  sv('p-bar-l', barriosUnicos+'/28');
+
   const di=gid('d-ia');
-  if(di){di.innerHTML=`<p class="f12 mb8" style="line-height:1.7;color:var(--ts)"><strong>${DB.referidos.length} referidos</strong> registrados. ${ven>0?`⚠ ${ven} compromisos vencidos.`:'Sin compromisos vencidos.'}</p><div class="sep"></div><p class="f11 tm3">Temas frecuentes en bitácora: revisa el módulo Bitácora para análisis completo</p><button class="btn bs bsm wf mt8" onclick="go('ia',null)">🤖 Consultar asistente IA</button>`;}
+  if(di){di.innerHTML='<p class="f12 mb8" style="line-height:1.7;color:var(--ts)"><strong>'+DB.referidos.length+' referidos</strong> registrados. '+(ven>0?'⚠ '+ven+' compromisos vencidos.':'Sin compromisos vencidos.')+'</p><div class="sep"></div><p class="f11 tm3">Barrios con equipo: '+barriosUnicos+' · Referidos: '+DB.referidos.length+'</p><button class="btn bs bsm wf mt8" onclick="go('ia',null)">🤖 Consultar asistente IA</button>';}
   renderTar();
 }
 
