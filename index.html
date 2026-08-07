@@ -233,7 +233,7 @@ textarea.fc{resize:vertical;min-height:72px;}
     <div class="lt">Zipa con el Corazón</div>
     <div class="ls">Centro de Operaciones · 2028</div>
     <input type="password" class="li" id="pi" placeholder="Contraseña de acceso" autocomplete="off">
-    <button class="lb" onclick="doLogin()">Ingresar al sistema</button>
+    <button class="lb" id="login-btn">Ingresar al sistema</button>
     <div class="le" id="le">⚠ Contraseña incorrecta</div>
     <div class="lbg">🔒 Sistema privado — acceso restringido</div>
   </div>
@@ -941,33 +941,44 @@ const GA = {
 // ══════════════════════════════════════════
 // AUTH
 // ══════════════════════════════════════════
-function doLogin() {
-  const inp = gid('pi');
-  const v = inp ? inp.value.trim() : '';
+// ── AUTH — funciones globales explícitas ──
+window.doLogin = function() {
+  var inp = document.getElementById('pi');
+  var v = inp ? inp.value.trim() : '';
   if(!v) return;
   if(v === C.PWD) {
-    gid('LS').style.display='none';
-    gid('APP').style.display='block';
+    document.getElementById('LS').style.display='none';
+    document.getElementById('APP').style.display='block';
     if(inp) inp.value='';
     init(Date.now());
   } else {
-    const le=gid('le');
-    if(le){ le.style.display='block'; setTimeout(()=>le.style.display='none',3000); }
+    var le=document.getElementById('le');
+    if(le){ le.style.display='block'; setTimeout(function(){le.style.display='none';},3000); }
     if(inp){ inp.value=''; inp.focus(); }
   }
-}
+};
 
-function doLogout() {
-  gid('LS').style.display='flex';
-  gid('APP').style.display='none';
-  const pi=gid('pi'); if(pi){ pi.value=''; pi.focus(); }
-}
+window.doLogout = function() {
+  document.getElementById('LS').style.display='flex';
+  document.getElementById('APP').style.display='none';
+  var pi=document.getElementById('pi');
+  if(pi){ pi.value=''; pi.focus(); }
+};
 
-// Bind Enter key
-document.addEventListener('DOMContentLoaded', function() {
-  const pi = gid('pi');
-  if(pi){ pi.addEventListener('keypress',function(e){ if(e.key==='Enter') doLogin(); }); pi.focus(); }
-});
+// Alias sin window. para compatibilidad
+var doLogin = window.doLogin;
+var doLogout = window.doLogout;
+
+// Setup login button y Enter key
+(function setupLogin() {
+  var btn = document.getElementById('login-btn');
+  var pi  = document.getElementById('pi');
+  if(btn) btn.addEventListener('click', window.doLogin);
+  if(pi) {
+    pi.addEventListener('keypress', function(e){ if(e.key==='Enter') window.doLogin(); });
+    pi.focus();
+  }
+})();
 
 // ══════════════════════════════════════════
 // INIT
@@ -1992,6 +2003,48 @@ function toast(msg){
   e.textContent=msg;e.style.opacity='1';
   clearTimeout(_tt);_tt=setTimeout(()=>e.style.opacity='0',3500);
 }
+
+// ── Exponer funciones globalmente (requerido para onclick en HTML) ──
+if(typeof go!=="undefined") window.go=go;
+if(typeof toggleSB!=="undefined") window.toggleSB=toggleSB;
+if(typeof closeMob!=="undefined") window.closeMob=closeMob;
+if(typeof openM!=="undefined") window.openM=openM;
+if(typeof closeM!=="undefined") window.closeM=closeM;
+if(typeof sTab!=="undefined") window.sTab=sTab;
+if(typeof syncAll!=="undefined") window.syncAll=syncAll;
+if(typeof syncCal!=="undefined") window.syncCal=syncCal;
+if(typeof cambMes!=="undefined") window.cambMes=cambMes;
+if(typeof clickDia!=="undefined") window.clickDia=clickDia;
+if(typeof saveActividad!=="undefined") window.saveActividad=saveActividad;
+if(typeof saveEq!=="undefined") window.saveEq=saveEq;
+if(typeof saveRef!=="undefined") window.saveRef=saveRef;
+if(typeof saveReu!=="undefined") window.saveReu=saveReu;
+if(typeof saveTar!=="undefined") window.saveTar=saveTar;
+if(typeof saveCom!=="undefined") window.saveCom=saveCom;
+if(typeof saveLid!=="undefined") window.saveLid=saveLid;
+if(typeof saveRed!=="undefined") window.saveRed=saveRed;
+if(typeof saveBit!=="undefined") window.saveBit=saveBit;
+if(typeof editR!=="undefined") window.editR=editR;
+if(typeof delR!=="undefined") window.delR=delR;
+if(typeof addTareaReu!=="undefined") window.addTareaReu=addTareaReu;
+if(typeof tarFromReu!=="undefined") window.tarFromReu=tarFromReu;
+if(typeof loadSheet!=="undefined") window.loadSheet=loadSheet;
+if(typeof filLid!=="undefined") window.filLid=filLid;
+if(typeof filTbl!=="undefined") window.filTbl=filTbl;
+if(typeof filCol!=="undefined") window.filCol=filCol;
+if(typeof initMap!=="undefined") window.initMap=initMap;
+if(typeof layerMap!=="undefined") window.layerMap=layerMap;
+if(typeof openFolder!=="undefined") window.openFolder=openFolder;
+if(typeof analizarBit!=="undefined") window.analizarBit=analizarBit;
+if(typeof saveGoogleCfg!=="undefined") window.saveGoogleCfg=saveGoogleCfg;
+if(typeof testConn!=="undefined") window.testConn=testConn;
+if(typeof saveMapsKey!=="undefined") window.saveMapsKey=saveMapsKey;
+if(typeof changePwd!=="undefined") window.changePwd=changePwd;
+if(typeof exportJSON!=="undefined") window.exportJSON=exportJSON;
+if(typeof sendIA!=="undefined") window.sendIA=sendIA;
+if(typeof askIA!=="undefined") window.askIA=askIA;
+if(typeof clrChat!=="undefined") window.clrChat=clrChat;
+if(typeof toast!=="undefined") window.toast=toast;
 </script>
 </body>
 </html>
