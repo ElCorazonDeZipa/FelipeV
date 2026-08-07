@@ -944,61 +944,30 @@ const GA = {
 function doLogin() {
   const inp = gid('pi');
   const v = inp ? inp.value.trim() : '';
-  if(!v) { toast('⚠ Ingresa la contraseña'); return; }
+  if(!v) return;
   if(v === C.PWD) {
-    const ts = Date.now();
-    try { ls('zipa_s',{a:true,t:ts,pwd:btoa(v)}); } catch(_){}
     gid('LS').style.display='none';
     gid('APP').style.display='block';
     if(inp) inp.value='';
-    init(ts);
+    init(Date.now());
   } else {
-    const le=gid('le'); if(le) le.style.display='block';
+    const le=gid('le');
+    if(le){ le.style.display='block'; setTimeout(()=>le.style.display='none',3000); }
     if(inp){ inp.value=''; inp.focus(); }
-    setTimeout(()=>{ const le=gid('le'); if(le) le.style.display='none'; },3000);
   }
 }
 
 function doLogout() {
-  if(!confirm('¿Cerrar sesión?')) return;
-  try { localStorage.removeItem('zipa_s'); } catch(_){}
   gid('LS').style.display='flex';
   gid('APP').style.display='none';
-  const pi=gid('pi'); if(pi) pi.value='';
+  const pi=gid('pi'); if(pi){ pi.value=''; pi.focus(); }
 }
 
-// Auto-login al cargar — sesión válida por 24 horas
-(function checkSession() {
-  try {
-    const raw = localStorage.getItem('zipa_s');
-    if(!raw) return; // sin sesión guardada
-    const s = JSON.parse(raw);
-    const DURACION = 24 * 3600000; // 24 horas
-    if(s && s.a && s.t && (Date.now() - s.t) < DURACION) {
-      // Sesión válida
-      gid('LS').style.display='none';
-      gid('APP').style.display='block';
-      init(s.t);
-    } else {
-      // Sesión expirada — limpiar
-      localStorage.removeItem('zipa_s');
-    }
-  } catch(e) {
-    // localStorage bloqueado o dato corrupto — continuar normalmente
-    console.warn('Session check error:', e);
-  }
-})();
-
-// Enter en el campo de contraseña
-(function bindEnter() {
+// Bind Enter key
+document.addEventListener('DOMContentLoaded', function() {
   const pi = gid('pi');
-  if(pi) {
-    pi.addEventListener('keypress', function(e) {
-      if(e.key === 'Enter') doLogin();
-    });
-    pi.focus();
-  }
-})();
+  if(pi){ pi.addEventListener('keypress',function(e){ if(e.key==='Enter') doLogin(); }); pi.focus(); }
+});
 
 // ══════════════════════════════════════════
 // INIT
