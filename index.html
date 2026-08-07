@@ -906,23 +906,34 @@ const DB = {
 // API GOOGLE — via Apps Script
 // ══════════════════════════════════════════
 const GA = {
+  // CORS fix: Google Apps Script no acepta Content-Type:application/json en POST desde browsers
+  // Usamos FormData para POST y URLSearchParams para GET
   async get(ac, d={}) {
     try {
-      const r = await fetch(C.AS+'?'+new URLSearchParams({accion:ac,...d}));
-      return r.ok ? r.json() : {ok:false,error:'HTTP '+r.status};
+      const p = new URLSearchParams({accion:ac});
+      Object.entries(d).forEach(([k,v])=>p.append(k,String(v)));
+      const r = await fetch(C.AS+'?'+p.toString(), {redirect:'follow'});
+      const t = await r.text();
+      try{return JSON.parse(t);}catch(e){return {ok:false,error:'No JSON: '+t.slice(0,80)};}
     } catch(e) { return {ok:false,error:e.message}; }
   },
   async post(ac, d={}) {
+    // FormData evita el preflight CORS que bloquea application/json
     try {
-      const r = await fetch(C.AS,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({accion:ac,...d})});
-      return r.json();
+      const fd = new FormData();
+      fd.append('accion', ac);
+      Object.entries(d).forEach(([k,v])=>{
+        fd.append(k, typeof v==='object' ? JSON.stringify(v) : String(v));
+      });
+      const r = await fetch(C.AS, {method:'POST', body:fd, redirect:'follow'});
+      const t = await r.text();
+      try{return JSON.parse(t);}catch(e){return {ok:false,error:'No JSON: '+t.slice(0,80)};}
     } catch(e) { return {ok:false,error:e.message}; }
   },
   leerHoja: h => GA.get('leerHoja',{hoja:h}),
   guardar: (h,f) => GA.post('guardarFila',{hoja:h,fila:JSON.stringify(f)}),
   actualizar: (h,id,d) => GA.post('actualizarFila',{hoja:h,id,datos:JSON.stringify(d)}),
   eliminar: (h,id) => GA.post('eliminarFila',{hoja:h,id}),
-  eventos: (ini,fin) => GA.get('leerEventos',{calCampana:C.CAL_C,calPersonal:C.CAL_P,inicio:ini,fin:fin}),
   crearEvento: d => GA.post('crearEvento',d),
   verificar: (f,hi,hf) => GA.get('verificarConflictos',{fecha:f,horaInicio:hi,horaFin:hf,calCampana:C.CAL_C,calPersonal:C.CAL_P}),
   ping: () => GA.get('ping'),
