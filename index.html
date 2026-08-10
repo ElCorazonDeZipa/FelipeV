@@ -1619,51 +1619,58 @@ function renderEq() {
   setText('eq-c1',c1); setText('eq-c2',c2); setText('eq-c3',c3);
 
   if (!DB.equipos.length) {
-    tb.innerHTML='<tr><td colspan="10" class="empty">Sin registros. Agrega el primero.</td></tr>';
+    tb.innerHTML='<tr><td colspan="10" class="empty">Sin registros.</td></tr>';
     return;
   }
   var CCOL={'Contratista':'bk-b','Funcionario':'bk-g','Equipo MCI':'bk-o','EQUIPO VISION DE CIUDAD':'bk-t','M180':'bk-r'};
-  tb.innerHTML = DB.equipos.map(function(r, i) {
-    var adh = r.Adhesion || 'Con nosotros';
-    var adhIco = adh==='Con nosotros'?'✅':adh==='Aún pensándolo'?'🤔':'❌';
-    var adhCol = adh==='Con nosotros'?'bk-g':adh==='Aún pensándolo'?'bk-y':'bk-r';
-    var refs = DB.referidos.filter(function(rf){
-      return (rf.QuienRefiere||'').toLowerCase().includes((r.Nombre||'').toLowerCase().split(' ')[0]);
-    }).length;
-    var refsCol = refs>=5?'#2E7D32':refs>=3?'var(--n)':'var(--s4)';
-    return '<tr>'
-      +'<td><div style="display:flex;align-items:center;gap:8px">'
-      +'<div class="av" style="background:linear-gradient(135deg,var(--n),var(--p));color:#fff;font-size:11px;font-weight:700">'+ini2(r.Nombre)+'</div>'
-      +'<div><div style="font-weight:700;font-size:13px">'+esc(r.Nombre)+'</div>'
-      +'<div style="font-size:10px;color:var(--s4)">'+esc(r.Condicion||'')+'</div></div></div></td>'
-      +'<td><a href="https://wa.me/57'+esc(r.Telefono||'')+'" target="_blank" style="color:var(--n);text-decoration:none;font-weight:500">📱 '+esc(r.Telefono||'—')+'</a></td>'
-      +'<td><span class="bk '+(CCOL[r.Condicion]||'bk-gr')+'" style="font-size:10px">'+esc(r.Condicion||'')+'</span></td>'
-      +'<td style="font-size:12px">'+esc(r.Entidad||'')+'</td>'
-      +'<td style="font-size:11px;max-width:140px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="'+esc(r.Cargo||'')+'">'+esc(r.Cargo||'')+'</td>'
-      +'<td style="font-size:11px;color:var(--s3)">'+esc((r.Lider12||'').split(' ').slice(0,2).join(' '))+'</td>'
-      +'<td><span class="bk bk-o" style="font-size:10px">'+esc(r.Vigia||'—')+'</span></td>'
-      +'<td><span class="bk '+adhCol+'">'+adhIco+' '+adh+'</span></td>'
-      +'<td><div style="font-size:12px;font-weight:700;color:'+refsCol+'">'+refs+'/5</div>'
-      +'<div class="pb" style="width:40px;margin-top:3px"><div class="pf" style="background:'+refsCol+';width:'+Math.min(100,refs*20)+'%"></div></div></td>'
-      +'<td><div style="display:flex;gap:4px">'
-      +'<button class="btn bp sm" style="padding:4px 9px;font-size:11px" onclick="abrirEdicionEq('+i+')">✏️ Editar</button>'
-      +'<button class="btn bd sm" style="padding:4px 9px;font-size:11px" data-del="equipos" data-idx="'+i+'" data-nom="'+esc(r.Nombre||'')+'">🗑</button>'
-      +'</div></td></tr>';
-  }).join('');
 
-  // Solo el botón eliminar usa delegation (porque no puede tener onclick con confirm)
-  tb.onclick = function(e) {
-    var btn = e.target.closest('[data-del]');
-    if (btn) {
-      var idx = parseInt(btn.getAttribute('data-idx'));
-      delR(btn.getAttribute('data-del'), idx, btn.getAttribute('data-nom'));
+  var rows = [];
+  for (var i = 0; i < DB.equipos.length; i++) {
+    var r = DB.equipos[i];
+    var adh = r.Adhesion || 'Con nosotros';
+    var adhIco = adh==='Con nosotros' ? '✅' : adh==='Aún pensándolo' ? '🤔' : '❌';
+    var adhCol = adh==='Con nosotros' ? 'bk-g' : adh==='Aún pensándolo' ? 'bk-y' : 'bk-r';
+    var refs = 0;
+    for (var j = 0; j < DB.referidos.length; j++) {
+      if ((DB.referidos[j].QuienRefiere||'').toLowerCase().indexOf((r.Nombre||'').toLowerCase().split(' ')[0]) >= 0) refs++;
     }
+    var refsCol = refs>=5 ? '#2E7D32' : refs>=3 ? '#FF8C00' : '#999';
+
+    var tr = document.createElement('tr');
+    tr.setAttribute('data-eq-idx', i);
+    tr.innerHTML = '<td><div style="display:flex;align-items:center;gap:8px">'
+      + '<div class="av" style="background:linear-gradient(135deg,#FF8C00,#FF5722);color:#fff;font-size:11px;font-weight:700">' + ini2(r.Nombre) + '</div>'
+      + '<div><div style="font-weight:700;font-size:13px">' + esc(r.Nombre) + '</div>'
+      + '<div style="font-size:10px;color:#999">' + esc(r.Condicion||'') + '</div></div></div></td>'
+      + '<td><a href="https://wa.me/57' + esc(r.Telefono||'') + '" target="_blank" style="color:#FF8C00;text-decoration:none;font-weight:500">📱 ' + esc(r.Telefono||'—') + '</a></td>'
+      + '<td><span class="bk ' + (CCOL[r.Condicion]||'bk-gr') + '" style="font-size:10px">' + esc(r.Condicion||'') + '</span></td>'
+      + '<td style="font-size:12px">' + esc(r.Entidad||'') + '</td>'
+      + '<td style="font-size:11px;max-width:140px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">' + esc(r.Cargo||'') + '</td>'
+      + '<td style="font-size:11px;color:#555">' + esc((r.Lider12||'').split(' ').slice(0,2).join(' ')) + '</td>'
+      + '<td><span class="bk bk-o" style="font-size:10px">' + esc(r.Vigia||'—') + '</span></td>'
+      + '<td><span class="bk ' + adhCol + '">' + adhIco + ' ' + adh + '</span></td>'
+      + '<td><div style="font-size:12px;font-weight:700;color:' + refsCol + '">' + refs + '/5</div>'
+      + '<div class="pb" style="width:40px;margin-top:3px"><div class="pf" style="background:' + refsCol + ';width:' + Math.min(100,refs*20) + '%"></div></div></td>'
+      + '<td><div style="display:flex;gap:4px">'
+      + '<button class="btn bp sm eq-edit-btn" data-idx="' + i + '" style="padding:4px 10px;font-size:12px">✏️ Editar</button>'
+      + '<button class="btn bd sm eq-del-btn" data-idx="' + i + '" style="padding:4px 10px;font-size:12px">🗑</button>'
+      + '</div></td>';
+    rows.push(tr);
+  }
+
+  // Clear and append rows
+  tb.innerHTML = '';
+  for (var k = 0; k < rows.length; k++) tb.appendChild(rows[k]);
+
+  // Single event listener - works always, no onclick string bugs
+  tb.onclick = function(e) {
+    var editBtn = e.target.closest('.eq-edit-btn');
+    var delBtn  = e.target.closest('.eq-del-btn');
+    if (editBtn) abrirEdicionEq(parseInt(editBtn.getAttribute('data-idx')));
+    if (delBtn)  delR('equipos', parseInt(delBtn.getAttribute('data-idx')), DB.equipos[parseInt(delBtn.getAttribute('data-idx'))].Nombre);
   };
 }
 
-// ═══════════════════════════════════════════════════
-// RENDER REFERIDOS
-// ═══════════════════════════════════════════════════
 function renderRef() {
   var tb = document.getElementById('tb-ref'); if (!tb) return;
   setText('r-tot', DB.referidos.length);
