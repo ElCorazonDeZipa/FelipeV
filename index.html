@@ -430,6 +430,26 @@ function exportJSON(){
 }
 function openFolder(n){window.open('https://drive.google.com/drive/search?q='+encodeURIComponent(n),'_blank');}
 
+
+// editR — abre el modal de edición (copia de seguridad si main script no carga)
+function _editRBootstrap(tipo, idx) {
+  // Si el main script cargó correctamente, usar su versión completa
+  if (typeof EDIT !== 'undefined') {
+    var cfg = EDIT[tipo]; if (!cfg) return;
+    var arr = typeof DB !== 'undefined' ? DB[{eq:'equipos',ref:'referidos',tar:'tareas',reu:'reuniones',com:'compromisos',lid:'lideres',bit:'bitacora',red:'redes'}[tipo]] : null;
+    if (!arr || arr[idx] === undefined) return;
+    updateVigiasSelects();
+    // Set title
+    var titEl = document.getElementById(cfg.tit); if(titEl) titEl.textContent = cfg.lbl;
+    // Set hidden index
+    var h = document.querySelector('#'+cfg.modal+' input[type=hidden]'); if(h) h.value = idx;
+    // Open modal
+    var m = document.getElementById(cfg.modal); if(!m) return;
+    m.classList.add('on');
+    // Fill data after modal is open
+    setTimeout(function() { cfg.fill(arr[idx]); }, 10);
+  }
+}
 // ── LOGIN
 function doLogin(){
   var inp=document.getElementById('pwd');
@@ -492,6 +512,22 @@ function stab(id,el){
     el.classList.add('on');
   }catch(e){}
 }
+
+// openNewModal — abre modal limpio para nuevo registro
+function openNewModal(modalId,titId,titTxt){
+  updateVigiasSelects();
+  var m=document.getElementById(modalId);if(!m)return;
+  m.querySelectorAll('input').forEach(function(i){if(i.type!=='hidden')i.value='';});
+  m.querySelectorAll('textarea').forEach(function(t){t.value='';});
+  m.querySelectorAll('select').forEach(function(s){s.selectedIndex=0;});
+  m.querySelectorAll('input[type=hidden]').forEach(function(h){h.value='';});
+  m.querySelectorAll('input[type=checkbox]').forEach(function(ch){ch.checked=false;});
+  if(titId)_sv(titId,titTxt||'');
+  m.classList.add('on');
+  var hoy=new Date().toISOString().split('T')[0];
+  m.querySelectorAll('input[type=date]').forEach(function(i){if(!i.value)i.value=hoy;});
+}
+function openNewEq(){openNewModal('m-eq','m-eq-t','Agregar persona al equipo');}
 
 // ── Setup al cargar
 window.addEventListener('DOMContentLoaded',function(){
@@ -627,7 +663,7 @@ window.addEventListener('DOMContentLoaded',function(){
 <div class="pg" id="pg-equipos">
   <div class="ph">
     <div><div class="pt">👥 Equipo de Campaña</div><div class="ps">96 integrantes — meta: 5 referidos por persona · Sincronizado con Google Sheets</div></div>
-    <div style="display:flex;gap:10px"><button class="btn bs sm" onclick="openM('m-vigias')">⚙️ Gestionar Vigías</button><button class="btn bp sm" onclick="openM('m-eq')">+ Agregar persona</button></div>
+    <div style="display:flex;gap:10px"><button class="btn bs sm" onclick="openM('m-vigias')">⚙️ Gestionar Vigías</button><button class="btn bp sm" onclick="openNewEq()">+ Agregar persona</button></div>
   </div>
   <!-- Stats adhesión -->
   <div class="g3" style="margin-bottom:20px">
@@ -655,7 +691,7 @@ window.addEventListener('DOMContentLoaded',function(){
 <div class="pg" id="pg-referidos">
   <div class="ph">
     <div><div class="pt">🤝 Referidos</div><div class="ps">Citas con Felipe — sincronizadas con Google Calendar</div></div>
-    <button class="btn bp sm" onclick="openM('m-ref')">+ Nuevo referido</button>
+    <button class="btn bp sm" onclick="openNewModal('m-ref','m-ref-t','Nuevo referido')">+ Nuevo referido</button>
   </div>
   <div class="g4" style="margin-bottom:20px">
     <div class="sc"><div class="si si-o">🤝</div><div><div class="sl">Total</div><div class="sv" id="r-tot">0</div></div></div>
@@ -687,14 +723,14 @@ window.addEventListener('DOMContentLoaded',function(){
 <!-- ═══ REUNIONES ═══ -->
 <div class="pg" id="pg-reuniones">
   <div class="ph"><div><div class="pt">🏛️ Reuniones</div><div class="ps">Sincronizadas con Google Calendar + Google Tasks</div></div>
-    <button class="btn bp sm" onclick="openM('m-reu')">+ Nueva reunión</button></div>
+    <button class="btn bp sm" onclick="openNewModal('m-reu','m-reu-t','Nueva reunión')">+ Nueva reunión</button></div>
   <div id="reu-list"><div class="empty">⏳ Cargando reuniones...</div></div>
 </div>
 
 <!-- ═══ TAREAS ═══ -->
 <div class="pg" id="pg-tareas">
   <div class="ph"><div><div class="pt">✅ Tareas</div><div class="ps">Sincronizadas con Google Tasks <span class="gt-badge">Google Tasks</span></div></div>
-    <div style="display:flex;gap:10px"><button class="btn bt sm" onclick="syncGoogleTasks()">🔄 Sync Tasks</button><button class="btn bp sm" onclick="openM('m-tar')">+ Nueva tarea</button></div></div>
+    <div style="display:flex;gap:10px"><button class="btn bt sm" onclick="syncGoogleTasks()">🔄 Sync Tasks</button><button class="btn bp sm" onclick="openNewModal('m-tar','m-tar-t','Nueva tarea')">+ Nueva tarea</button></div></div>
   <div class="tabs"><div class="tab on" onclick="stab('t-k',this)">📌 Kanban</div><div class="tab" onclick="stab('t-l',this)">📋 Lista</div></div>
   <div class="tabp on" id="t-k">
     <div class="kb">
@@ -713,7 +749,7 @@ window.addEventListener('DOMContentLoaded',function(){
 <!-- ═══ REDES ═══ -->
 <div class="pg" id="pg-redes">
   <div class="ph"><div><div class="pt">📱 Redes Sociales</div><div class="ps">Calendario editorial · Seguimiento en Google Tasks</div></div>
-    <div style="display:flex;gap:10px"><button class="btn bt sm" onclick="syncGoogleTasks()">🔄 Sync Tasks</button><button class="btn bp sm" onclick="openM('m-red')">+ Nueva publicación</button></div></div>
+    <div style="display:flex;gap:10px"><button class="btn bt sm" onclick="syncGoogleTasks()">🔄 Sync Tasks</button><button class="btn bp sm" onclick="openNewModal('m-red','m-red-t','Nueva publicación / contenido')">+ Nueva publicación</button></div></div>
   <div class="g4" style="margin-bottom:20px">
     <div class="sc"><div class="si si-o">📸</div><div><div class="sl">Instagram/FB</div><div class="sv" id="rd-ig">0</div></div></div>
     <div class="sc"><div class="si si-b">🎵</div><div><div class="sl">TikTok</div><div class="sv" id="rd-tt">0</div></div></div>
@@ -729,7 +765,7 @@ window.addEventListener('DOMContentLoaded',function(){
 <!-- ═══ COMPROMISOS ═══ -->
 <div class="pg" id="pg-compromisos">
   <div class="ph"><div><div class="pt">📋 Compromisos con la Comunidad</div><div class="ps">Seguimiento con alertas · Google Tasks</div></div>
-    <div style="display:flex;gap:10px"><button class="btn bt sm" onclick="syncGoogleTasks()">🔄 Sync Tasks</button><button class="btn bp sm" onclick="openM('m-com')">+ Nuevo compromiso</button></div></div>
+    <div style="display:flex;gap:10px"><button class="btn bt sm" onclick="syncGoogleTasks()">🔄 Sync Tasks</button><button class="btn bp sm" onclick="openNewModal('m-com','m-com-t','Nuevo compromiso')">+ Nuevo compromiso</button></div></div>
   <div class="g4" style="margin-bottom:20px">
     <div class="sc"><div class="si si-o">📋</div><div><div class="sl">Total</div><div class="sv" id="c-tot">0</div></div></div>
     <div class="sc"><div class="si si-g">✅</div><div><div class="sl">Cumplidos</div><div class="sv" id="c-cum">0</div></div></div>
@@ -745,7 +781,7 @@ window.addEventListener('DOMContentLoaded',function(){
 
 <!-- ═══ LÍDERES ═══ -->
 <div class="pg" id="pg-lideres">
-  <div class="ph"><div><div class="pt">⭐ Líderes Estratégicos</div></div><button class="btn bp sm" onclick="openM('m-lid')">+ Nuevo líder</button></div>
+  <div class="ph"><div><div class="pt">⭐ Líderes Estratégicos</div></div><button class="btn bp sm" onclick="openNewModal('m-lid','m-lid-t','Nuevo líder estratégico')">+ Nuevo líder</button></div>
   <div class="fb"><input class="fi" placeholder="🔍 Buscar líder..." oninput="filLid(this.value)"><select class="fc" style="width:auto" id="fil-lid-sec" onchange="filLid('')"><option value="">Todo sector</option><option>Deportes</option><option>Cultura</option><option>Educación</option><option>Salud</option><option>Comunal</option><option>Político</option><option>Empresarial</option></select><button class="btn bs sm" onclick="loadSheet('Lideres')">🔄</button></div>
   <div class="g3" id="lid-grid"><div class="empty">⭐ Cargando líderes...</div></div>
 </div>
@@ -785,7 +821,7 @@ window.addEventListener('DOMContentLoaded',function(){
 
 <!-- ═══ BITÁCORA ═══ -->
 <div class="pg" id="pg-bitacora">
-  <div class="ph"><div><div class="pt">📓 Bitácora del Candidato</div><div class="ps">🔒 Registro privado — Felipe Vanegas</div></div><button class="btn bp sm" onclick="openM('m-bit')">+ Nueva entrada</button></div>
+  <div class="ph"><div><div class="pt">📓 Bitácora del Candidato</div><div class="ps">🔒 Registro privado — Felipe Vanegas</div></div><button class="btn bp sm" onclick="openNewModal('m-bit','m-bit-t','Nueva entrada — Bitácora')">+ Nueva entrada</button></div>
   <div id="bit-list"><div class="empty">📓 Cargando bitácora...</div></div>
 </div>
 
@@ -1322,14 +1358,6 @@ function openM(id) {
   m.querySelectorAll('input[type=date]').forEach(function(i) { if (!i.value) i.value = hoy; });
   updateVigiasSelects();
   if (id === 'm-vigias') { renderVigiasAdmin(); }
-  if (id === 'm-eq') {
-    // Reset form for new entry
-    var h = m.querySelector('input[type=hidden]');
-    if (!h || h.value === '') {
-      m.querySelectorAll('input:not([type=hidden]):not([type=date])').forEach(function(i){i.value='';});
-      m.querySelectorAll('textarea').forEach(function(t){t.value='';});
-    }
-  }
 }
 function closeM(id) { var m = document.getElementById(id); if (m) m.classList.remove('on'); }
 
@@ -1950,18 +1978,24 @@ var EDIT = {
 };
 
 function editR(tipo, idx) {
+  if (typeof EDIT === 'undefined') { toast('⚠ Sistema cargando, intenta en un momento'); return; }
   var cfg = EDIT[tipo]; if (!cfg) return;
-  var arr = DB[DB_KEY[tipo]]; if (!arr || arr[idx] === undefined) return;
-  // First populate selects so setSel() works
+  var arr = DB[DB_KEY[tipo]];
+  if (!arr || arr[idx] === undefined) { toast('⚠ Registro no encontrado'); return; }
+  // 1. Populate selects FIRST
   updateVigiasSelects();
+  // 2. Set modal title and hidden index
   setText(cfg.tit, cfg.lbl);
-  var h = document.querySelector('#' + cfg.modal + ' input[type=hidden]'); if (h) h.value = idx;
-  // Open modal first so the DOM elements exist and are visible
-  var m = document.getElementById(cfg.modal); if (m) m.classList.add('on');
-  var hoy = new Date().toISOString().split('T')[0];
-  if (m) m.querySelectorAll('input[type=date]').forEach(function(i){if(!i.value)i.value=hoy;});
-  // Then fill with data
-  cfg.fill(arr[idx]);
+  var h = document.querySelector('#' + cfg.modal + ' input[type=hidden]');
+  if (h) h.value = idx;
+  // 3. Open modal
+  var m = document.getElementById(cfg.modal);
+  if (!m) { toast('⚠ Modal no encontrado: ' + cfg.modal); return; }
+  m.classList.add('on');
+  // 4. Fill data (after modal is visible)
+  setTimeout(function() {
+    try { cfg.fill(arr[idx]); } catch(e) { toast('⚠ Error llenando formulario: ' + e.message); }
+  }, 20);
 }
 
 function delR(tipo, idx, nombre) {
@@ -2305,6 +2339,39 @@ window.initApp=initApp;
 window.renderReu=renderReu; window.renderBit=renderBit; window.renderLid=renderLid;
 window.renderTar=renderTar; window.renderCom=renderCom; window.renderRed=renderRed;
 window.updateDash=updateDash; window.renderRefProg=renderRefProg;
+window.editR=editR; window.delR=delR; window.updateVigiasSelects=updateVigiasSelects;
+window.addReuTar=addReuTar; window.tarFromReu=tarFromReu;
+
+function openNewEq() {
+  updateVigiasSelects();
+  // Clear the form completely
+  var m = document.getElementById('m-eq'); if (!m) return;
+  m.querySelectorAll('input').forEach(function(i){ i.value=''; if(i.type==='checkbox')i.checked=false; });
+  m.querySelectorAll('textarea').forEach(function(t){ t.value=''; });
+  m.querySelectorAll('select').forEach(function(s){ s.selectedIndex=0; });
+  // Set title for new entry
+  setText('m-eq-t','Agregar persona al equipo');
+  // Open
+  m.classList.add('on');
+  var hoy=new Date().toISOString().split('T')[0];
+  m.querySelectorAll('input[type=date]').forEach(function(i){if(!i.value)i.value=hoy;});
+}
+window.openNewEq=openNewEq;
+
+function openNewModal(modalId, titId, titTxt) {
+  updateVigiasSelects();
+  var m = document.getElementById(modalId); if (!m) return;
+  m.querySelectorAll('input').forEach(function(i){ if(i.type!=='hidden')i.value=''; });
+  m.querySelectorAll('textarea').forEach(function(t){ t.value=''; });
+  m.querySelectorAll('select').forEach(function(s){ s.selectedIndex=0; });
+  m.querySelectorAll('input[type=hidden]').forEach(function(h){ h.value=''; });
+  m.querySelectorAll('input[type=checkbox]').forEach(function(ch){ ch.checked=false; });
+  if(titId) setText(titId, titTxt||'');
+  m.classList.add('on');
+  var hoy=new Date().toISOString().split('T')[0];
+  m.querySelectorAll('input[type=date]').forEach(function(i){if(!i.value)i.value=hoy;});
+}
+window.openNewModal=openNewModal;
 
 </script>
 </body>
