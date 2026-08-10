@@ -259,7 +259,8 @@ textarea.fc{resize:vertical;min-height:80px;}
 var CFG = {
   PWD: '4LC4LD32028*',
   AS: 'https://script.google.com/macros/s/AKfycbyCtjTocrNhGU5ePNrGBETc_IiIz34tznZWjthU-V2EtoahAKFVEZlNIWMBQQnQnd2C/exec',
-  SID: '', MKEY: '', IA_KEY: '', TASKLIST: ''
+  SID: '18oCKARfHEAWW6LA8uUXPS45SGcOuwkWT6rDGViiVh-M',
+  MKEY: '', IA_KEY: '', TASKLIST: ''
 };
 
 var VIGIAS_DEFAULT = [
@@ -310,9 +311,10 @@ function renderVigiasAdmin(){
     return '<div style="display:flex;align-items:center;gap:10px;padding:10px;background:#fff;border-radius:8px;margin-bottom:8px;border:1px solid #eee">'
       +'<div style="width:36px;height:36px;background:linear-gradient(135deg,#FF8C00,#FF5722);border-radius:50%;display:flex;align-items:center;justify-content:center;color:#fff;font-size:11px;font-weight:700">'+ini2(v.nom)+'</div>'
       +'<div style="flex:1"><div style="font-weight:600">'+esc(v.nom)+'</div><div style="font-size:11px;color:#888">'+esc(v.area)+'</div></div>'
-      +'<button style="background:#ffebee;color:#c62828;border:none;padding:6px 12px;border-radius:6px;cursor:pointer;font-size:12px" onclick="removeVigia('+i+')">🗑 Eliminar</button>'
+      +'<button style="background:#ffebee;color:#c62828;border:none;padding:6px 12px;border-radius:6px;cursor:pointer;font-size:12px" data-del-vigia="'+i+'">🗑 Eliminar</button>'
       +'</div>';
   }).join(''):'<div style="text-align:center;padding:20px;color:#888">No hay vigías configurados</div>';
+  c.onclick=function(e){var btn=e.target.closest('[data-del-vigia]');if(btn)removeVigia(parseInt(btn.getAttribute('data-del-vigia')));};
 }
 function renderVigiasConfig(){
   var c=document.getElementById('cfg-vigias-list');if(!c)return;
@@ -321,7 +323,7 @@ function renderVigiasConfig(){
       +'<div style="width:32px;height:32px;background:linear-gradient(135deg,#FF8C00,#FF5722);border-radius:50%;display:flex;align-items:center;justify-content:center;color:#fff;font-size:10px;font-weight:700">'+ini2(v.nom)+'</div>'
       +'<div><div style="font-weight:600;font-size:13px">'+esc(v.nom)+'</div><div style="font-size:11px;color:#888">'+esc(v.area)+'</div></div>'
       +'<div style="margin-left:auto;width:8px;height:8px;border-radius:50%;background:#00BFA5"></div></div>';
-  }).join('')+'<div style="margin-top:10px"><button class="btn bp sm" onclick="openM('m-vigias')">⚙️ Editar vigías</button></div>';
+  }).join('')+'<div style="margin-top:10px"><button class="btn bp sm" onclick="openM(&quot;m-vigias&quot;)">⚙️ Editar vigías</button></div>';
 }
 function renderDashVigias(){
   var c=document.getElementById('d-vigias');if(!c)return;
@@ -358,7 +360,6 @@ function removeVigia(i){
 function loadCfg(){
   try{
     var cfg=JSON.parse(localStorage.getItem('zipa_cfg')||'{}');
-    if(cfg.sid){CFG.SID=cfg.sid;var e=document.getElementById('cfg-sid');if(e)e.value=cfg.sid;}
     if(cfg.mkey){CFG.MKEY=cfg.mkey;var e=document.getElementById('cfg-mkey');if(e)e.value=cfg.mkey;}
     if(cfg.tasklist){CFG.TASKLIST=cfg.tasklist;var e=document.getElementById('cfg-tasklist');if(e)e.value=cfg.tasklist;}
   }catch(e){}
@@ -368,16 +369,14 @@ function loadCfg(){
   }catch(e){}
 }
 function saveCfg(){
-  var sid=_gv('cfg-sid');
-  if(!sid){_toast('⚠ Ingresa el ID del Google Sheets');return;}
-  CFG.SID=sid; CFG.TASKLIST=_gv('cfg-tasklist');
+  CFG.TASKLIST=_gv('cfg-tasklist');
   try{
     var cfg=JSON.parse(localStorage.getItem('zipa_cfg')||'{}');
-    cfg.sid=sid; cfg.tasklist=CFG.TASKLIST;
+    cfg.tasklist=CFG.TASKLIST;
     localStorage.setItem('zipa_cfg',JSON.stringify(cfg));
   }catch(e){_toast('⚠ Error guardando: '+e.message);return;}
   var g=document.getElementById('g-st');if(g){g.className='gs-b gs-ok';g.textContent='✅ Configurado';}
-  _toast('✅ Sheets ID guardado. Sincronizando...');
+  _toast('✅ Configuración guardada. Sincronizando...');
   if(typeof syncAll==='function')syncAll(); else window.location.reload();
 }
 function saveMapsKey(){
@@ -822,9 +821,9 @@ window.addEventListener('DOMContentLoaded',function(){
   <div class="g2">
     <div>
       <div class="card" style="margin-bottom:16px"><div class="ch"><span>🔗</span><div class="ct">Google Workspace</div><span class="gs-b gs-wn" id="g-st">⚠ Configurar</span></div><div class="cb">
-        <div class="fg"><div class="fl">Google Sheets ID</div><input class="fc" id="cfg-sid" placeholder="El ID del URL de tu Google Sheets"><div style="font-size:11px;color:var(--s4);margin-top:4px">docs.google.com/spreadsheets/d/<strong>ESTE_ID</strong>/edit</div></div>
-        <div class="fg"><div class="fl">Google Tasks List ID (opcional)</div><input class="fc" id="cfg-tasklist" placeholder="ID de tu lista en Google Tasks"><div style="font-size:11px;color:var(--s4);margin-top:4px">Déjalo vacío para usar la lista predeterminada</div></div>
-        <div style="display:flex;gap:10px"><button class="btn bp sm" onclick="saveCfg()">💾 Guardar</button><button class="btn bs sm" onclick="testConn()">🔌 Probar conexión</button></div>
+        <div class="al al-g" style="margin-bottom:12px">✅ <strong>Google Sheets conectado:</strong> ID hardcodeado · <code style="font-size:10px">18oCKARf...</code></div>
+        <div class="fg"><div class="fl">Google Tasks List ID (opcional)</div><input class="fc" id="cfg-tasklist" placeholder="Déjalo vacío para usar la lista predeterminada"></div>
+        <div style="display:flex;gap:10px"><button class="btn bp sm" onclick="saveCfg()">💾 Guardar Tasks ID</button><button class="btn bs sm" onclick="testConn()">🔌 Probar conexión</button></div>
       </div></div>
       <div class="card" style="margin-bottom:16px"><div class="ch"><span>🗺️</span><div class="ct">Google Maps</div><span class="gs-b gs-wn" id="maps-st">⚠ Configurar</span></div><div class="cb">
         <div class="fg"><div class="fl">API Key — Maps JavaScript API</div><input class="fc" id="cfg-mkey" placeholder="AIzaSy..."><div style="font-size:11px;color:var(--ro);margin-top:4px">⚠ No subas esta key a GitHub. API requerida: Maps JavaScript API</div></div>
@@ -1054,10 +1053,8 @@ window.addEventListener('DOMContentLoaded',function(){
 var CFG = {
   PWD: '4LC4LD32028*',
   AS: 'https://script.google.com/macros/s/AKfycbyCtjTocrNhGU5ePNrGBETc_IiIz34tznZWjthU-V2EtoahAKFVEZlNIWMBQQnQnd2C/exec',
-  SID: '',
-  MKEY: '',
-  IA_KEY: '',
-  TASKLIST: ''
+  SID: '18oCKARfHEAWW6LA8uUXPS45SGcOuwkWT6rDGViiVh-M',
+  MKEY: '', IA_KEY: '', TASKLIST: ''
 };
 
 // ═══════════════════════════════════════════════════
@@ -1128,7 +1125,7 @@ function renderVigiasConfig() {
       + '<div class="av" style="background:linear-gradient(135deg,var(--n),var(--p));color:#fff;font-size:11px">' + ini2(v.nom) + '</div>'
       + '<div><div style="font-weight:600">' + esc(v.nom) + '</div><div style="font-size:11px;color:var(--s4)">' + esc(v.area) + '</div></div>'
       + '<div style="margin-left:auto;width:8px;height:8px;border-radius:50%;background:var(--g)"></div></div>';
-  }).join('') + '<div style="margin-top:10px"><button class="btn bp sm" onclick="openM('m-vigias')">⚙️ Editar vigías</button></div>';
+  }).join('') + '<div style="margin-top:10px"><button class="btn bp sm" onclick="openM(&quot;m-vigias&quot;)">⚙️ Editar vigías</button></div>';
 }
 
 function renderDashVigias() {
@@ -1164,35 +1161,9 @@ var DB = {
   cal: [], rtTemp: []
 };
 
-// ═══════════════════════════════════════════════════
-// LOGIN — directo, sin capas
-// ═══════════════════════════════════════════════════
-function doLogin() {
-  var v = (document.getElementById('pwd') || {}).value || '';
-  var err = document.getElementById('lerr');
-  if (v.trim() === CFG.PWD) {
-    document.getElementById('LS').style.display = 'none';
-    document.getElementById('APP').style.display = 'block';
-    document.getElementById('pwd').value = '';
-    initApp();
-  } else {
-    if (err) { err.textContent = '⚠ Contraseña incorrecta'; setTimeout(function() { err.textContent = ''; }, 3000); }
-    document.getElementById('pwd').value = '';
-    document.getElementById('pwd').focus();
-  }
-}
+// LOGIN ya definido en bootstrap — initApp es lo que se llama desde ahí
+// Aquí solo definimos initApp para que sea invocado por el bootstrap
 
-function doLogout() {
-  document.getElementById('LS').style.display = 'flex';
-  document.getElementById('APP').style.display = 'none';
-  setTimeout(function() { document.getElementById('pwd').focus(); }, 100);
-}
-
-// Button setup (redundant safety — also set by inline bootstrap above)
-try {
-  document.getElementById('lbtn').onclick = doLogin;
-  document.getElementById('pwd').onkeypress = function(e) { if (e.key === 'Enter') doLogin(); };
-} catch(_) {}
 
 // ═══════════════════════════════════════════════════
 // GOOGLE APPS SCRIPT — FormData (sin CORS preflight)
@@ -1264,10 +1235,8 @@ function initApp() {
 function loadCfg() {
   try {
     var c = JSON.parse(localStorage.getItem('zipa_cfg') || '{}');
-    if (c.sid) { CFG.SID = c.sid; setVal('cfg-sid', c.sid); }
     if (c.mkey) { CFG.MKEY = c.mkey; setVal('cfg-mkey', c.mkey); }
     if (c.tasklist) { CFG.TASKLIST = c.tasklist; setVal('cfg-tasklist', c.tasklist); }
-    // IA Key se guarda aparte
     var iak = localStorage.getItem('zipa_ia_key');
     if (iak) { CFG.IA_KEY = iak; setVal('ia-key', iak); setText('ia-key-st', '✅ API Key cargada'); }
   } catch(e) {}
@@ -2251,9 +2220,8 @@ function clrChat() { setHTML('ia-chat', '<div class="im bot">¡Chat limpio! ¿En
 // CONFIGURACIÓN
 // ═══════════════════════════════════════════════════
 function saveCfg() {
-  var sid = gv('cfg-sid'); if (!sid) { toast('⚠ Ingresa el ID del Google Sheets'); return; }
-  CFG.SID = sid; CFG.TASKLIST = gv('cfg-tasklist');
-  try { var c=JSON.parse(localStorage.getItem('zipa_cfg')||'{}'); c.sid=sid; c.tasklist=CFG.TASKLIST; localStorage.setItem('zipa_cfg',JSON.stringify(c)); } catch(e) {}
+  CFG.TASKLIST = gv('cfg-tasklist');
+  try { var c=JSON.parse(localStorage.getItem('zipa_cfg')||'{}'); c.tasklist=CFG.TASKLIST; localStorage.setItem('zipa_cfg',JSON.stringify(c)); } catch(e) {}
   toast('✅ Configuración guardada. Sincronizando...'); syncAll();
 }
 
