@@ -1320,7 +1320,16 @@ function openM(id) {
   m.classList.add('on');
   var hoy = new Date().toISOString().split('T')[0];
   m.querySelectorAll('input[type=date]').forEach(function(i) { if (!i.value) i.value = hoy; });
+  updateVigiasSelects();
   if (id === 'm-vigias') { renderVigiasAdmin(); }
+  if (id === 'm-eq') {
+    // Reset form for new entry
+    var h = m.querySelector('input[type=hidden]');
+    if (!h || h.value === '') {
+      m.querySelectorAll('input:not([type=hidden]):not([type=date])').forEach(function(i){i.value='';});
+      m.querySelectorAll('textarea').forEach(function(t){t.value='';});
+    }
+  }
 }
 function closeM(id) { var m = document.getElementById(id); if (m) m.classList.remove('on'); }
 
@@ -1943,10 +1952,16 @@ var EDIT = {
 function editR(tipo, idx) {
   var cfg = EDIT[tipo]; if (!cfg) return;
   var arr = DB[DB_KEY[tipo]]; if (!arr || arr[idx] === undefined) return;
+  // First populate selects so setSel() works
+  updateVigiasSelects();
   setText(cfg.tit, cfg.lbl);
   var h = document.querySelector('#' + cfg.modal + ' input[type=hidden]'); if (h) h.value = idx;
+  // Open modal first so the DOM elements exist and are visible
+  var m = document.getElementById(cfg.modal); if (m) m.classList.add('on');
+  var hoy = new Date().toISOString().split('T')[0];
+  if (m) m.querySelectorAll('input[type=date]').forEach(function(i){if(!i.value)i.value=hoy;});
+  // Then fill with data
   cfg.fill(arr[idx]);
-  openM(cfg.modal);
 }
 
 function delR(tipo, idx, nombre) {
@@ -1977,7 +1992,16 @@ function saveEq() {
     GA.post('guardarFila', {hoja:'Equipos', fila:JSON.stringify(datos)}).then(function(r) { toast(r&&r.ok?'✅ Guardado en Google Sheets':'⚠ Guardado localmente'); });
     DB.equipos.push(datos);
   }
-  closeM('m-eq'); renderEq(); resetM('m-eq','m-eq-t','Agregar persona al equipo');
+  closeM('m-eq'); renderEq();
+  // Reset form completely
+  var modal = document.getElementById('m-eq');
+  if (modal) {
+    modal.querySelectorAll('input:not([type=hidden]):not([type=date])').forEach(function(i){i.value='';});
+    modal.querySelectorAll('textarea').forEach(function(t){t.value='';});
+    modal.querySelectorAll('select').forEach(function(s){s.selectedIndex=0;});
+    var h = modal.querySelector('input[type=hidden]'); if(h) h.value='';
+  }
+  setText('m-eq-t','Agregar persona al equipo');
 }
 
 function saveRef() {
