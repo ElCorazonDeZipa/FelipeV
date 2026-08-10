@@ -259,7 +259,7 @@ textarea.fc{resize:vertical;min-height:72px}
   <div class="ph"><div><div class="pt">Equipos</div><div class="ps">Contactos por vigía</div></div><button class="btn bp sm" onclick="openM('m-eq')">+ Nuevo contacto</button></div>
   <div class="fb"><input class="fi" placeholder="🔍 Buscar..." oninput="filT('tb-eq',this.value)"><button class="btn bs sm" onclick="loadSheet('Equipos')">🔄</button></div>
   <div class="card"><div class="tw"><table>
-    <thead><tr><th>Nombre</th><th>Teléfono</th><th>Barrio</th><th>Vigía</th><th>Interés</th><th>Estado</th><th>Acciones</th></tr></thead>
+    <thead><tr><th>Nombre</th><th>WhatsApp</th><th>Entidad</th><th>Cargo</th><th>Líder 12</th><th>Adhesión</th><th>Referidos</th><th>Acciones</th></tr></thead>
     <tbody id="tb-eq"><tr><td colspan="7" class="empty">Cargando...</td></tr></tbody>
   </table></div></div>
 </div>
@@ -273,9 +273,13 @@ textarea.fc{resize:vertical;min-height:72px}
     <div class="sc"><div class="si si-g">✅</div><div><div class="sl">Realizadas</div><div class="sv" id="r-rel">0</div></div></div>
     <div class="sc"><div class="si si-b">🔄</div><div><div class="sl">Seguimiento</div><div class="sv" id="r-seg">0</div></div></div>
   </div>
-  <div class="fb"><input class="fi" placeholder="🔍 Buscar..." oninput="filT('tb-ref',this.value)"><button class="btn bs sm" onclick="loadSheet('Referidos')">🔄</button></div>
+  <div class="card" style="margin-bottom:16px">
+    <div class="ch"><span>🏆</span><div class="ct">Progreso por miembro del equipo (meta: 5 referidos c/u)</div></div>
+    <div class="cb" id="ref-progreso"><div class="empty">Cargando progreso...</div></div>
+  </div>
+  <div class="fb"><input class="fi" placeholder="🔍 Buscar nombre, barrio, quién refiere..." oninput="filT('tb-ref',this.value)"><select class="fc" style="width:auto" id="fil-ref-llam" onchange="filRefLlam(this.value)"><option value="">Todos</option><option>Pendiente</option><option>Confirmado</option><option>No contesta</option></select><button class="btn bs sm" onclick="loadSheet('Referidos')">🔄</button></div>
   <div class="card"><div class="tw"><table>
-    <thead><tr><th>Nombre</th><th>Teléfono</th><th>Barrio</th><th>Quién refiere</th><th>Cita</th><th>Estado</th><th>Acciones</th></tr></thead>
+    <thead><tr><th>Nombre</th><th>Teléfono</th><th>Barrio</th><th>Quién refiere</th><th>Horarios disponibles</th><th>Llamada</th><th>Cita agendada</th><th>Estado</th><th>Acciones</th></tr></thead>
     <tbody id="tb-ref"><tr><td colspan="7" class="empty">Cargando...</td></tr></tbody>
   </table></div></div>
 </div>
@@ -439,15 +443,49 @@ textarea.fc{resize:vertical;min-height:72px}
 
 <div class="mo" id="m-eq"><div class="md"><div class="mh"><div class="mt" id="m-eq-t">Nuevo contacto</div><button class="mx" onclick="closeM('m-eq')">×</button></div><div class="mb">
   <input type="hidden" id="eq-idx">
-  <div class="g2"><div class="fg"><div class="fl">Nombre *</div><input class="fc" id="eq-nom" placeholder="Nombre completo"></div><div class="fg"><div class="fl">Teléfono</div><input class="fc" id="eq-tel" placeholder="310..."></div><div class="fg"><div class="fl">Barrio</div><input class="fc" id="eq-bar" placeholder="Barrio o sector"></div><div class="fg"><div class="fl">Dependencia</div><select class="fc" id="eq-dep"><option>Deportes</option><option>Cultura</option><option>Familia</option><option>Mujer</option><option>Administrativos</option><option>Adulto Mayor</option></select></div><div class="fg"><div class="fl">Vigía</div><select class="fc" id="eq-vig"><option>Jorgito</option><option>Héctor</option><option>Deira</option><option>John Harold</option><option>Francy</option><option>Evelyn</option><option>Ju</option><option>Vivi Velásquez</option></select></div><div class="fg"><div class="fl">Interés</div><select class="fc" id="eq-int"><option>Alto</option><option>Medio</option><option>Bajo</option><option>Sin información</option></select></div></div>
-  <div class="fg"><div class="fl">Observaciones</div><textarea class="fc" id="eq-obs" placeholder="Notas..."></textarea></div>
+  <div class="g2">
+    <div class="fg"><div class="fl">Nombre *</div><input class="fc" id="eq-nom" placeholder="Nombre completo"></div>
+    <div class="fg"><div class="fl">WhatsApp</div><input class="fc" id="eq-tel" placeholder="310..."></div>
+    <div class="fg"><div class="fl">Condición</div><select class="fc" id="eq-cond"><option>Contratista</option><option>Funcionario</option><option>Equipo MCI</option><option>EQUIPO VISION DE CIUDAD</option><option>M180</option></select></div>
+    <div class="fg"><div class="fl">Entidad</div><input class="fc" id="eq-ent" placeholder="SFDS, IMCRDZ..."></div>
+    <div class="fg"><div class="fl">Cargo</div><input class="fc" id="eq-car" placeholder="Cargo o rol"></div>
+    <div class="fg"><div class="fl">Líder 12</div><input class="fc" id="eq-lid" placeholder="Nombre del líder 12"></div>
+    <div class="fg"><div class="fl">Adhesión a la campaña</div>
+      <select class="fc" id="eq-adh">
+        <option value="Con nosotros">✅ Con nosotros</option>
+        <option value="Aún pensándolo">🤔 Aún pensándolo</option>
+        <option value="No está aquí">❌ No está aquí</option>
+      </select>
+    </div>
+    <div class="fg"><div class="fl">Barrio</div><input class="fc" id="eq-bar" placeholder="Barrio (opcional)"></div>
+  </div>
+  <div class="fg"><div class="fl">Observaciones</div><textarea class="fc" id="eq-obs" placeholder="Notas adicionales..."></textarea></div>
 </div><div class="mf"><button class="btn bs" onclick="closeM('m-eq')">Cancelar</button><button class="btn bp" onclick="saveEq()">✅ Guardar</button></div></div></div>
 
 <div class="mo" id="m-ref"><div class="md"><div class="mh"><div class="mt" id="m-ref-t">Nuevo referido</div><button class="mx" onclick="closeM('m-ref')">×</button></div><div class="mb">
   <input type="hidden" id="ref-idx">
   <div class="g2"><div class="fg"><div class="fl">Nombre *</div><input class="fc" id="ref-nom" placeholder="Nombre completo"></div><div class="fg"><div class="fl">Teléfono</div><input class="fc" id="ref-tel" placeholder="310..."></div><div class="fg"><div class="fl">Barrio</div><input class="fc" id="ref-bar" placeholder="Barrio"></div><div class="fg"><div class="fl">Quién refiere</div><select class="fc" id="ref-vig"><option>Jorgito</option><option>Héctor</option><option>Deira</option><option>John Harold</option><option>Francy</option><option>Evelyn</option><option>Ju</option><option>Vivi Velásquez</option></select></div><div class="fg"><div class="fl">Estado</div><select class="fc" id="ref-est"><option>Pendiente</option><option>Agendada</option><option>Realizada</option><option>Seguimiento</option><option>Descartada</option></select></div><div class="fg"><div class="fl">Fecha cita</div><input type="date" class="fc" id="ref-fci"></div><div class="fg"><div class="fl">Hora cita</div><input type="time" class="fc" id="ref-hci"></div><div class="fg"><div class="fl">Lugar</div><input class="fc" id="ref-lug" placeholder="Lugar"></div></div>
-  <div class="fg"><div class="fl">Resultado / Notas</div><textarea class="fc" id="ref-obs" placeholder="Notas..."></textarea></div>
-</div><div class="mf"><button class="btn bs" onclick="closeM('m-ref')">Cancelar</button><button class="btn bp" onclick="saveRef()">✅ Guardar y agendar</button></div></div></div>
+  <div class="fg"><div class="fl">Estado de la llamada de confirmación</div>
+    <select class="fc" id="ref-llam"><option value="Pendiente">⏳ Pendiente</option><option value="Confirmado">✅ Confirmado</option><option value="No contesta">📵 No contesta</option><option value="Reagendar">🔄 Reagendar</option></select></div>
+  <div class="fg"><div class="fl">Tipificación / Observación de llamada</div><textarea class="fc" id="ref-obs" placeholder="¿Qué dijo cuando lo llamaste?..."></textarea></div>
+  <div style="background:#f8f8f8;border-radius:8px;padding:12px;margin-bottom:12px">
+    <div class="fl" style="margin-bottom:8px">Horarios disponibles del referido</div>
+    <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:6px">
+      <label style="display:flex;align-items:center;gap:4px;font-size:12px"><input type="checkbox" id="ref-h8"> 8am</label>
+      <label style="display:flex;align-items:center;gap:4px;font-size:12px"><input type="checkbox" id="ref-h9"> 9am</label>
+      <label style="display:flex;align-items:center;gap:4px;font-size:12px"><input type="checkbox" id="ref-h10"> 10am</label>
+      <label style="display:flex;align-items:center;gap:4px;font-size:12px"><input type="checkbox" id="ref-h11"> 11am</label>
+      <label style="display:flex;align-items:center;gap:4px;font-size:12px"><input type="checkbox" id="ref-h12"> 12pm</label>
+      <label style="display:flex;align-items:center;gap:4px;font-size:12px"><input type="checkbox" id="ref-h13"> 1pm</label>
+      <label style="display:flex;align-items:center;gap:4px;font-size:12px"><input type="checkbox" id="ref-h14"> 2pm</label>
+      <label style="display:flex;align-items:center;gap:4px;font-size:12px"><input type="checkbox" id="ref-h15"> 3pm</label>
+      <label style="display:flex;align-items:center;gap:4px;font-size:12px"><input type="checkbox" id="ref-h16"> 4pm</label>
+      <label style="display:flex;align-items:center;gap:4px;font-size:12px"><input type="checkbox" id="ref-h17"> 5pm</label>
+      <label style="display:flex;align-items:center;gap:4px;font-size:12px"><input type="checkbox" id="ref-h18"> 6pm</label>
+      <label style="display:flex;align-items:center;gap:4px;font-size:12px"><input type="checkbox" id="ref-h19"> 7pm</label>
+    </div>
+  </div>
+</div><div class="mf"><button class="btn bs" onclick="closeM('m-ref')">Cancelar</button><button class="btn bp" onclick="saveRef()">✅ Guardar y agendar en Calendar</button></div></div></div>
 
 <div class="mo" id="m-reu"><div class="md lg"><div class="mh"><div class="mt" id="m-reu-t">Nueva reunión</div><button class="mx" onclick="closeM('m-reu')">×</button></div><div class="mb">
   <input type="hidden" id="reu-idx">
@@ -516,7 +554,8 @@ var CFG = {
 // BASE DE DATOS LOCAL
 // ═══════════════════════════════════════════════
 var DB = {
-  equipos:[], referidos:[], tareas:[], reuniones:[],
+  equipos:[{"Nombre": "EDGAR ALEXANDER VASQUEZ TORRES", "Telefono": "3160479783", "Condicion": "Contratista", "Entidad": "SFDS", "Cargo": "ASESOR JURIDICO CASA SOCIAL Y LINEA PURPURA", "Lider12": "WILLIAM MANUEL RODRIGUEZ GOMEZ", "Adhesion": "Con nosotros"}, {"Nombre": "BRIAN STIF POVEDA RODRIGUEZ", "Telefono": "3208255499", "Condicion": "Contratista", "Entidad": "IMCRDZ", "Cargo": "Productor audiovisual", "Lider12": "JOSE SEBASTIAN BELLO LAMPREA", "Adhesion": "Con nosotros"}, {"Nombre": "JOHANNA SASTRE", "Telefono": "3217543912", "Condicion": "Contratista", "Entidad": "IMCRDZ - SFDS", "Cargo": "ASESORA FINANCIERA", "Lider12": "YULI JOHANA MONTAÑO ROZO", "Adhesion": "Con nosotros"}, {"Nombre": "AYDA YULIANA RODRIGUEZ GARNICA", "Telefono": "3104387740", "Condicion": "Equipo MCI", "Entidad": "NINGUNO", "Cargo": "NINGUNO", "Lider12": "AYDA YULIANA RODRIGUEZ GARNICA", "Adhesion": "Con nosotros"}, {"Nombre": "DEISY GARNICA GUTIERREZ", "Telefono": "3103133322", "Condicion": "Contratista", "Entidad": "SFDS", "Cargo": "PSICOLOGA LÍNEA PURPURA", "Lider12": "ALEXANDRA LOZANO MATEUS", "Adhesion": "Con nosotros"}, {"Nombre": "VIVIANA MONROY DE ANTONIO", "Telefono": "3202796233", "Condicion": "Contratista", "Entidad": "SFDS", "Cargo": "PROFESIONAL DE GESTION AMBIENTAL", "Lider12": "ALEXANDRA LOZANO MATEUS", "Adhesion": "Con nosotros"}, {"Nombre": "ADRIANA PATRICIA SANCHEZ MESA", "Telefono": "3214647744", "Condicion": "Contratista", "Entidad": "SFDS", "Cargo": "PSICOLOGA", "Lider12": "ALEXANDRA BELTRAN HERREÑO", "Adhesion": "Con nosotros"}, {"Nombre": "FRANCY SUAREZ", "Telefono": "3164279001", "Condicion": "Contratista", "Entidad": "SFDS", "Cargo": "COORDINACIÓN DE DISCAPACIDAD", "Lider12": "ALEXANDRA BELTRAN HERREÑO", "Adhesion": "Con nosotros"}, {"Nombre": "SONIA ANGELICA CASTELLANOS NAVA", "Telefono": "3223133280", "Condicion": "Contratista", "Entidad": "SFDS", "Cargo": "PROFESIONAL LINEA PURPURA", "Lider12": "ALEXANDRA LOZANO MATEUS", "Adhesion": "Con nosotros"}, {"Nombre": "EVELYN PEÑA", "Telefono": "3229749314", "Condicion": "Contratista", "Entidad": "SFDS", "Cargo": "DOCENTE CASA SOCIAL DE LA MUJER", "Lider12": "ALEXANDRA BELTRAN HERREÑO", "Adhesion": "Con nosotros"}, {"Nombre": "YACKELIN VARGAS", "Telefono": "3125541292", "Condicion": "Contratista", "Entidad": "SFDS", "Cargo": "DOCENTE CSM", "Lider12": "CLAUDIA EDITH GUZMAN PAREDES", "Adhesion": "Con nosotros"}, {"Nombre": "YUDY XIMENA SOTO LATORRE", "Telefono": "3132839206", "Condicion": "Contratista", "Entidad": "IMCRDZ", "Cargo": "AUXILIAR ADMINISTARTIVA CULTURA", "Lider12": "JULIETH XIMENA FORERO CANO", "Adhesion": "Con nosotros"}, {"Nombre": "GERALDINE GONZALEZ SALDAÑA", "Telefono": "3209904327", "Condicion": "Contratista", "Entidad": "SFDS", "Cargo": "TRABAJADORA SOCIAL DE CSM", "Lider12": "JULIETH XIMENA FORERO CANO", "Adhesion": "Con nosotros"}, {"Nombre": "JINETH HERNANDEZ", "Telefono": "3157149362", "Condicion": "Equipo MCI", "Entidad": "COLSUBSIDIO", "Cargo": "COORDINADORA", "Lider12": "YULI JOHANA MONTAÑO ROZO", "Adhesion": "Con nosotros"}, {"Nombre": "NINI YOHANA HERNANDEZ", "Telefono": "3204491234", "Condicion": "Contratista", "Entidad": "SFDS", "Cargo": "PSICOLOGA", "Lider12": "YULI JOHANA MONTAÑO ROZO", "Adhesion": "Con nosotros"}, {"Nombre": "JULIANA VALENTINA HERNANDEZ HERNANDEZ", "Telefono": "3157991422", "Condicion": "Contratista", "Entidad": "IMCRDZ", "Cargo": "PRENSA", "Lider12": "YULI JOHANA MONTAÑO ROZO", "Adhesion": "Con nosotros"}, {"Nombre": "MARISELA SANCHEZ", "Telefono": "3144752434", "Condicion": "Contratista", "Entidad": "SFDS", "Cargo": "LUDOTECARIA", "Lider12": "ALEXANDRA LOZANO MATEUS", "Adhesion": "Con nosotros"}, {"Nombre": "CRISTIAN FELIPE RINCON PINZON", "Telefono": "3154793008", "Condicion": "Funcionario", "Entidad": "SOP", "Cargo": "PROFESIONAL GRADO II", "Lider12": "GERMAN FELIPE VANEGAS CALA", "Adhesion": "Con nosotros"}, {"Nombre": "PILAR DELGADO", "Telefono": "3204368491", "Condicion": "Contratista", "Entidad": "SFDS", "Cargo": "LUDOTECARIA", "Lider12": "CLAUDIA EDITH GUZMAN PAREDES", "Adhesion": "Con nosotros"}, {"Nombre": "JHON HAROL CORTES CAMPOS", "Telefono": "3004464090", "Condicion": "Contratista", "Entidad": "IMCRDZ", "Cargo": "COORDINADOR GENERAL PPEPA", "Lider12": "ALEX DIDIER AVILAN SANTAMARIA", "Adhesion": "Con nosotros"}, {"Nombre": "JULIETH ANDREA RIVERA BOLAÑOS", "Telefono": "3134434880", "Condicion": "Contratista", "Entidad": "SFDS", "Cargo": "COORDINADORA DE JUVENTUD", "Lider12": "JULIETH XIMENA FORERO CANO", "Adhesion": "Con nosotros"}, {"Nombre": "CRISTIAN LIZARAZO", "Telefono": "3024696107", "Condicion": "Equipo MCI", "Entidad": ".", "Cargo": ".", "Lider12": "GERMAN FELIPE VANEGAS CALA", "Adhesion": "Con nosotros"}, {"Nombre": "JORGE ANDRES LEON PARRA", "Telefono": "3232273893", "Condicion": "Contratista", "Entidad": "IMCRDZ", "Cargo": "COORDINADOR ALMACÉN", "Lider12": "ALEX DIDIER AVILAN SANTAMARIA", "Adhesion": "Con nosotros"}, {"Nombre": "LINA MARIA OTAVO QUIÑONEZ", "Telefono": "3209316317", "Condicion": "Contratista", "Entidad": "SFDS", "Cargo": "ABOGADA PROGRAMAM VIVIENDA", "Lider12": "LADY MARCELA GOMEZ MALDONADO", "Adhesion": "Con nosotros"}, {"Nombre": "DEIBY NICOLAS FORERO PALACIOS", "Telefono": "3182915804", "Condicion": "Contratista", "Entidad": "SFDS", "Cargo": "PROFESIONAL ADMINISTRATIVO DE JUVENTUD", "Lider12": "EDISSON FERNANDO UNRIZA PULIDO", "Adhesion": "Con nosotros"}, {"Nombre": "NATALIA GONZALEZ FERNANDEZ", "Telefono": "3108049873", "Condicion": "Contratista", "Entidad": "IMCRDZ", "Cargo": "APOYO PROFESIONAL CULTURA", "Lider12": "DEISY MILENA FORERO PALACIOS", "Adhesion": "Con nosotros"}, {"Nombre": "SANTIAGO CASTAÑEDA", "Telefono": "3185372568", "Condicion": "Contratista", "Entidad": "SFDS", "Cargo": "PRENSA", "Lider12": "GERMAN FELIPE VANEGAS CALA", "Adhesion": "Con nosotros"}, {"Nombre": "JULY FERNANDA ALBA MIRANDA", "Telefono": "3005611729", "Condicion": "Contratista", "Entidad": "IMCRDZ", "Cargo": "AUXILIAR ADMINISTRATIVA", "Lider12": "YURI DIMELSA LOPEZ SALINAS", "Adhesion": "Con nosotros"}, {"Nombre": "ALBA LUCIA SILVA RODRIGUEZ", "Telefono": "3174824865", "Condicion": "Contratista", "Entidad": "SFDS", "Cargo": "PROFESIONAL DE CONTRATACION", "Lider12": "CLAUDIA EDITH GUZMAN PAREDES", "Adhesion": "Con nosotros"}, {"Nombre": "ROBERT ALEXANDER QUINTERO SALGADO", "Telefono": "3115546344", "Condicion": "Contratista", "Entidad": "SFDS", "Cargo": "AUXILIAR ADMINISTRATIVO", "Lider12": "JUAN GABRIEL MOYA MARTINEZ", "Adhesion": "Con nosotros"}, {"Nombre": "SAMDRA VIVIANA GARCES SANCHEZ", "Telefono": "3182648825", "Condicion": "Equipo MCI", "Entidad": "NINGUNO", "Cargo": "NINGUNO", "Lider12": "YURI DIMELSA LOPEZ SALINAS", "Adhesion": "Con nosotros"}, {"Nombre": "DAYANNA GARZON", "Telefono": "3243096507", "Condicion": "Contratista", "Entidad": "IMCRDZ", "Cargo": "AUXILIAR COORDINACIÓN DE DEPORTES", "Lider12": "ANA JIREH DIAZ PAZ", "Adhesion": "Con nosotros"}, {"Nombre": "MONICA FERNANDA HERRERA CONTRERAS", "Telefono": "3144615565", "Condicion": "Funcionario", "Entidad": "IMCRDZ", "Cargo": "SUBGERENTE ADMINISTRATIVA", "Lider12": "AYDA YULIANA RODRIGUEZ GARNICA", "Adhesion": "Con nosotros"}, {"Nombre": "XIOMARA AYALA", "Telefono": "3132511777", "Condicion": "Funcionario", "Entidad": "IMCRDZ", "Cargo": "TESORERA", "Lider12": "DEISY MILENA FORERO PALACIOS", "Adhesion": "Con nosotros"}, {"Nombre": "LINEY DEL CARMEN GONZALEZ SAN MARTIN", "Telefono": "3226017753", "Condicion": "Contratista", "Entidad": "SFDS", "Cargo": "NOTIFICADORA", "Lider12": "ALEXANDRA BELTRAN HERREÑO", "Adhesion": "Con nosotros"}, {"Nombre": "MONICA LIZETH INFANTE ROCHA", "Telefono": "3175615762", "Condicion": "Contratista", "Entidad": "IMCRDZ", "Cargo": "COORDINADORA DE ESCENARIOS DEPORTIVOS", "Lider12": "YULI JOHANA MONTAÑO ROZO", "Adhesion": "Con nosotros"}, {"Nombre": "ANDRES MUÑOZ", "Telefono": "3185326590", "Condicion": "EQUIPO VISION DE CIUDAD", "Entidad": ".", "Cargo": ".", "Lider12": "JONNY GUAUQUE BAGUI", "Adhesion": "Con nosotros"}, {"Nombre": "JENNY MILENA SUAREZ VALENCIA", "Telefono": "3016784836", "Condicion": "Contratista", "Entidad": "SFDS", "Cargo": "PRESUPUESTO Y PLAN DE DESARROLLO", "Lider12": "ALEXANDRA BELTRAN HERREÑO", "Adhesion": "Con nosotros"}, {"Nombre": "MARTHA ISABEL ARDILA", "Telefono": "3115541544", "Condicion": "Contratista", "Entidad": "SFDS", "Cargo": "COORDINADORA CASA SOCIAL DE LA MUJER", "Lider12": "JULIETH XIMENA FORERO CANO", "Adhesion": "Con nosotros"}, {"Nombre": "LADY MARCELA GOMEZ MALDONADO", "Telefono": "3222456622", "Condicion": "Funcionario", "Entidad": "HACIENDA", "Cargo": "AUXILIAR ADMINISTRATIVA", "Lider12": "LADY MARCELA GOMEZ MALDONADO", "Adhesion": "Con nosotros"}, {"Nombre": "OMAR IVAN GUACANEME FORERO", "Telefono": "3102975247", "Condicion": "Contratista", "Entidad": "IMCRDZ", "Cargo": "FORMADOR ADULTO MAYOR", "Lider12": "JOSÉ DANIEL BERNAL", "Adhesion": "Con nosotros"}, {"Nombre": "GINA RODRIGUEZ", "Telefono": "3052356135", "Condicion": "Contratista", "Entidad": "SFDS", "Cargo": "TRABAJADORA SOCIAL - ADULTO MAYOR", "Lider12": "ALEXANDRA LOZANO MATEUS", "Adhesion": "Con nosotros"}, {"Nombre": "DUVIER WILCHES", "Telefono": "3026308722", "Condicion": "Contratista", "Entidad": "IMCRDZ", "Cargo": "FORMADOR", "Lider12": "OMAR ALEXANDER CANTILLO BELLO", "Adhesion": "Con nosotros"}, {"Nombre": "ELIZABETH CRISTANCHO", "Telefono": "3108525044", "Condicion": "EQUIPO VISION DE CIUDAD", "Entidad": ".", "Cargo": "..", "Lider12": "ALEXANDRA BELTRAN HERREÑO", "Adhesion": "Con nosotros"}, {"Nombre": "PAULA MORENO", "Telefono": "3007166136", "Condicion": "Equipo MCI", "Entidad": "NINGUNO", "Cargo": "NINGUNO", "Lider12": "PAULA ROCIO MORENO CARDONA", "Adhesion": "Con nosotros"}, {"Nombre": "NESTOR FABIAN RAMIREZ VARGAS", "Telefono": "3123673920", "Condicion": "Equipo MCI", "Entidad": "NINGUNO", "Cargo": "NINGUNO", "Lider12": "NESTOR FABIAN RAMIREZ VARGAS", "Adhesion": "Con nosotros"}, {"Nombre": "CAMILA SUAREZ", "Telefono": "3156587471", "Condicion": "Contratista", "Entidad": "SDFS", "Cargo": "AUXILIAR ADMINISTRATIVA", "Lider12": "DEISY MILENA FORERO PALACIOS", "Adhesion": "Con nosotros"}, {"Nombre": "ALEXANDRA LOZANO", "Telefono": "3208487449", "Condicion": "Equipo MCI", "Entidad": ".", "Cargo": ".", "Lider12": "ALEXANDRA LOZANO MATEUS", "Adhesion": "Con nosotros"}, {"Nombre": "JOSE DANIEL BERNAL TORRES", "Telefono": "3107851931", "Condicion": "Funcionario", "Entidad": "EPZ", "Cargo": "TECNICO DE INOVACIÓN", "Lider12": "JOSÉ DANIEL BERNAL", "Adhesion": "Con nosotros"}, {"Nombre": "WALTER CRUZ", "Telefono": "3107723311", "Condicion": "Contratista", "Entidad": "IMCRDZ", "Cargo": "COORDINADOR ACTIVIDAD FISICA", "Lider12": "HENRY RODRIGUEZ VALBUENA", "Adhesion": "Con nosotros"}, {"Nombre": "LEIDY DAYANA TOVAR", "Telefono": "3227735083", "Condicion": "M180", "Entidad": "CONSEJO DE JUVENTUDES", "Cargo": "CONSEJERA DE JUVENTUD", "Lider12": "JULIETH XIMENA FORERO CANO", "Adhesion": "Con nosotros"}, {"Nombre": "NIDYA YAMILE PINEDA", "Telefono": "3143837552", "Condicion": "Contratista", "Entidad": "SFDS", "Cargo": "PSICOLOGA", "Lider12": "NIDYA YAMILE PINEDA", "Adhesion": "Con nosotros"}, {"Nombre": "JONNY GUAUQUE", "Telefono": "3203023755", "Condicion": "Equipo MCI", "Entidad": "NO APLICA", "Cargo": "NO APLICA", "Lider12": "JONNY GUAUQUE BAGUI", "Adhesion": "Con nosotros"}, {"Nombre": "YULI JHOANNA MONTAÑO ROSO", "Telefono": "3219348632", "Condicion": "Equipo MCI", "Entidad": "N/A", "Cargo": "N/a", "Lider12": "YULI JOHANA MONTAÑO ROZO", "Adhesion": "Con nosotros"}, {"Nombre": "WILLIAM RODRIGUEZ", "Telefono": "3123310427", "Condicion": "Equipo MCI", "Entidad": ".", "Cargo": ".", "Lider12": "WILLIAM MANUEL RODRIGUEZ GOMEZ", "Adhesion": "Con nosotros"}, {"Nombre": "OMAR ALEXANDER CANTILLO BELLO", "Telefono": "3102224678", "Condicion": "Contratista", "Entidad": "imcrdz", "Cargo": "ASESOR DE CONTROL INTERNO", "Lider12": "OMAR ALEXANDER CANTILLO BELLO", "Adhesion": "Con nosotros"}, {"Nombre": "VANESA TORRES DIAZ", "Telefono": "3012197477", "Condicion": "Contratista", "Entidad": "INCRDZ", "Cargo": "FORMADORA", "Lider12": "YURI DIMELSA LOPEZ SALINAS", "Adhesion": "Con nosotros"}, {"Nombre": "ANA JIREH DIAZ PAZ", "Telefono": "3104666727", "Condicion": "Equipo MCI", "Entidad": "N/A", "Cargo": "N/A", "Lider12": "ANA JIREH DIAZ PAZ", "Adhesion": "Con nosotros"}, {"Nombre": "ROCIO FIGUEROA", "Telefono": "3118506711", "Condicion": "Contratista", "Entidad": "SFDS", "Cargo": "LUDOTECARIA", "Lider12": "CLAUDIA EDITH GUZMAN PAREDES", "Adhesion": "Con nosotros"}, {"Nombre": "RICARDO MENDEZ ORTIZ", "Telefono": "3124102154", "Condicion": "Equipo MCI", "Entidad": "NO APLICA", "Cargo": "NO APLICA", "Lider12": "JOSÉ RICARDO MENDEZ ORTIZ", "Adhesion": "Con nosotros"}, {"Nombre": "CLAUDIA GUZMAN", "Telefono": "3118113982", "Condicion": "Equipo MCI", "Entidad": "NINUGO", "Cargo": "NINGUNO", "Lider12": "CLAUDIA EDITH GUZMAN PAREDES", "Adhesion": "Con nosotros"}, {"Nombre": "DIANA MARCELA MUÑOZ VABUENA", "Telefono": "3125186530", "Condicion": "Equipo MCI", "Entidad": "N/A", "Cargo": "N/A", "Lider12": "JENNY INELDA MATEUS GOMEZ", "Adhesion": "Con nosotros"}, {"Nombre": "DARDY SANTANA", "Telefono": "3112590072", "Condicion": "Contratista", "Entidad": "SFDS", "Cargo": "ARTISTA", "Lider12": "GERMAN FELIPE VANEGAS CALA", "Adhesion": "Con nosotros"}, {"Nombre": "LADY TATIANA CASTAÑEDA", "Telefono": "3126838331", "Condicion": "EQUIPO VISION DE CIUDAD", "Entidad": "NO APLICA", "Cargo": "NO APLICA", "Lider12": "DEISY MILENA FORERO PALACIOS", "Adhesion": "Con nosotros"}, {"Nombre": "JEISON HERNANDEZ", "Telefono": "3136748587", "Condicion": "Equipo MCI", "Entidad": ".", "Cargo": ".", "Lider12": "EDISSON FERNANDO UNRIZA PULIDO", "Adhesion": "Con nosotros"}, {"Nombre": "LUISA CRIOLLO", "Telefono": "3105584184", "Condicion": "Contratista", "Entidad": "SECRETARIA DE SALUD", "Cargo": "PSICOLOGA", "Lider12": "ALEXANDRA LOZANO MATEUS", "Adhesion": "Con nosotros"}, {"Nombre": "KAROL VIVIANA VELASQUEZ CASTILLO", "Telefono": "3223704589", "Condicion": "Contratista", "Entidad": "SFDS", "Cargo": "ENFERMERA JEFE", "Lider12": "JULIETH XIMENA FORERO CANO", "Adhesion": "Con nosotros"}, {"Nombre": "CAMILO MONTAÑO", "Telefono": "3227924050", "Condicion": "M180", "Entidad": "CMJ", "Cargo": "CONSEJERO", "Lider12": "GERMAN FELIPE VANEGAS CALA", "Adhesion": "Con nosotros"}, {"Nombre": "HARVEY BRAVO", "Telefono": "3014191981", "Condicion": "M180", "Entidad": "M180", "Cargo": "CONSEJERO DE JUVENTUD", "Lider12": "JOSÉ RICARDO MENDEZ ORTIZ", "Adhesion": "Con nosotros"}, {"Nombre": "ROSA ADRIANA PINZON CASTAÑEDA", "Telefono": "3113336854", "Condicion": "Equipo MCI", "Entidad": "N/A", "Cargo": "N/A", "Lider12": "JENNY INELDA MATEUS GOMEZ", "Adhesion": "Con nosotros"}, {"Nombre": "ANDRES MENDOZA", "Telefono": "3106088486", "Condicion": "M180", "Entidad": "M180", "Cargo": "PRESIDENTE CMJ", "Lider12": "GERMAN FELIPE VANEGAS CALA", "Adhesion": "Con nosotros"}, {"Nombre": "DARWIN LIZARAZO", "Telefono": "3193274673", "Condicion": "M180", "Entidad": "M180", "Cargo": "REPRESENTANTE PLATAFORMA DE JUVENTUD", "Lider12": "YURI DIMELSA LOPEZ SALINAS", "Adhesion": "Con nosotros"}, {"Nombre": "DEISY MILENA FORERO", "Telefono": "3017419713", "Condicion": "Equipo MCI", "Entidad": "NO APLICA", "Cargo": "NOA APLICA", "Lider12": "DEISY MILENA FORERO PALACIOS", "Adhesion": "Con nosotros"}, {"Nombre": "LUZ MYRIAM VARGAS MELO", "Telefono": "3125139834", "Condicion": "Contratista", "Entidad": "IMCRDZ", "Cargo": "COORDINADORA DE ARCHIVO", "Lider12": "ALEXANDRA LOZANO MATEUS", "Adhesion": "Con nosotros"}, {"Nombre": "DAYANA CHAVEZ", "Telefono": "3219927573", "Condicion": "EQUIPO VISION DE CIUDAD", "Entidad": ".", "Cargo": ".", "Lider12": "JENNY INELDA MATEUS GOMEZ", "Adhesion": "Con nosotros"}, {"Nombre": "KAROL GARCIA", "Telefono": "3026369770", "Condicion": "M180", "Entidad": "M180", "Cargo": "PLATAFORMA DE JUVENTUD", "Lider12": "ALEXANDRA BELTRAN HERREÑO", "Adhesion": "Con nosotros"}, {"Nombre": "JESSICA DAYANNA ZAMORA", "Telefono": "3193368944", "Condicion": "Contratista", "Entidad": "IMCRDZ", "Cargo": "FORMADORA DE ARTES", "Lider12": "JULIETH XIMENA FORERO CANO", "Adhesion": "Con nosotros"}, {"Nombre": "ESTEBAN MORA", "Telefono": "3112658780", "Condicion": "EQUIPO VISION DE CIUDAD", "Entidad": ".", "Cargo": ".", "Lider12": "HENRY RODRIGUEZ VALBUENA", "Adhesion": "Con nosotros"}, {"Nombre": "MAYRA ALEXANDRA NIETO BENITO", "Telefono": "3003620436", "Condicion": "Funcionario", "Entidad": "DESPACHO", "Cargo": "ASESORA DE PRENSA", "Lider12": "JULIETH XIMENA FORERO CANO", "Adhesion": "Con nosotros"}, {"Nombre": "JOSE SEBASTIAN BELLO", "Telefono": "3106495934", "Condicion": "Equipo MCI", "Entidad": "NO APLICA", "Cargo": "NO APLICA", "Lider12": "JOSE SEBASTIAN BELLO LAMPREA", "Adhesion": "Con nosotros"}, {"Nombre": "VIVIANA BUSTOS", "Telefono": "3114526627", "Condicion": "Equipo MCI", "Entidad": "N/A", "Cargo": "N/A", "Lider12": "LEIDY VIVIANA BUSTOS MONTAÑO", "Adhesion": "Con nosotros"}, {"Nombre": "ESPERANZA BENITO", "Telefono": "3015836644", "Condicion": "EQUIPO VISION DE CIUDAD", "Entidad": "NO APLICA", "Cargo": "NO APLICA", "Lider12": "ISABEL CRISTINA ZULUAGA VILLEGAS", "Adhesion": "Con nosotros"}, {"Nombre": "PAULA QUIROGA", "Telefono": "3208624782", "Condicion": "EQUIPO VISION DE CIUDAD", "Entidad": "CONCEJO", "Cargo": "N/A", "Lider12": "JULIETH XIMENA FORERO CANO", "Adhesion": "Con nosotros"}, {"Nombre": "HERNAN BEJARANO ROBAYO", "Telefono": "3183605646", "Condicion": "EQUIPO VISION DE CIUDAD", "Entidad": "N/A", "Cargo": "N/A", "Lider12": "HERNAN BEJARANO ROBAYO", "Adhesion": "Con nosotros"}, {"Nombre": "ANDRES FELIPE AGIRRE OQUENDO", "Telefono": "3223276441", "Condicion": "Contratista", "Entidad": "IMCRDZ", "Cargo": "INSTRUCTOR GIMNASIO", "Lider12": "HERNAN BEJARANO ROBAYO", "Adhesion": "Con nosotros"}, {"Nombre": "JUAN GARZON", "Telefono": "3213928421", "Condicion": "M180", "Entidad": "PMJ", "Cargo": "LIDER JUVENIL", "Lider12": "GERMAN FELIPE VANEGAS CALA", "Adhesion": "Con nosotros"}, {"Nombre": "OMAR FERNANDO BATANERO", "Telefono": "3105618485", "Condicion": "EQUIPO VISION DE CIUDAD", "Entidad": "N/A", "Cargo": "N/A", "Lider12": "JOSÉ RICARDO MENDEZ ORTIZ", "Adhesion": "Con nosotros"}, {"Nombre": "LEYDI VIVIANA CARILLO", "Telefono": "3136162089", "Condicion": "EQUIPO VISION DE CIUDAD", "Entidad": "N/A", "Cargo": "N/A", "Lider12": "JENNY INELDA MATEUS GOMEZ", "Adhesion": "Con nosotros"}, {"Nombre": "LINA MARIA MALAVER CAMARGO", "Telefono": "3222133160", "Condicion": "EQUIPO VISION DE CIUDAD", "Entidad": "NO APLICA", "Cargo": "NO APLICA", "Lider12": "PAULA ROCIO MORENO CARDONA", "Adhesion": "Con nosotros"}, {"Nombre": "EDWIN ESTEBAN BERNAL", "Telefono": "3204435828", "Condicion": "EQUIPO VISION DE CIUDAD", "Entidad": "N/A", "Cargo": "N/A", "Lider12": "NESTOR FABIAN RAMIREZ VARGAS", "Adhesion": "Con nosotros"}, {"Nombre": "EDISON UNRIZA", "Telefono": "3124854999", "Condicion": "Funcionario", "Entidad": "AERONAUTICA SIVIL", "Cargo": "PROFESIONAL AERONAUTICA", "Lider12": "EDISSON FERNANDO UNRIZA PULIDO", "Adhesion": "Con nosotros"}, {"Nombre": "PAULA AREVALO", "Telefono": "3014667260", "Condicion": "Contratista", "Entidad": "IMCRDZ", "Cargo": "LIDER DE CONVOCATORIAS", "Lider12": "JULIETH XIMENA FORERO CANO", "Adhesion": "Con nosotros"}, {"Nombre": "ANGELA INFANTE", "Telefono": "3134065666", "Condicion": "Contratista", "Entidad": "GOBERNACION DE CUNDINAMARCA", "Cargo": "PUBLICISTA", "Lider12": "JULIETH XIMENA FORERO CANO", "Adhesion": "Con nosotros"}, {"Nombre": "GINNA PAOLA CASTILLO", "Telefono": "3222486595", "Condicion": "Contratista", "Entidad": "IMCRDZ", "Cargo": "PROYECTOS", "Lider12": "AYDA YULIANA RODRIGUEZ GARNICA", "Adhesion": "Con nosotros"}, {"Nombre": "JANETH FLOREZ LONDOÑO", "Telefono": "3245381844", "Condicion": "EQUIPO VISION DE CIUDAD", "Entidad": "N/A", "Cargo": "N/A", "Lider12": "JENNY INELDA MATEUS GOMEZ", "Adhesion": "Con nosotros"}, {"Nombre": "ANGELICA RAMIREZ", "Telefono": "3043731267", "Condicion": "Contratista", "Entidad": "SFDS", "Cargo": "LIDER DIFUSION ARTISTICA", "Lider12": "JULIETH XIMENA FORERO CANO", "Adhesion": "Con nosotros"}],
+  referidos:[], tareas:[], reuniones:[],
   compromisos:[], lideres:[], redes:[], bitacora:[],
   cal:[], rtTemp:[]
 };
@@ -818,27 +857,45 @@ function filT(id, q) {
 // ═══════════════════════════════════════════════
 function renderEq() {
   var tb = document.getElementById('tb-eq'); if (!tb) return;
-  if (!DB.equipos.length) { tb.innerHTML='<tr><td colspan="7" class="empty">Sin registros. Agrega el primer contacto.</td></tr>'; return; }
+  if (!DB.equipos.length) { tb.innerHTML='<tr><td colspan="8" class="empty">Sin registros.</td></tr>'; return; }
   tb.innerHTML = DB.equipos.map(function(r,i){
-    return '<tr><td><div style="display:flex;align-items:center;gap:8px"><div class="av" style="background:#fff3e0;color:#ff8c00">'+ini2(r.Nombre)+'</div><div><div style="font-weight:600">'+esc(r.Nombre)+'</div><div style="font-size:11px;color:#888">'+esc(r.Barrio||'')+'</div></div></div></td>'
-      +'<td>'+esc(r.Telefono||'—')+'</td><td>'+esc(r.Barrio||'')+'</td><td>'+esc(r.Vigia||'')+'</td>'
-      +'<td><span class="bk '+bkInt(r.Interes)+'">'+esc(r.Interes||'—')+'</span></td>'
-      +'<td><span class="bk '+bkEst(r.Estado)+'">'+esc(r.Estado||'')+'</span></td>'
-      +'<td><div style="display:flex;gap:6px"><button class="btn bs" style="padding:4px 8px;font-size:12px" onclick="editR(\'eq\','+i+')">✏️</button><button class="btn bd" style="padding:4px 8px;font-size:12px" onclick="delR(\'equipos\','+i+',\''+esc(r.Nombre||'')+'\')">🗑</button></div></td></tr>';
+    var adh=r.Adhesion||'Con nosotros';
+    var adhCol=adh==='Con nosotros'?'bk-g':adh==='Aún pensándolo'?'bk-y':'bk-r';
+    var refs=DB.referidos.filter(function(rf){return (rf.QuienRefiere||'').toLowerCase().includes((r.Nombre||'').toLowerCase().split(' ')[0]);}).length;
+    return '<tr>'
+      +'<td><div style="display:flex;align-items:center;gap:8px">'
+      +'<div class="av" style="background:#fff3e0;color:#ff8c00;font-size:11px">'+ini2(r.Nombre)+'</div>'
+      +'<div><div style="font-weight:600;font-size:13px">'+esc(r.Nombre)+'</div>'
+      +'<div style="font-size:11px;color:#888">'+esc(r.Condicion||'')+'</div></div></div></td>'
+      +'<td>'+esc(r.Telefono||'—')+'</td>'
+      +'<td style="font-size:12px">'+esc(r.Entidad||'')+'</td>'
+      +'<td style="font-size:12px">'+esc(r.Cargo||'')+'</td>'
+      +'<td style="font-size:11px;max-width:140px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="'+esc(r.Lider12||'')+'">'+esc((r.Lider12||'').split(' ').slice(0,2).join(' '))+'</td>'
+      +'<td><span class="bk '+adhCol+'">'+adh+'</span></td>'
+      +'<td><span style="font-size:12px;font-weight:700;color:'+(refs>=5?'#2e7d32':'#ff8c00')+'">'+refs+'/5</span></td>'
+      +'<td><div style="display:flex;gap:4px">'
+      +'<button class="btn bs" style="padding:3px 8px;font-size:12px" data-tipo="eq" data-idx="'+i+'">✏️</button>'
+      +'<button class="btn bd" style="padding:3px 8px;font-size:12px" data-del="equipos" data-idx="'+i+'" data-nom="'+esc(r.Nombre||'')+'">🗑</button>'
+      +'</div></td></tr>';
   }).join('');
+  tb.onclick=function(e){
+    var btn=e.target.closest('button'); if(!btn)return;
+    var idx=parseInt(btn.getAttribute('data-idx'));
+    if(btn.getAttribute('data-tipo')) editR(btn.getAttribute('data-tipo'),idx);
+    if(btn.getAttribute('data-del')) delR(btn.getAttribute('data-del'),idx,btn.getAttribute('data-nom'));
+  };
 }
 
-// ═══════════════════════════════════════════════
-// RENDER REFERIDOS
-// ═══════════════════════════════════════════════
+
 function renderRef() {
   var tb = document.getElementById('tb-ref'); if (!tb) return;
   setText('r-tot', DB.referidos.length);
+  renderRefProgreso();
   setText('r-pen', DB.referidos.filter(function(r){return r.Estado==='Pendiente';}).length);
   setText('r-rel', DB.referidos.filter(function(r){return r.Estado==='Realizada';}).length);
   setText('r-seg', DB.referidos.filter(function(r){return r.Estado==='Seguimiento';}).length);
   setText('b-ref', DB.referidos.filter(function(r){return r.Estado==='Pendiente';}).length);
-  if (!DB.referidos.length) { tb.innerHTML='<tr><td colspan="7" class="empty">Sin referidos.</td></tr>'; return; }
+  if (!DB.referidos.length) { tb.innerHTML='<tr><td colspan="9" class="empty">Sin referidos registrados aún.</td></tr>'; return; }
   tb.innerHTML = DB.referidos.map(function(r,i){
     return '<tr><td><div style="font-weight:600">'+esc(r.Nombre)+'</div></td>'
       +'<td>'+esc(r.Telefono||'—')+'</td><td>'+esc(r.Barrio||'')+'</td>'
@@ -847,6 +904,7 @@ function renderRef() {
       +'<td><span class="bk '+bkEst(r.Estado)+'">'+esc(r.Estado||'')+'</span></td>'
       +'<td><div style="display:flex;gap:6px"><button class="btn bs" style="padding:4px 8px;font-size:12px" onclick="editR(\'ref\','+i+')">✏️</button><button class="btn bd" style="padding:4px 8px;font-size:12px" onclick="delR(\'referidos\','+i+',\''+esc(r.Nombre||'')+'\')">🗑</button></div></td></tr>';
   }).join('');
+  if(tb) tb.onclick = function(e){var btn=e.target.closest('button');if(!btn)return;var idx=parseInt(btn.getAttribute('data-idx'));if(btn.getAttribute('data-tipo'))editR(btn.getAttribute('data-tipo'),idx);if(btn.getAttribute('data-del'))delR(btn.getAttribute('data-del'),idx,btn.getAttribute('data-nom'));};
 }
 
 // ═══════════════════════════════════════════════
@@ -870,14 +928,15 @@ function renderTar() {
   function fillK(id,arr){ var e=document.getElementById(id); if(e) e.innerHTML=arr.length?arr.map(function(r){ return mkK(r,DB.tareas.indexOf(r)); }).join(''):'<div class="empty" style="padding:12px">Sin tareas</div>'; }
   fillK('kp',pen); fillK('kr',pro); fillK('kd',don); fillK('kc2',can);
   var tb = document.getElementById('tb-tar');
-  if (tb) tb.innerHTML = DB.tareas.length ? DB.tareas.map(function(r,i){
+  if (tb) { tb.innerHTML = DB.tareas.length ? DB.tareas.map(function(r,i){
     return '<tr><td>'+esc(r.Descripcion||'')+'</td><td>'+esc(r.Responsable||'')+'</td>'
       +'<td>'+esc(r.FechaEntrega||'—')+'</td>'
       +'<td><span class="bk '+bkPri(r.Prioridad||'Normal')+'">'+esc(r.Prioridad||'Normal')+'</span></td>'
       +'<td><span class="bk '+bkEst(r.Estado)+'">'+esc(r.Estado||'')+'</span></td>'
       +'<td style="font-size:11px">'+esc(r.Reunion||'—')+'</td>'
-      +'<td><div style="display:flex;gap:6px"><button class="btn bs" style="padding:4px 8px;font-size:12px" onclick="editR(\'tar\','+i+')">✏️</button><button class="btn bd" style="padding:4px 8px;font-size:12px" onclick="delR(\'tareas\','+i+',\''+esc(r.Descripcion||'')+'\')">🗑</button></div></td></tr>';
-  }).join('') : '<tr><td colspan="7" class="empty">Sin tareas.</td></tr>';
+      +'<td><div style="display:flex;gap:4px"><button class="btn bs" style="padding:3px 8px;font-size:12px" data-tipo="tar" data-idx="'+i+'">✏️</button><button class="btn bd" style="padding:3px 8px;font-size:12px" data-del="tareas" data-idx="'+i+'" data-nom="'+esc(r.Descripcion||'')+'">🗑</button></div></td></tr>';
+  }).join('') : '<tr><td colspan="8" class="empty">Sin tareas.</td></tr>';
+  if(tb){tb.onclick=function(e){var btn=e.target.closest('button');if(!btn)return;var idx=parseInt(btn.getAttribute('data-idx'));if(btn.getAttribute('data-tipo'))editR(btn.getAttribute('data-tipo'),idx);if(btn.getAttribute('data-del'))delR(btn.getAttribute('data-del'),idx,btn.getAttribute('data-nom'));};}}
   // Dashboard
   var dt = document.getElementById('d-tareas');
   if (dt) {
@@ -911,6 +970,7 @@ function renderReu() {
       +(inv?'<div style="font-size:11px;color:#888;margin-top:8px">👥 '+esc(inv)+'</div>':'')
       +'</div>';
   }).join('');
+  if(cont){cont.onclick=function(e){var btn=e.target.closest('button');if(!btn)return;var idx=parseInt(btn.getAttribute('data-idx'));if(btn.getAttribute('data-tipo'))editR(btn.getAttribute('data-tipo'),idx);if(btn.getAttribute('data-del'))delR(btn.getAttribute('data-del'),idx,btn.getAttribute('data-nom'));if(btn.getAttribute('data-tarreu'))tarFromReu(btn.getAttribute('data-tarreu'));};}
 }
 
 // ═══════════════════════════════════════════════
@@ -930,8 +990,9 @@ function renderCom() {
       +'<td>'+esc(r.Barrio||'')+'</td><td>'+esc(r.Solicitante||'')+'</td><td>'+esc(r.Responsable||'')+'</td>'
       +'<td><span class="bk '+bkEst(r.Estado)+'">'+esc(r.Estado||'')+'</span></td>'
       +'<td style="'+(r.Estado==='Vencido'?'color:#c62828':'')+'">'+esc(r.FechaCumplimiento||r.Fecha||'—')+'</td>'
-      +'<td><div style="display:flex;gap:6px"><button class="btn bs" style="padding:4px 8px;font-size:12px" onclick="editR(\'com\','+i+')">✏️</button><button class="btn bd" style="padding:4px 8px;font-size:12px" onclick="delR(\'compromisos\','+i+',\''+esc(r.Nombre||'')+'\')">🗑</button></div></td></tr>';
+      +'<td><div style="display:flex;gap:4px"><button class="btn bs" style="padding:3px 8px;font-size:12px" data-tipo="com" data-idx="'+i+'">✏️</button><button class="btn bd" style="padding:3px 8px;font-size:12px" data-del="compromisos" data-idx="'+i+'" data-nom="'+esc(r.Nombre||'')+'">🗑</button></div></td></tr>';
   }).join('');
+  if(tb){tb.onclick=function(e){var btn=e.target.closest('button');if(!btn)return;var idx=parseInt(btn.getAttribute('data-idx'));if(btn.getAttribute('data-tipo'))editR(btn.getAttribute('data-tipo'),idx);if(btn.getAttribute('data-del'))delR(btn.getAttribute('data-del'),idx,btn.getAttribute('data-nom'));};}
 }
 
 // ═══════════════════════════════════════════════
@@ -958,9 +1019,10 @@ function filLid(q) {
       +'<div><div style="font-size:10px;color:#888">Último contacto</div><div style="font-size:12px;font-weight:600">'+esc(r.UltimoContacto||'—')+'</div></div>'
       +'<div><div style="font-size:10px;color:#888">Próx. seguimiento</div><div style="font-size:12px;font-weight:600;color:#ff8c00">'+esc(r.ProximoSeguimiento||'—')+'</div></div></div>'
       +'<div style="display:flex;gap:8px">'
-      +'<button class="btn bs sm" style="flex:1" onclick="editR(\'lid\','+i+')">✏️ Editar</button>'
-      +'<button class="btn bd sm" onclick="delR(\'lideres\','+i+',\''+esc(r.Nombre||'')+'\')">🗑</button></div></div>';
+      +'<button class="btn bs sm" style="flex:1" data-tipo="lid" data-idx="'+i+'">✏️ Editar</button>'
+      +'<button class="btn bd sm" data-del="lideres" data-idx="'+i+'" data-nom="'+esc(r.Nombre||'')+'">🗑</button></div></div>';
   }).join('');
+  if(cont){cont.onclick=function(e){var btn=e.target.closest('button');if(!btn)return;var idx=parseInt(btn.getAttribute('data-idx'));if(btn.getAttribute('data-tipo'))editR(btn.getAttribute('data-tipo'),idx);if(btn.getAttribute('data-del'))delR(btn.getAttribute('data-del'),idx,btn.getAttribute('data-nom'));};}
 }
 
 // ═══════════════════════════════════════════════
@@ -972,8 +1034,9 @@ function renderRed() {
   tb.innerHTML=DB.redes.map(function(r,i){
     return '<tr><td>'+esc(r.Fecha||'')+'</td><td>'+esc(r.Red||'')+'</td><td>'+esc(r.Tema||'')+'</td>'
       +'<td>'+esc(r.Responsable||'')+'</td><td><span class="bk '+bkEst(r.Estado)+'">'+esc(r.Estado||'')+'</span></td>'
-      +'<td><div style="display:flex;gap:6px"><button class="btn bs" style="padding:4px 8px;font-size:12px" onclick="editR(\'red\','+i+')">✏️</button><button class="btn bd" style="padding:4px 8px;font-size:12px" onclick="delR(\'redes\','+i+',\''+esc(r.Tema||'')+'\')">🗑</button></div></td></tr>';
+      +'<td><div style="display:flex;gap:4px"><button class="btn bs" style="padding:3px 8px;font-size:12px" data-tipo="red" data-idx="'+i+'">✏️</button><button class="btn bd" style="padding:3px 8px;font-size:12px" data-del="redes" data-idx="'+i+'" data-nom="'+esc(r.Tema||'')+'">🗑</button></div></td></tr>';
   }).join('');
+  if(tb){tb.onclick=function(e){var btn=e.target.closest('button');if(!btn)return;var idx=parseInt(btn.getAttribute('data-idx'));if(btn.getAttribute('data-tipo'))editR(btn.getAttribute('data-tipo'),idx);if(btn.getAttribute('data-del'))delR(btn.getAttribute('data-del'),idx,btn.getAttribute('data-nom'));};}
 }
 
 // ═══════════════════════════════════════════════
@@ -988,13 +1051,14 @@ function renderBit() {
       +'<div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:8px">'
       +'<div><div style="font-size:15px;font-weight:700">'+esc(r.Persona||'Sin nombre')+'</div>'
       +'<div style="font-size:12px;color:#888">📍 '+esc(r.Lugar||'')+' · '+esc(r.Fecha||'')+'</div></div>'
-      +'<div style="display:flex;gap:6px"><button class="btn bs sm" onclick="editR(\'bit\','+i+')">✏️</button><button class="btn bd sm" onclick="delR(\'bitacora\','+i+',\'entrada\')">🗑</button></div></div>'
+      +'<div style="display:flex;gap:6px"><button class="btn bs sm" data-tipo="bit" data-idx="'+i+'">✏️</button><button class="btn bd sm" data-del="bitacora" data-idx="'+i+'" data-nom="entrada">🗑</button></div></div>'
       +(r.Resumen?'<p style="font-size:12px;line-height:1.6;margin-bottom:8px">'+esc(r.Resumen)+'</p>':'')
       +(r.Problemas?'<div class="ob">'+esc(r.Problemas)+'</div>':'')
       +(r.Compromisos?'<div class="alert al-o" style="margin:8px 0">📋 '+esc(r.Compromisos)+'</div>':'')
       +(r.Tags?'<div style="display:flex;gap:6px;flex-wrap:wrap">'+r.Tags.split(',').map(function(t){return '<span class="bk bk-b">'+esc(t.trim())+'</span>';}).join('')+'</div>':'')
       +'</div>';
   }).join('');
+  if(cont){cont.onclick=function(e){var btn=e.target.closest('button');if(!btn)return;var idx=parseInt(btn.getAttribute('data-idx'));if(btn.getAttribute('data-tipo'))editR(btn.getAttribute('data-tipo'),idx);if(btn.getAttribute('data-del'))delR(btn.getAttribute('data-del'),idx,btn.getAttribute('data-nom'));};}
 }
 
 // ═══════════════════════════════════════════════
@@ -1013,6 +1077,8 @@ function updateDash() {
   if(!als.length) als.push('<div class="alert al-g">✅ Todo en orden — sin alertas urgentes</div>');
   setHTML('d-alertas',als.join(''));
   renderTar();
+  renderEq(); // update referidos counter per member
+  renderRefProgreso();
   if(CFG.MKEY && window._ML) addMapMarkers();
 }
 
@@ -1021,9 +1087,9 @@ function updateDash() {
 // ═══════════════════════════════════════════════
 var EDIT = {
   eq:  { modal:'m-eq',  tit:'m-eq-t',  lbl:'Editar contacto',
-    fill:function(r){ setVal('eq-nom',r.Nombre);setVal('eq-tel',r.Telefono);setVal('eq-bar',r.Barrio);setSel('eq-dep',r.Dependencia);setSel('eq-vig',r.Vigia);setSel('eq-int',r.Interes);setVal('eq-obs',r.Observaciones); }},
+    fill:function(r){ setVal('eq-nom',r.Nombre);setVal('eq-tel',r.Telefono);setSel('eq-cond',r.Condicion);setVal('eq-ent',r.Entidad);setVal('eq-car',r.Cargo);setVal('eq-lid',r.Lider12||r.Lider);setSel('eq-adh',r.Adhesion);setVal('eq-bar',r.Barrio);setVal('eq-obs',r.Observaciones); }},
   ref: { modal:'m-ref', tit:'m-ref-t', lbl:'Editar referido',
-    fill:function(r){ setVal('ref-nom',r.Nombre);setVal('ref-tel',r.Telefono);setVal('ref-bar',r.Barrio);setSel('ref-vig',r.QuienRefiere);setSel('ref-est',r.Estado);setVal('ref-fci',r.FechaCita);setVal('ref-hci',r.HoraCita);setVal('ref-lug',r.Lugar);setVal('ref-obs',r.Resultado); }},
+    fill:function(r){ setVal('ref-nom',r.Nombre);setVal('ref-tel',r.Telefono);setVal('ref-bar',r.Barrio);setVal('ref-ocu',r.Ocupacion||'');setSel('ref-vig',r.QuienRefiere);setSel('ref-est',r.Estado);setVal('ref-fci',r.FechaCita);setVal('ref-hci',r.HoraCita);setVal('ref-lug',r.Lugar);setSel('ref-llam',r.Llamada||'Pendiente');setVal('ref-obs',r.Resultado); }},
   tar: { modal:'m-tar', tit:'m-tar-t', lbl:'Editar tarea',
     fill:function(r){ setVal('tar-des',r.Descripcion);setVal('tar-res',r.Responsable);setVal('tar-fec',r.FechaEntrega);setSel('tar-pri',r.Prioridad);setSel('tar-est',r.Estado);setSel('tar-cat',r.Categoria);setVal('tar-reu',r.Reunion);setVal('tar-obs',r.Observaciones); }},
   reu: { modal:'m-reu', tit:'m-reu-t', lbl:'Editar reunión',
@@ -1070,7 +1136,7 @@ function resetModal(modal,titId,titTxt) { var h=document.querySelector('#'+modal
 // ═══════════════════════════════════════════════
 function saveEq() {
   var nom=gv('eq-nom'); if(!nom){toast('⚠ El nombre es requerido');return;}
-  var datos={Nombre:nom,Telefono:gv('eq-tel'),Barrio:gv('eq-bar'),Dependencia:gv('eq-dep'),Vigia:gv('eq-vig'),Interes:gv('eq-int'),Estado:'Activo',Observaciones:gv('eq-obs')};
+  var datos={Nombre:nom,Telefono:gv('eq-tel'),Condicion:gv('eq-cond'),Entidad:gv('eq-ent'),Cargo:gv('eq-car'),Lider12:gv('eq-lid'),Adhesion:gv('eq-adh'),Barrio:gv('eq-bar'),Observaciones:gv('eq-obs')};
   var idx=getIdx('m-eq');
   if(idx!==null){DB.equipos[idx]=Object.assign({},DB.equipos[idx],datos);if(DB.equipos[idx]._fila)GA.post('actualizarFila',{hoja:'Equipos',id:DB.equipos[idx]._fila,datos:JSON.stringify(datos)});toast('✅ Actualizado');}
   else{GA.post('guardarFila',{hoja:'Equipos',fila:JSON.stringify(datos)}).then(function(r){toast(r&&r.ok?'✅ Guardado en Sheets':'⚠ Guardado local');});DB.equipos.push(datos);}
@@ -1079,7 +1145,9 @@ function saveEq() {
 
 function saveRef() {
   var nom=gv('ref-nom'); if(!nom){toast('⚠ El nombre es requerido');return;}
-  var datos={Nombre:nom,Telefono:gv('ref-tel'),Barrio:gv('ref-bar'),QuienRefiere:gv('ref-vig'),Estado:gv('ref-est'),FechaCita:gv('ref-fci'),HoraCita:gv('ref-hci'),Lugar:gv('ref-lug'),Resultado:gv('ref-obs')};
+  var horas=['h8','h9','h10','h11','h12','h13','h14','h15','h16','h17','h18','h19'];
+  var horSelec=horas.filter(function(h){var e=document.getElementById('ref-'+h);return e&&e.checked;}).map(function(h){return h.replace('h','')+'h';}).join(', ');
+  var datos={Nombre:nom,Telefono:gv('ref-tel'),Barrio:gv('ref-bar'),Ocupacion:gv('ref-ocu'),QuienRefiere:gv('ref-vig'),Estado:gv('ref-est'),FechaCita:gv('ref-fci'),HoraCita:gv('ref-hci'),Lugar:gv('ref-lug'),Llamada:gv('ref-llam'),Resultado:gv('ref-obs'),Horarios:horSelec};
   var idx=getIdx('m-ref');
   if(datos.FechaCita&&datos.Estado==='Agendada'&&idx===null){
     toast('⏳ Agendando en Calendar...');
@@ -1228,6 +1296,35 @@ function addMapMarkers(){
     m.addListener('click',function(){iw.open(window._map,m);});
     window._mapMarkers.push(m);
   });
+}
+
+function filRefLlam(v){
+  document.querySelectorAll('#tb-ref tr').forEach(function(r){
+    if(!v){r.style.display='';return;}
+    r.style.display=r.textContent.includes(v)?'':'none';
+  });
+}
+
+function renderRefProgreso(){
+  var cont=document.getElementById('ref-progreso'); if(!cont)return;
+  // Group referidos by quien refiere
+  var byRef={};
+  DB.referidos.forEach(function(r){
+    var q=(r.QuienRefiere||'Sin asignar').split(' ').slice(0,2).join(' ');
+    if(!byRef[q])byRef[q]=0; byRef[q]++;
+  });
+  var keys=Object.keys(byRef).sort(function(a,b){return byRef[b]-byRef[a];});
+  if(!keys.length){cont.innerHTML='<div class="empty">Sin referidos registrados aún</div>';return;}
+  cont.innerHTML='<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:10px">'
+    +keys.map(function(k){
+      var n=byRef[k], pct=Math.min(100,Math.round(n/5*100));
+      var col=n>=5?'#2e7d32':n>=3?'#ff8c00':'#c62828';
+      return '<div><div style="display:flex;justify-content:space-between;margin-bottom:4px">'
+        +'<span style="font-size:12px;font-weight:600">'+esc(k)+'</span>'
+        +'<span style="font-size:12px;font-weight:700;color:'+col+'">'+n+'/5</span></div>'
+        +'<div style="height:6px;background:#f0f0f0;border-radius:3px;overflow:hidden">'
+        +'<div style="height:100%;width:'+pct+'%;background:'+col+';border-radius:3px;transition:width .5s"></div></div></div>';
+    }).join('')+'</div>';
 }
 
 // ═══════════════════════════════════════════════
