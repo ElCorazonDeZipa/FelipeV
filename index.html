@@ -250,53 +250,268 @@ textarea.fc{resize:vertical;min-height:80px;}
   </div>
 </div>
 <script>
-// Login bootstrap — runs immediately, before main script
-// This guarantees login works even if main script has issues
-(function() {
-  var PWD = '4LC4LD32028*';
-  function tryLogin() {
-    var inp = document.getElementById('pwd');
-    var v = inp ? inp.value : '';
-    if (v === PWD) {
-      document.getElementById('LS').style.display = 'none';
-      document.getElementById('APP').style.display = 'block';
-      inp.value = '';
-      if (typeof initApp === 'function') initApp();
-    } else {
-      var err = document.getElementById('lerr');
-      if (err) { err.textContent = '⚠ Contraseña incorrecta'; setTimeout(function(){err.textContent='';},3000); }
-      if (inp) { inp.value = ''; inp.focus(); }
-    }
-  }
-  window.doLogin = tryLogin;
-  // Expose navigation - delegates to main script's go() once loaded
-  window.go = function(p, el) {
-    // Try main script's go first, fallback to basic page switch
-    try {
-      document.querySelectorAll('.pg').forEach(function(x){x.classList.remove('on');});
-      var pg = document.getElementById('pg-'+p); if(pg) pg.classList.add('on');
-      document.querySelectorAll('.ni').forEach(function(x){x.classList.remove('on');});
-      if(el) el.classList.add('on');
-      var titles = {dashboard:'🧡 Dashboard',agenda:'📅 Agenda y Calendario',equipos:'👥 Equipo de Campaña',referidos:'🤝 Referidos',reuniones:'🏛️ Reuniones',tareas:'✅ Tareas',redes:'📱 Redes Sociales',compromisos:'📋 Compromisos',lideres:'⭐ Líderes Estratégicos',mapa:'🗺️ Mapa Territorial',documentos:'📁 Documentos',bitacora:'📓 Bitácora',ia:'🤖 Asistente IA',config:'⚙️ Configuración'};
-      var tt = document.getElementById('TT'); if(tt) tt.textContent = titles[p]||p;
-      window.scrollTo(0,0);
-    } catch(e) { console.error('go() error:', e); }
-  };
-  window.openM = function(id){ var m=document.getElementById(id); if(m) m.classList.add('on'); };
-  window.closeM = function(id){ var m=document.getElementById(id); if(m) m.classList.remove('on'); };
-  window.stab = function(id,el){ try{ var pg=el.closest('.pg'); pg.querySelectorAll('.tabp').forEach(function(p){p.classList.remove('on');}); var tp=document.getElementById(id); if(tp) tp.classList.add('on'); pg.querySelectorAll('.tab').forEach(function(t){t.classList.remove('on');}); el.classList.add('on'); }catch(e){} };
-  window.syncAll = function(){ if(typeof initApp==='function') initApp(); };
-  window.addEventListener('load', function() {
-    var btn = document.getElementById('lbtn');
-    var pwd = document.getElementById('pwd');
-    if (btn) btn.onclick = tryLogin;
-    if (pwd) {
-      pwd.onkeypress = function(e) { if (e.key === 'Enter') tryLogin(); };
-      pwd.focus();
-    }
+// ══════════════════════════════════════════════════════════
+// BOOTSTRAP — Corre primero, garantiza que TODO funcione
+// Incluye: CFG, VIGIAS, login, navegación, config, guardar
+// ══════════════════════════════════════════════════════════
+
+// ── Estado global compartido con el script principal
+var CFG = {
+  PWD: '4LC4LD32028*',
+  AS: 'https://script.google.com/macros/s/AKfycbyCtjTocrNhGU5ePNrGBETc_IiIz34tznZWjthU-V2EtoahAKFVEZlNIWMBQQnQnd2C/exec',
+  SID: '', MKEY: '', IA_KEY: '', TASKLIST: ''
+};
+
+var VIGIAS_DEFAULT = [
+  {nom:'Jorgito',area:'Deportes'},{nom:'Héctor',area:'Deportes'},
+  {nom:'Deira',area:'Cultura'},{nom:'John Harold',area:'Cultura'},
+  {nom:'Evelyn',area:'Mujer'},{nom:'Ju',area:'Administrativos'},
+  {nom:'Vivi Velásquez',area:'Adulto Mayor'}
+];
+var VIGIAS = [];
+
+// ── Helpers mínimos
+function _gv(id){var e=document.getElementById(id);return e?e.value.trim():'';}
+function _sv(id,v){var e=document.getElementById(id);if(e)e.textContent=v;}
+function _toast(msg){
+  var e=document.getElementById('_t');
+  if(!e){e=document.createElement('div');e.id='_t';
+    e.style.cssText='position:fixed;bottom:24px;right:24px;z-index:9999;background:#1a1a2e;color:#fff;padding:13px 20px;border-radius:12px;font-size:13px;font-weight:600;max-width:320px;pointer-events:none;opacity:0;transition:opacity .25s;font-family:Poppins,sans-serif;box-shadow:0 8px 24px rgba(0,0,0,.3)';
+    document.body.appendChild(e);}
+  e.textContent=msg;e.style.opacity='1';
+  clearTimeout(window._tt);window._tt=setTimeout(function(){e.style.opacity='0';},4000);
+}
+
+// ── VIGÍAS — guardar/cargar/render
+function loadVigias(){
+  try{var v=JSON.parse(localStorage.getItem('zipa_vigias')||'null');
+    VIGIAS=v&&v.length?v:VIGIAS_DEFAULT.slice();
+  }catch(e){VIGIAS=VIGIAS_DEFAULT.slice();}
+}
+function saveVigias(){
+  try{localStorage.setItem('zipa_vigias',JSON.stringify(VIGIAS));}catch(e){}
+}
+function ini2(n){return(n||'?').split(' ').map(function(w){return w[0]||'';}).join('').slice(0,2).toUpperCase();}
+function esc(s){return String(s||'').replace(/[&<>"]/g,function(c){return{'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c];});}
+
+function updateVigiasSelects(){
+  ['eq-vig','ref-vig'].forEach(function(id){
+    var sel=document.getElementById(id);if(!sel)return;
+    var cur=sel.value;
+    sel.innerHTML='<option value="">-- Sin vigía --</option>'+VIGIAS.map(function(v){
+      return '<option value="'+esc(v.nom)+'">'+esc(v.nom)+' ('+esc(v.area)+')</option>';
+    }).join('');
+    if(cur)sel.value=cur;
   });
-})();
+}
+function renderVigiasAdmin(){
+  var c=document.getElementById('vigias-admin-list');if(!c)return;
+  c.innerHTML=VIGIAS.length?VIGIAS.map(function(v,i){
+    return '<div style="display:flex;align-items:center;gap:10px;padding:10px;background:#fff;border-radius:8px;margin-bottom:8px;border:1px solid #eee">'
+      +'<div style="width:36px;height:36px;background:linear-gradient(135deg,#FF8C00,#FF5722);border-radius:50%;display:flex;align-items:center;justify-content:center;color:#fff;font-size:11px;font-weight:700">'+ini2(v.nom)+'</div>'
+      +'<div style="flex:1"><div style="font-weight:600">'+esc(v.nom)+'</div><div style="font-size:11px;color:#888">'+esc(v.area)+'</div></div>'
+      +'<button style="background:#ffebee;color:#c62828;border:none;padding:6px 12px;border-radius:6px;cursor:pointer;font-size:12px" onclick="removeVigia('+i+')">🗑 Eliminar</button>'
+      +'</div>';
+  }).join(''):'<div style="text-align:center;padding:20px;color:#888">No hay vigías configurados</div>';
+}
+function renderVigiasConfig(){
+  var c=document.getElementById('cfg-vigias-list');if(!c)return;
+  c.innerHTML=VIGIAS.map(function(v){
+    return '<div style="display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid #f0f0f0">'
+      +'<div style="width:32px;height:32px;background:linear-gradient(135deg,#FF8C00,#FF5722);border-radius:50%;display:flex;align-items:center;justify-content:center;color:#fff;font-size:10px;font-weight:700">'+ini2(v.nom)+'</div>'
+      +'<div><div style="font-weight:600;font-size:13px">'+esc(v.nom)+'</div><div style="font-size:11px;color:#888">'+esc(v.area)+'</div></div>'
+      +'<div style="margin-left:auto;width:8px;height:8px;border-radius:50%;background:#00BFA5"></div></div>';
+  }).join('')+'<div style="margin-top:10px"><button class="btn bp sm" onclick="openM('m-vigias')">⚙️ Editar vigías</button></div>';
+}
+function renderDashVigias(){
+  var c=document.getElementById('d-vigias');if(!c)return;
+  c.innerHTML=VIGIAS.map(function(v){
+    return '<div style="display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid #f0f0f0">'
+      +'<div style="width:36px;height:36px;background:#FF8C0020;border-radius:50%;display:flex;align-items:center;justify-content:center;color:#FF8C00;font-size:11px;font-weight:700">'+ini2(v.nom)+'</div>'
+      +'<div style="flex:1"><div style="font-size:13px;font-weight:600">'+esc(v.nom)+'</div><div style="font-size:11px;color:#888">'+esc(v.area)+'</div></div>'
+      +'<div style="width:8px;height:8px;border-radius:50%;background:#00BFA5;flex-shrink:0"></div></div>';
+  }).join('');
+}
+function addVigia(){
+  var nom=_gv('nv-nom'),area=_gv('nv-area');
+  if(!nom){_toast('⚠ Escribe el nombre del vigía');return;}
+  VIGIAS.push({nom:nom,area:area||'General'});
+  saveVigias();
+  document.getElementById('nv-nom').value='';
+  document.getElementById('nv-area').value='';
+  renderVigiasAdmin();
+  updateVigiasSelects();
+  renderVigiasConfig();
+  _toast('✅ Vigía "'+nom+'" agregado');
+}
+function removeVigia(i){
+  var nom=VIGIAS[i].nom;
+  VIGIAS.splice(i,1);
+  saveVigias();
+  renderVigiasAdmin();
+  updateVigiasSelects();
+  renderVigiasConfig();
+  _toast('🗑 Vigía "'+nom+'" eliminado');
+}
+
+// ── CONFIGURACIÓN — guardar/cargar
+function loadCfg(){
+  try{
+    var cfg=JSON.parse(localStorage.getItem('zipa_cfg')||'{}');
+    if(cfg.sid){CFG.SID=cfg.sid;var e=document.getElementById('cfg-sid');if(e)e.value=cfg.sid;}
+    if(cfg.mkey){CFG.MKEY=cfg.mkey;var e=document.getElementById('cfg-mkey');if(e)e.value=cfg.mkey;}
+    if(cfg.tasklist){CFG.TASKLIST=cfg.tasklist;var e=document.getElementById('cfg-tasklist');if(e)e.value=cfg.tasklist;}
+  }catch(e){}
+  try{
+    var iak=localStorage.getItem('zipa_ia_key');
+    if(iak){CFG.IA_KEY=iak;var e=document.getElementById('ia-key');if(e)e.value=iak;_sv('ia-key-st','✅ API Key cargada');}
+  }catch(e){}
+}
+function saveCfg(){
+  var sid=_gv('cfg-sid');
+  if(!sid){_toast('⚠ Ingresa el ID del Google Sheets');return;}
+  CFG.SID=sid; CFG.TASKLIST=_gv('cfg-tasklist');
+  try{
+    var cfg=JSON.parse(localStorage.getItem('zipa_cfg')||'{}');
+    cfg.sid=sid; cfg.tasklist=CFG.TASKLIST;
+    localStorage.setItem('zipa_cfg',JSON.stringify(cfg));
+  }catch(e){_toast('⚠ Error guardando: '+e.message);return;}
+  var g=document.getElementById('g-st');if(g){g.className='gs-b gs-ok';g.textContent='✅ Configurado';}
+  _toast('✅ Sheets ID guardado. Sincronizando...');
+  if(typeof syncAll==='function')syncAll(); else window.location.reload();
+}
+function saveMapsKey(){
+  var k=_gv('cfg-mkey');
+  if(!k){_toast('⚠ Ingresa tu Google Maps API Key');return;}
+  CFG.MKEY=k;
+  try{
+    var cfg=JSON.parse(localStorage.getItem('zipa_cfg')||'{}');
+    cfg.mkey=k; localStorage.setItem('zipa_cfg',JSON.stringify(cfg));
+  }catch(e){_toast('⚠ Error guardando: '+e.message);return;}
+  var st=document.getElementById('maps-st');if(st){st.className='gs-b gs-ok';st.textContent='✅ Key guardada';}
+  _toast('✅ Google Maps Key guardada. Abriendo mapa...');
+  if(typeof go==='function')go('mapa',null);
+  setTimeout(function(){if(typeof initMap==='function')initMap();},400);
+}
+function saveIAKey(){
+  var k=_gv('ia-key');
+  if(!k){_toast('⚠ Ingresa tu API Key de Claude');return;}
+  CFG.IA_KEY=k;
+  try{localStorage.setItem('zipa_ia_key',k);}catch(e){_toast('⚠ Error: '+e.message);return;}
+  _sv('ia-key-st','✅ API Key guardada en este dispositivo');
+  _toast('✅ API Key de Claude guardada');
+}
+function testConn(){
+  _toast('🔄 Probando conexión con Apps Script...');
+  fetch(CFG.AS+'?accion=ping',{redirect:'follow'})
+    .then(function(r){return r.text();})
+    .then(function(t){
+      try{
+        var j=JSON.parse(t);
+        if(j.ok){
+          _toast('✅ Conectado: '+j.mensaje);
+          var g=document.getElementById('g-st');if(g){g.className='gs-b gs-ok';g.textContent='✅ Conectado';}
+        }else _toast('⚠ Apps Script error: '+j.error);
+      }catch(e){_toast('⚠ Respuesta inválida: '+t.substring(0,80));}
+    })
+    .catch(function(e){_toast('❌ Sin conexión: '+e.message);});
+}
+function changePwd(){
+  var n=_gv('pw-n'),cc=_gv('pw-c');
+  if(!n)return _toast('⚠ Ingresa la nueva contraseña');
+  if(n!==cc)return _toast('⚠ Las contraseñas no coinciden');
+  CFG.PWD=n;_toast('✅ Contraseña actualizada para esta sesión');
+}
+function exportJSON(){
+  var d=JSON.stringify({meta:{fecha:new Date().toISOString()},db:typeof DB!=='undefined'?DB:{}},null,2);
+  var b=new Blob([d],{type:'application/json'});
+  var u=URL.createObjectURL(b);var a=document.createElement('a');
+  a.href=u;a.download='zipa_backup_'+new Date().toISOString().split('T')[0]+'.json';
+  a.click();_toast('✅ Datos exportados');
+}
+function openFolder(n){window.open('https://drive.google.com/drive/search?q='+encodeURIComponent(n),'_blank');}
+
+// ── LOGIN
+function doLogin(){
+  var inp=document.getElementById('pwd');
+  var v=inp?inp.value:'';
+  var err=document.getElementById('lerr');
+  if(v===CFG.PWD){
+    document.getElementById('LS').style.display='none';
+    document.getElementById('APP').style.display='block';
+    if(inp)inp.value='';
+    loadVigias(); updateVigiasSelects(); renderVigiasConfig(); renderDashVigias();
+    loadCfg();
+    if(typeof initApp==='function')initApp();
+    else setTimeout(function(){if(typeof initApp==='function')initApp();},300);
+  }else{
+    if(err){err.textContent='⚠ Contraseña incorrecta';setTimeout(function(){err.textContent='';},3000);}
+    if(inp){inp.value='';inp.focus();}
+  }
+}
+function doLogout(){
+  document.getElementById('LS').style.display='flex';
+  document.getElementById('APP').style.display='none';
+  setTimeout(function(){var p=document.getElementById('pwd');if(p)p.focus();},100);
+}
+
+// ── NAVEGACIÓN básica (el script principal sobreescribe con versión completa)
+var _PTIT={dashboard:'🧡 Dashboard',agenda:'📅 Agenda y Calendario',equipos:'👥 Equipo de Campaña',
+  referidos:'🤝 Referidos',reuniones:'🏛️ Reuniones',tareas:'✅ Tareas',
+  redes:'📱 Redes Sociales',compromisos:'📋 Compromisos',lideres:'⭐ Líderes Estratégicos',
+  mapa:'🗺️ Mapa Territorial',documentos:'📁 Documentos',bitacora:'📓 Bitácora',
+  ia:'🤖 Asistente IA',config:'⚙️ Configuración'};
+function go(p,el){
+  document.querySelectorAll('.pg').forEach(function(x){x.classList.remove('on');});
+  var pg=document.getElementById('pg-'+p);if(pg)pg.classList.add('on');
+  document.querySelectorAll('.ni').forEach(function(x){x.classList.remove('on');});
+  if(el)el.classList.add('on');
+  var tt=document.getElementById('TT');if(tt)tt.textContent=_PTIT[p]||p;
+  window.scrollTo(0,0);
+  if(p==='mapa'&&CFG.MKEY&&!window._ML&&typeof initMap==='function')initMap();
+  if(p==='config'){renderVigiasConfig();renderVigiasAdmin();}
+  // Trigger renders from main script if available
+  var renders={reuniones:'renderReu',lideres:'renderLid',bitacora:'renderBit'};
+  if(renders[p]&&typeof window[renders[p]]==='function')window[renders[p]]();
+}
+function openM(id){
+  var m=document.getElementById(id);if(!m)return;
+  m.classList.add('on');
+  var hoy=new Date().toISOString().split('T')[0];
+  m.querySelectorAll('input[type=date]').forEach(function(i){if(!i.value)i.value=hoy;});
+  if(id==='m-vigias')renderVigiasAdmin();
+  // Populate vigia selects each time a modal opens
+  updateVigiasSelects();
+}
+function closeM(id){var m=document.getElementById(id);if(m)m.classList.remove('on');}
+function stab(id,el){
+  try{
+    var pg=el.closest('.pg');
+    pg.querySelectorAll('.tabp').forEach(function(p){p.classList.remove('on');});
+    var tp=document.getElementById(id);if(tp)tp.classList.add('on');
+    pg.querySelectorAll('.tab').forEach(function(t){t.classList.remove('on');});
+    el.classList.add('on');
+  }catch(e){}
+}
+
+// ── Setup al cargar
+window.addEventListener('DOMContentLoaded',function(){
+  var btn=document.getElementById('lbtn');
+  var pwd=document.getElementById('pwd');
+  if(btn)btn.onclick=doLogin;
+  if(pwd){
+    pwd.onkeypress=function(e){if(e.key==='Enter')doLogin();};
+    pwd.focus();
+  }
+  document.querySelectorAll('.mo').forEach(function(o){
+    o.addEventListener('click',function(e){if(e.target===this)this.classList.remove('on');});
+  });
+  document.addEventListener('keydown',function(e){
+    if(e.key==='Escape')document.querySelectorAll('.mo.on').forEach(function(m){m.classList.remove('on');});
+  });
+});
 </script>
+
 
 <div id="APP">
 <!-- ═══ SIDEBAR ═══ -->
@@ -2095,6 +2310,9 @@ window.testConn=testConn; window.changePwd=changePwd;
 window.openFolder=openFolder; window.exportJSON=exportJSON;
 window.loadSheet=loadSheet; window.filEq=filEq; window.filT=filT; window.filLid=filLid;
 window.initApp=initApp;
+window.renderReu=renderReu; window.renderBit=renderBit; window.renderLid=renderLid;
+window.renderTar=renderTar; window.renderCom=renderCom; window.renderRed=renderRed;
+window.updateDash=updateDash; window.renderRefProg=renderRefProg;
 
 </script>
 </body>
