@@ -269,6 +269,23 @@ textarea.fc{resize:vertical;min-height:80px;}
     }
   }
   window.doLogin = tryLogin;
+  // Expose navigation - delegates to main script's go() once loaded
+  window.go = function(p, el) {
+    // Try main script's go first, fallback to basic page switch
+    try {
+      document.querySelectorAll('.pg').forEach(function(x){x.classList.remove('on');});
+      var pg = document.getElementById('pg-'+p); if(pg) pg.classList.add('on');
+      document.querySelectorAll('.ni').forEach(function(x){x.classList.remove('on');});
+      if(el) el.classList.add('on');
+      var titles = {dashboard:'🧡 Dashboard',agenda:'📅 Agenda y Calendario',equipos:'👥 Equipo de Campaña',referidos:'🤝 Referidos',reuniones:'🏛️ Reuniones',tareas:'✅ Tareas',redes:'📱 Redes Sociales',compromisos:'📋 Compromisos',lideres:'⭐ Líderes Estratégicos',mapa:'🗺️ Mapa Territorial',documentos:'📁 Documentos',bitacora:'📓 Bitácora',ia:'🤖 Asistente IA',config:'⚙️ Configuración'};
+      var tt = document.getElementById('TT'); if(tt) tt.textContent = titles[p]||p;
+      window.scrollTo(0,0);
+    } catch(e) { console.error('go() error:', e); }
+  };
+  window.openM = function(id){ var m=document.getElementById(id); if(m) m.classList.add('on'); };
+  window.closeM = function(id){ var m=document.getElementById(id); if(m) m.classList.remove('on'); };
+  window.stab = function(id,el){ try{ var pg=el.closest('.pg'); pg.querySelectorAll('.tabp').forEach(function(p){p.classList.remove('on');}); var tp=document.getElementById(id); if(tp) tp.classList.add('on'); pg.querySelectorAll('.tab').forEach(function(t){t.classList.remove('on');}); el.classList.add('on'); }catch(e){} };
+  window.syncAll = function(){ if(typeof initApp==='function') initApp(); };
   window.addEventListener('load', function() {
     var btn = document.getElementById('lbtn');
     var pwd = document.getElementById('pwd');
