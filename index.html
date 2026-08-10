@@ -529,6 +529,63 @@ function openNewModal(modalId,titId,titTxt){
 }
 function openNewEq(){openNewModal('m-eq','m-eq-t','Agregar persona al equipo');}
 
+
+// ══ EDITAR EQUIPO — función robusta en bootstrap ══
+function abrirEdicionEq(idx) {
+  var r = (typeof DB !== 'undefined' && DB.equipos) ? DB.equipos[idx] : null;
+  if (!r) { _toast('⚠ Registro no encontrado'); return; }
+  
+  // Llenar selectores de vigías
+  updateVigiasSelects();
+  
+  // Abrir modal
+  var m = document.getElementById('m-eq'); if (!m) return;
+  m.classList.add('on');
+  
+  // Título
+  _sv('m-eq-t', 'Editar persona del equipo');
+  
+  // Poner índice en el hidden
+  var h = m.querySelector('input[type=hidden]'); if (h) h.value = idx;
+  
+  // Llenar campos con setTimeout para asegurar que el modal ya está visible
+  setTimeout(function() {
+    function sv(id, v) { var e = document.getElementById(id); if (e) e.value = v || ''; }
+    function ss(id, v) {
+      var e = document.getElementById(id); if (!e || !v) return;
+      for (var i = 0; i < e.options.length; i++) {
+        if (e.options[i].value === v || e.options[i].text === v) { e.selectedIndex = i; break; }
+      }
+    }
+    sv('eq-nom', r.Nombre);
+    sv('eq-tel', r.Telefono);
+    ss('eq-cond', r.Condicion);
+    sv('eq-ent', r.Entidad);
+    sv('eq-car', r.Cargo);
+    sv('eq-lid', r.Lider12 || r.Lider);
+    ss('eq-vig', r.Vigia || '');
+    ss('eq-adh', r.Adhesion || 'Con nosotros');
+    sv('eq-bar', r.Barrio);
+    sv('eq-obs', r.Observaciones);
+  }, 30);
+}
+window.abrirEdicionEq = abrirEdicionEq;
+
+function abrirNuevoEq() {
+  updateVigiasSelects();
+  var m = document.getElementById('m-eq'); if (!m) return;
+  // Limpiar todo
+  m.querySelectorAll('input').forEach(function(i) { i.value = ''; });
+  m.querySelectorAll('textarea').forEach(function(t) { t.value = ''; });
+  m.querySelectorAll('select').forEach(function(s) { s.selectedIndex = 0; });
+  // Poner fecha de hoy
+  var hoy = new Date().toISOString().split('T')[0];
+  m.querySelectorAll('input[type=date]').forEach(function(i) { i.value = hoy; });
+  _sv('m-eq-t', 'Agregar persona al equipo');
+  m.classList.add('on');
+}
+window.abrirNuevoEq = abrirNuevoEq;
+
 // ── Setup al cargar
 window.addEventListener('DOMContentLoaded',function(){
   var btn=document.getElementById('lbtn');
@@ -663,7 +720,7 @@ window.addEventListener('DOMContentLoaded',function(){
 <div class="pg" id="pg-equipos">
   <div class="ph">
     <div><div class="pt">👥 Equipo de Campaña</div><div class="ps">96 integrantes — meta: 5 referidos por persona · Sincronizado con Google Sheets</div></div>
-    <div style="display:flex;gap:10px"><button class="btn bs sm" onclick="openM('m-vigias')">⚙️ Gestionar Vigías</button><button class="btn bp sm" onclick="openNewEq()">+ Agregar persona</button></div>
+    <div style="display:flex;gap:10px"><button class="btn bs sm" onclick="openM('m-vigias')">⚙️ Gestionar Vigías</button><button class="btn bp sm" onclick="abrirNuevoEq()">+ Agregar persona</button></div>
   </div>
   <!-- Stats adhesión -->
   <div class="g3" style="margin-bottom:20px">
@@ -1556,52 +1613,50 @@ function filEq(q) {
 // ═══════════════════════════════════════════════════
 function renderEq() {
   var tb = document.getElementById('tb-eq'); if (!tb) return;
-  // Stats adhesión
-  var c1 = DB.equipos.filter(function(r){return r.Adhesion === 'Con nosotros';}).length;
-  var c2 = DB.equipos.filter(function(r){return r.Adhesion === 'Aún pensándolo';}).length;
-  var c3 = DB.equipos.filter(function(r){return r.Adhesion === 'No está aquí';}).length;
-  setText('eq-c1', c1); setText('eq-c2', c2); setText('eq-c3', c3);
+  var c1=DB.equipos.filter(function(r){return r.Adhesion==='Con nosotros';}).length;
+  var c2=DB.equipos.filter(function(r){return r.Adhesion==='Aún pensándolo';}).length;
+  var c3=DB.equipos.filter(function(r){return r.Adhesion==='No está aquí';}).length;
+  setText('eq-c1',c1); setText('eq-c2',c2); setText('eq-c3',c3);
 
-  if (!DB.equipos.length) { tb.innerHTML = '<tr><td colspan="10" class="empty">Sin registros.</td></tr>'; return; }
-
-  var COND_COL = {
-    'Contratista':'bk-b','Funcionario':'bk-g','Equipo MCI':'bk-o',
-    'EQUIPO VISION DE CIUDAD':'bk-t','M180':'bk-r'
-  };
+  if (!DB.equipos.length) {
+    tb.innerHTML='<tr><td colspan="10" class="empty">Sin registros. Agrega el primero.</td></tr>';
+    return;
+  }
+  var CCOL={'Contratista':'bk-b','Funcionario':'bk-g','Equipo MCI':'bk-o','EQUIPO VISION DE CIUDAD':'bk-t','M180':'bk-r'};
   tb.innerHTML = DB.equipos.map(function(r, i) {
     var adh = r.Adhesion || 'Con nosotros';
-    var adhIco = adh === 'Con nosotros' ? '✅' : adh === 'Aún pensándolo' ? '🤔' : '❌';
-    var adhCol = adh === 'Con nosotros' ? 'bk-g' : adh === 'Aún pensándolo' ? 'bk-y' : 'bk-r';
-    var refs = DB.referidos.filter(function(rf) {
-      return (rf.QuienRefiere || '').toLowerCase().includes((r.Nombre || '').toLowerCase().split(' ')[0]);
+    var adhIco = adh==='Con nosotros'?'✅':adh==='Aún pensándolo'?'🤔':'❌';
+    var adhCol = adh==='Con nosotros'?'bk-g':adh==='Aún pensándolo'?'bk-y':'bk-r';
+    var refs = DB.referidos.filter(function(rf){
+      return (rf.QuienRefiere||'').toLowerCase().includes((r.Nombre||'').toLowerCase().split(' ')[0]);
     }).length;
-    var refsCol = refs >= 5 ? '#2E7D32' : refs >= 3 ? 'var(--n)' : 'var(--s4)';
+    var refsCol = refs>=5?'#2E7D32':refs>=3?'var(--n)':'var(--s4)';
     return '<tr>'
-      + '<td><div style="display:flex;align-items:center;gap:10px">'
-      + '<div class="av" style="background:linear-gradient(135deg,var(--n),var(--p));color:#fff;font-size:11px;font-weight:700">' + ini2(r.Nombre) + '</div>'
-      + '<div><div style="font-weight:700;font-size:13px">' + esc(r.Nombre) + '</div>'
-      + '<div style="font-size:10px;color:var(--s4)">' + esc(r.Condicion || '') + '</div></div></div></td>'
-      + '<td><a href="https://wa.me/57' + esc(r.Telefono || '') + '" target="_blank" style="color:var(--n);text-decoration:none;font-weight:500">📱 ' + esc(r.Telefono || '—') + '</a></td>'
-      + '<td><span class="bk ' + (COND_COL[r.Condicion] || 'bk-gr') + '" style="font-size:10px">' + esc(r.Condicion || '') + '</span></td>'
-      + '<td style="font-size:12px">' + esc(r.Entidad || '') + '</td>'
-      + '<td style="font-size:11px;max-width:160px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="' + esc(r.Cargo || '') + '">' + esc(r.Cargo || '') + '</td>'
-      + '<td style="font-size:11px;color:var(--s3)">' + esc((r.Lider12 || '').split(' ').slice(0, 2).join(' ')) + '</td>'
-      + '<td><span class="bk bk-o" style="font-size:10px">' + esc(r.Vigia || '—') + '</span></td>'
-      + '<td><span class="bk ' + adhCol + '">' + adhIco + ' ' + adh + '</span></td>'
-      + '<td><div style="font-size:12px;font-weight:700;color:' + refsCol + '">' + refs + '/5</div><div class="pb" style="width:40px;margin-top:3px"><div class="pf" style="background:' + refsCol + ';width:' + Math.min(100, refs*20) + '%"></div></div></td>'
-      + '<td><div style="display:flex;gap:4px">'
-      + '<button class="btn bs sm" style="padding:4px 9px" data-tipo="eq" data-idx="' + i + '" title="Editar">✏️</button>'
-      + '<button class="btn bd sm" style="padding:4px 9px" data-del="equipos" data-idx="' + i + '" data-nom="' + esc(r.Nombre || '') + '" title="Eliminar">🗑</button>'
-      + '</div></td></tr>';
+      +'<td><div style="display:flex;align-items:center;gap:8px">'
+      +'<div class="av" style="background:linear-gradient(135deg,var(--n),var(--p));color:#fff;font-size:11px;font-weight:700">'+ini2(r.Nombre)+'</div>'
+      +'<div><div style="font-weight:700;font-size:13px">'+esc(r.Nombre)+'</div>'
+      +'<div style="font-size:10px;color:var(--s4)">'+esc(r.Condicion||'')+'</div></div></div></td>'
+      +'<td><a href="https://wa.me/57'+esc(r.Telefono||'')+'" target="_blank" style="color:var(--n);text-decoration:none;font-weight:500">📱 '+esc(r.Telefono||'—')+'</a></td>'
+      +'<td><span class="bk '+(CCOL[r.Condicion]||'bk-gr')+'" style="font-size:10px">'+esc(r.Condicion||'')+'</span></td>'
+      +'<td style="font-size:12px">'+esc(r.Entidad||'')+'</td>'
+      +'<td style="font-size:11px;max-width:140px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="'+esc(r.Cargo||'')+'">'+esc(r.Cargo||'')+'</td>'
+      +'<td style="font-size:11px;color:var(--s3)">'+esc((r.Lider12||'').split(' ').slice(0,2).join(' '))+'</td>'
+      +'<td><span class="bk bk-o" style="font-size:10px">'+esc(r.Vigia||'—')+'</span></td>'
+      +'<td><span class="bk '+adhCol+'">'+adhIco+' '+adh+'</span></td>'
+      +'<td><div style="font-size:12px;font-weight:700;color:'+refsCol+'">'+refs+'/5</div>'
+      +'<div class="pb" style="width:40px;margin-top:3px"><div class="pf" style="background:'+refsCol+';width:'+Math.min(100,refs*20)+'%"></div></div></td>'
+      +'<td><div style="display:flex;gap:4px">'
+      +'<button class="btn bp sm" style="padding:4px 9px;font-size:11px" onclick="abrirEdicionEq('+i+')">✏️ Editar</button>'
+      +'<button class="btn bd sm" style="padding:4px 9px;font-size:11px" data-del="equipos" data-idx="'+i+'" data-nom="'+esc(r.Nombre||'')+'">🗑</button>'
+      +'</div></td></tr>';
   }).join('');
 
-  // Event delegation — ÚNICA forma confiable en GitHub Pages
+  // Solo el botón eliminar usa delegation (porque no puede tener onclick con confirm)
   tb.onclick = function(e) {
-    var btn = e.target.closest('button'); if (!btn) return;
-    var idx = parseInt(btn.getAttribute('data-idx'));
-    if (!isNaN(idx)) {
-      if (btn.getAttribute('data-tipo')) editR(btn.getAttribute('data-tipo'), idx);
-      if (btn.getAttribute('data-del')) delR(btn.getAttribute('data-del'), idx, btn.getAttribute('data-nom'));
+    var btn = e.target.closest('[data-del]');
+    if (btn) {
+      var idx = parseInt(btn.getAttribute('data-idx'));
+      delR(btn.getAttribute('data-del'), idx, btn.getAttribute('data-nom'));
     }
   };
 }
