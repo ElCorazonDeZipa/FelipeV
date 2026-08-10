@@ -244,11 +244,42 @@ textarea.fc{resize:vertical;min-height:80px;}
     <div class="ltit">Zipa con el Corazón</div>
     <div class="lsub">Centro de Operaciones · Zipaquirá 2028</div>
     <input type="password" class="lpwd" id="pwd" placeholder="••••••••••••" autocomplete="current-password">
-    <button class="lbtn" id="lbtn">Ingresar al sistema</button>
+    <button class="lbtn" id="lbtn" onclick="doLogin()">Ingresar al sistema</button>
     <div class="lerr" id="lerr"></div>
     <div class="lfoot">🔒 Sistema privado de campaña</div>
   </div>
 </div>
+<script>
+// Login bootstrap — runs immediately, before main script
+// This guarantees login works even if main script has issues
+(function() {
+  var PWD = '4LC4LD32028*';
+  function tryLogin() {
+    var inp = document.getElementById('pwd');
+    var v = inp ? inp.value : '';
+    if (v === PWD) {
+      document.getElementById('LS').style.display = 'none';
+      document.getElementById('APP').style.display = 'block';
+      inp.value = '';
+      if (typeof initApp === 'function') initApp();
+    } else {
+      var err = document.getElementById('lerr');
+      if (err) { err.textContent = '⚠ Contraseña incorrecta'; setTimeout(function(){err.textContent='';},3000); }
+      if (inp) { inp.value = ''; inp.focus(); }
+    }
+  }
+  window.doLogin = tryLogin;
+  window.addEventListener('load', function() {
+    var btn = document.getElementById('lbtn');
+    var pwd = document.getElementById('pwd');
+    if (btn) btn.onclick = tryLogin;
+    if (pwd) {
+      pwd.onkeypress = function(e) { if (e.key === 'Enter') tryLogin(); };
+      pwd.focus();
+    }
+  });
+})();
+</script>
 
 <div id="APP">
 <!-- ═══ SIDEBAR ═══ -->
@@ -925,9 +956,11 @@ function doLogout() {
   setTimeout(function() { document.getElementById('pwd').focus(); }, 100);
 }
 
-document.getElementById('lbtn').onclick = doLogin;
-document.getElementById('pwd').onkeypress = function(e) { if (e.key === 'Enter') doLogin(); };
-document.getElementById('pwd').focus();
+// Button setup (redundant safety — also set by inline bootstrap above)
+try {
+  document.getElementById('lbtn').onclick = doLogin;
+  document.getElementById('pwd').onkeypress = function(e) { if (e.key === 'Enter') doLogin(); };
+} catch(_) {}
 
 // ═══════════════════════════════════════════════════
 // GOOGLE APPS SCRIPT — FormData (sin CORS preflight)
