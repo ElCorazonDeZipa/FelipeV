@@ -1040,7 +1040,10 @@ function initApp() {
   loadCfg();
   renderCal();
   renderEq();
-  setTimeout(syncAll, 800);
+  renderRef(); renderTar(); renderReu(); renderCom(); renderRed(); renderBit(); renderLid();
+  renderAgHoy(); renderAgProx();
+  updateDash();
+  setTimeout(syncAll, 1200);
 }
 
 function loadCfg() {
@@ -1083,8 +1086,8 @@ function syncAll() {
     } else throw new Error(r ? r.error : 'Sin respuesta');
   }).catch(function(e) {
     if (gs) { gs.className = 'gs-b gs-er'; gs.textContent = '⚠ Sin conexión'; }
-    toast('⚠ Sin conexión al Apps Script. Verifica que esté desplegado.');
-    updateDash();
+    // Sin conexión a Sheets - mostrar datos locales (equipo pre-cargado)
+    renderEq(); renderTar(); updateDash();
     if (CFG.MKEY) initMap();
   });
 }
@@ -2072,6 +2075,27 @@ function exportJSON() {
   a.href = u; a.download = 'zipa_backup_' + new Date().toISOString().split('T')[0] + '.json';
   a.click(); toast('✅ Datos exportados');
 }
+// ═══════════════════════════════════════════════════
+// EXPONER TODAS LAS FUNCIONES GLOBALMENTE
+// Necesario para que onclick="fn()" funcione en GitHub Pages
+// ═══════════════════════════════════════════════════
+window.go=go; window.openM=openM; window.closeM=closeM; window.stab=stab;
+window.doLogin=doLogin; window.doLogout=doLogout; window.syncAll=syncAll;
+window.syncCal=syncCal; window.syncGoogleTasks=syncGoogleTasks;
+window.saveAct=saveAct; window.saveEq=saveEq; window.saveRef=saveRef;
+window.saveReu=saveReu; window.saveTar=saveTar; window.saveCom=saveCom;
+window.saveLid=saveLid; window.saveBit=saveBit; window.saveRed=saveRed;
+window.addVigia=addVigia; window.removeVigia=removeVigia;
+window.addReuTar=addReuTar; window.tarFromReu=tarFromReu;
+window.renderEq=renderEq; window.renderRef=renderRef;
+window.cambMes=cambMes; window.clickDia=clickDia;
+window.sendIA=sendIA; window.askIA=askIA; window.clrChat=clrChat;
+window.saveIAKey=saveIAKey; window.saveCfg=saveCfg; window.saveMapsKey=saveMapsKey;
+window.testConn=testConn; window.changePwd=changePwd;
+window.openFolder=openFolder; window.exportJSON=exportJSON;
+window.loadSheet=loadSheet; window.filEq=filEq; window.filT=filT; window.filLid=filLid;
+window.initApp=initApp;
+
 </script>
 </body>
 </html>
