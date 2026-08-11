@@ -231,8 +231,21 @@ textarea.fc{resize:vertical;min-height:80px;}
 
 /* ═══ RESPONSIVE ═══ */
 @media(max-width:900px){.dl{grid-template-columns:1fr;}.g4{grid-template-columns:1fr 1fr;}}
-@media(max-width:768px){.sb{display:none;}.tb{left:0!important;}.mn{margin-left:0!important;}.g4,.g3,.g2{grid-template-columns:1fr;}.kb{flex-direction:column;}.kc{flex:none;width:100%;}}
-@media(max-width:480px){.mn{padding:16px;}.pt{font-size:20px;}}
+@media(max-width:768px){
+  .sb{position:fixed;top:0;left:-100%;width:280px;height:100%;z-index:500;transition:left .28s cubic-bezier(.4,0,.2,1);box-shadow:none;}
+  .sb.mob-open{left:0;box-shadow:4px 0 32px rgba(0,0,0,.4);}
+  .mob-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:499;backdrop-filter:blur(2px);}
+  .mob-overlay.on{display:block;}
+  .tb{left:0!important;}
+  .mn{margin-left:0!important;padding:16px;}
+  .g4,.g3,.g2{grid-template-columns:1fr;}
+  .kb{flex-direction:column;}
+  .kc{flex:none;width:100%;}
+  .mob-btn{display:flex!important;}
+  .tb-tit{font-size:15px;}
+}
+@media(min-width:769px){.mob-btn{display:none!important;}.mob-overlay{display:none!important;}}
+@media(max-width:480px){.mn{padding:12px;}.pt{font-size:18px;}}
 </style>
 </head>
 <body>
@@ -587,6 +600,30 @@ function abrirNuevoEq() {
 window.abrirNuevoEq = abrirNuevoEq;
 
 // ── Setup al cargar
+function toggleMobMenu() {
+  var sb = document.querySelector('.sb');
+  var ov = document.getElementById('mob-overlay');
+  if (!sb) return;
+  var isOpen = sb.classList.contains('mob-open');
+  if (isOpen) { sb.classList.remove('mob-open'); if(ov) ov.classList.remove('on'); }
+  else { sb.classList.add('mob-open'); if(ov) ov.classList.add('on'); }
+}
+function closeMobMenu() {
+  var sb = document.querySelector('.sb');
+  var ov = document.getElementById('mob-overlay');
+  if (sb) sb.classList.remove('mob-open');
+  if (ov) ov.classList.remove('on');
+}
+window.toggleMobMenu = toggleMobMenu;
+window.closeMobMenu = closeMobMenu;
+
+// Close menu when nav item clicked on mobile
+function goMob(p, el) {
+  closeMobMenu();
+  go(p, el);
+}
+window.goMob = goMob;
+
 window.addEventListener('DOMContentLoaded',function(){
   var btn=document.getElementById('lbtn');
   var pwd=document.getElementById('pwd');
@@ -610,28 +647,29 @@ window.addEventListener('DOMContentLoaded',function(){
 <aside class="sb">
   <div class="sb-top">
     <div class="sb-logo">🧡</div>
-    <div><div class="sb-nm">Zipa con el Corazón</div><div class="sb-sub2">Campaña 2028</div></div>
+    <div style="flex:1"><div class="sb-nm">Zipa con el Corazón</div><div class="sb-sub2">Campaña 2028</div></div>
+    <button onclick="closeMobMenu()" style="display:none;background:rgba(255,255,255,.1);border:none;color:rgba(255,255,255,.7);font-size:20px;cursor:pointer;border-radius:8px;width:32px;height:32px;align-items:center;justify-content:center;flex-shrink:0;" class="mob-btn" id="sb-close">×</button>
   </div>
   <nav class="sb-nav">
     <div class="nb-sec">Principal</div>
-    <div class="ni on" onclick="go('dashboard',this)"><span class="ni-ic">📊</span><span class="ni-lb">Dashboard</span></div>
-    <div class="ni" onclick="go('agenda',this)"><span class="ni-ic">📅</span><span class="ni-lb">Agenda y Calendario</span></div>
+    <div class="ni on" onclick="goMob('dashboard',this)"><span class="ni-ic">📊</span><span class="ni-lb">Dashboard</span></div>
+    <div class="ni" onclick="goMob('agenda',this)"><span class="ni-ic">📅</span><span class="ni-lb">Agenda y Calendario</span></div>
     <div class="nb-sec">Equipo</div>
-    <div class="ni" onclick="go('equipos',this)"><span class="ni-ic">👥</span><span class="ni-lb">Equipo</span></div>
-    <div class="ni" onclick="go('referidos',this)"><span class="ni-ic">🤝</span><span class="ni-lb">Referidos</span><span class="ni-bd" id="b-ref">0</span></div>
+    <div class="ni" onclick="goMob('equipos',this)"><span class="ni-ic">👥</span><span class="ni-lb">Equipo</span></div>
+    <div class="ni" onclick="goMob('referidos',this)"><span class="ni-ic">🤝</span><span class="ni-lb">Referidos</span><span class="ni-bd" id="b-ref">0</span></div>
     <div class="nb-sec">Operaciones</div>
-    <div class="ni" onclick="go('reuniones',this)"><span class="ni-ic">🏛️</span><span class="ni-lb">Reuniones</span></div>
-    <div class="ni" onclick="go('tareas',this)"><span class="ni-ic">✅</span><span class="ni-lb">Tareas</span><span class="ni-bd" id="b-tar">0</span></div>
-    <div class="ni" onclick="go('redes',this)"><span class="ni-ic">📱</span><span class="ni-lb">Redes Sociales</span></div>
+    <div class="ni" onclick="goMob('reuniones',this)"><span class="ni-ic">🏛️</span><span class="ni-lb">Reuniones</span></div>
+    <div class="ni" onclick="goMob('tareas',this)"><span class="ni-ic">✅</span><span class="ni-lb">Tareas</span><span class="ni-bd" id="b-tar">0</span></div>
+    <div class="ni" onclick="goMob('redes',this)"><span class="ni-ic">📱</span><span class="ni-lb">Redes Sociales</span></div>
     <div class="nb-sec">Campaña</div>
-    <div class="ni" onclick="go('compromisos',this)"><span class="ni-ic">📋</span><span class="ni-lb">Compromisos</span><span class="ni-bd" id="b-com">0</span></div>
-    <div class="ni" onclick="go('lideres',this)"><span class="ni-ic">⭐</span><span class="ni-lb">Líderes Estratégicos</span></div>
-    <div class="ni" onclick="go('mapa',this)"><span class="ni-ic">🗺️</span><span class="ni-lb">Mapa Territorial</span></div>
+    <div class="ni" onclick="goMob('compromisos',this)"><span class="ni-ic">📋</span><span class="ni-lb">Compromisos</span><span class="ni-bd" id="b-com">0</span></div>
+    <div class="ni" onclick="goMob('lideres',this)"><span class="ni-ic">⭐</span><span class="ni-lb">Líderes Estratégicos</span></div>
+    <div class="ni" onclick="goMob('mapa',this)"><span class="ni-ic">🗺️</span><span class="ni-lb">Mapa Territorial</span></div>
     <div class="nb-sec">Inteligencia</div>
-    <div class="ni" onclick="go('documentos',this)"><span class="ni-ic">📁</span><span class="ni-lb">Documentos</span></div>
-    <div class="ni" onclick="go('bitacora',this)"><span class="ni-ic">📓</span><span class="ni-lb">Bitácora</span></div>
-    <div class="ni" onclick="go('ia',this)"><span class="ni-ic">🤖</span><span class="ni-lb">Asistente IA</span></div>
-    <div class="ni" onclick="go('config',this)"><span class="ni-ic">⚙️</span><span class="ni-lb">Configuración</span></div>
+    <div class="ni" onclick="goMob('documentos',this)"><span class="ni-ic">📁</span><span class="ni-lb">Documentos</span></div>
+    <div class="ni" onclick="goMob('bitacora',this)"><span class="ni-ic">📓</span><span class="ni-lb">Bitácora</span></div>
+    <div class="ni" onclick="goMob('ia',this)"><span class="ni-ic">🤖</span><span class="ni-lb">Asistente IA</span></div>
+    <div class="ni" onclick="goMob('config',this)"><span class="ni-ic">⚙️</span><span class="ni-lb">Configuración</span></div>
   </nav>
   <div class="sb-foot">
     <div class="urow" onclick="doLogout()">
@@ -642,7 +680,13 @@ window.addEventListener('DOMContentLoaded',function(){
 </aside>
 
 <!-- ═══ TOPBAR ═══ -->
+<div class="mob-overlay" id="mob-overlay" onclick="closeMobMenu()"></div>
 <header class="tb">
+  <button class="mob-btn" id="mob-btn" onclick="toggleMobMenu()" style="display:none;background:none;border:none;cursor:pointer;padding:6px;border-radius:8px;color:var(--s1);flex-direction:column;gap:5px;align-items:center;justify-content:center;width:38px;height:38px;">
+    <span style="display:block;width:20px;height:2px;background:var(--s1);border-radius:2px;transition:.2s"></span>
+    <span style="display:block;width:20px;height:2px;background:var(--s1);border-radius:2px;transition:.2s"></span>
+    <span style="display:block;width:20px;height:2px;background:var(--s1);border-radius:2px;transition:.2s"></span>
+  </button>
   <div class="tb-tit" id="TT">🧡 Dashboard</div>
   <div style="display:flex;gap:10px;align-items:center">
     <span class="gs-b gs-wn" id="GS" onclick="syncAll()" style="cursor:pointer">⏳ Conectando...</span>
