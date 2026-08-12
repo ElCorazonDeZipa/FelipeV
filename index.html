@@ -799,7 +799,7 @@ window.loadSheet = loadSheet;
 // ── syncRefFormulario en bootstrap
 function syncRefFormulario() {
   _toast('🔄 Cargando referidos del formulario...');
-  var SID = '1g120UJ763yWEveA1nF5KFNXKM74wWzEKoNbc7BLX1yo';
+  // Formulario externo ya no requerido
   GA.get('leerHojaExt', { sid: SID, hoja: '' }).then(function(r) {
     if (r && r.ok && r.filas && r.filas.length) {
       DB.referidos = r.filas.map(function(row) {
@@ -1013,6 +1013,7 @@ window.addEventListener('DOMContentLoaded',function(){
     <div class="ch"><span>🏆</span><div class="ct">Top 5 — Líderes con meta de referidos cumplida</div><span class="bk bk-g" id="d-meta-badge">0 con meta ✅</span></div>
     <div class="cb" id="d-top5" style="display:grid;grid-template-columns:repeat(5,1fr);gap:12px"></div>
   </div>
+</div>
 
 <!-- ═══ AGENDA ═══ -->
 <div class="pg" id="pg-agenda">
