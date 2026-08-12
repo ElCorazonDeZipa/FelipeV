@@ -415,19 +415,34 @@ function saveIAKey(){
   _toast('✅ API Key de Claude guardada');
 }
 function testConn(){
-  _toast('🔄 Probando conexión con Apps Script...');
-  fetch(CFG.AS+'?accion=ping',{redirect:'follow'})
+  _toast('🔄 Probando conexión... (puede tardar hasta 15 seg)');
+  var url = CFG.AS+'?accion=ping';
+  console.log('Probando URL:', url);
+  fetch(url,{redirect:'follow'})
     .then(function(r){return r.text();})
     .then(function(t){
+      console.log('Respuesta raw:', t.substring(0,300));
       try{
         var j=JSON.parse(t);
         if(j.ok){
           _toast('✅ Conectado: '+j.mensaje);
           var g=document.getElementById('g-st');if(g){g.className='gs-b gs-ok';g.textContent='✅ Conectado';}
-        }else _toast('⚠ Apps Script error: '+j.error);
-      }catch(e){_toast('⚠ Respuesta inválida: '+t.substring(0,80));}
+          var gs=document.getElementById('GS');if(gs){gs.className='gs-b gs-ok';gs.textContent='✅ Google Sheets';}
+          if(typeof syncAll==='function') syncAll();
+        }else{
+          _toast('⚠ Apps Script responde pero con error: '+j.error);
+          console.warn('Apps Script error:', j);
+        }
+      }catch(e){
+        _toast('❌ No es JSON. Revisa la consola del navegador (F12) para ver qué llegó.');
+        console.error('Respuesta no es JSON:', t.substring(0,500));
+        console.error('POSIBLE CAUSA: El Apps Script NO está desplegado como webapp con acceso "Cualquiera"');
+      }
     })
-    .catch(function(e){_toast('❌ Sin conexión: '+e.message);});
+    .catch(function(e){
+      _toast('❌ Error de red: '+e.message);
+      console.error('Fetch error:', e);
+    });
 }
 function changePwd(){
   var n=_gv('pw-n'),cc=_gv('pw-c');
@@ -1078,6 +1093,9 @@ window.addEventListener('DOMContentLoaded',function(){
         <div class="al al-g" style="margin-bottom:12px">✅ <strong>Google Sheets conectado:</strong> ID hardcodeado · <code style="font-size:10px">18oCKARf...</code></div>
         <div class="fg"><div class="fl">Google Tasks List ID (opcional)</div><input class="fc" id="cfg-tasklist" placeholder="Déjalo vacío para usar la lista predeterminada"></div>
         <div style="display:flex;gap:10px"><button class="btn bp sm" onclick="saveCfg()">💾 Guardar Tasks ID</button><button class="btn bs sm" onclick="testConn()">🔌 Probar conexión</button></div>
+        <div class="al al-b" style="margin-top:12px;font-size:12px">
+          💡 Después de probar, abre la consola del navegador (<strong>F12 → Console</strong>) para ver la respuesta exacta del servidor.
+        </div>
       </div></div>
       <div class="card" style="margin-bottom:16px"><div class="ch"><span>🗺️</span><div class="ct">Google Maps</div><span class="gs-b gs-wn" id="maps-st">⚠ Configurar</span></div><div class="cb">
         <div class="fg"><div class="fl">API Key — Maps JavaScript API</div><input class="fc" id="cfg-mkey" placeholder="AIzaSy..."><div style="font-size:11px;color:var(--ro);margin-top:4px">⚠ No subas esta key a GitHub. API requerida: Maps JavaScript API</div></div>
@@ -1098,7 +1116,19 @@ window.addEventListener('DOMContentLoaded',function(){
         <div class="al al-b">2️⃣ <strong>Apps Script:</strong> Ve a script.google.com → ejecuta <code>inicializarSheets()</code> → acepta permisos de Calendar y Tasks</div>
         <div class="al al-b">3️⃣ <strong>Google Maps:</strong> console.cloud.google.com → habilita Maps JavaScript API → copia la key → pégala arriba</div>
         <div class="al al-g">4️⃣ <strong>Google Tasks:</strong> Configurado automáticamente cuando aceptes permisos en el paso 2</div>
-        <div class="al al-b">5️⃣ <strong>Referidos del Formulario:</strong> En la pestaña Referidos → botón "📋 Sync Formulario". El Apps Script v5 ya tiene leerHojaExt.</div>
+        <div class="al al-b">5️⃣ <strong>Referidos del Formulario:</strong> En la pestaña Referidos → botón "📋 Sync Formulario". El Apps Script v6 tiene leerHojaExt.</div>
+        <div style="background:#fff;border-radius:var(--rad-sm);padding:14px;margin-top:12px;border:1px solid var(--s6)">
+          <div style="font-size:13px;font-weight:700;margin-bottom:8px">🔧 Si dice "Conectando..." o "Sin conexión":</div>
+          <div style="font-size:12px;color:var(--s3);line-height:2">
+            1. Abre <a href="https://script.google.com" target="_blank" style="color:var(--n)">script.google.com</a> con corazonzipa@gmail.com<br>
+            2. <strong>Desplegar → Administrar despliegues → ✏️ Editar</strong><br>
+            3. Ejecutar como: <strong>Yo (corazonzipa@gmail.com)</strong><br>
+            4. Quién puede acceder: <strong>Cualquier persona</strong> (sin Google)<br>
+            5. Versión: <strong>Nueva versión</strong> → Guardar → Desplegar<br>
+            6. Acepta los permisos si los pide<br>
+            7. Regresa aquí → botón <strong>🔌 Probar conexión</strong>
+          </div>
+        </div>
       </div></div>
       <div class="card"><div class="ch"><span>💾</span><div class="ct">Exportar datos</div></div><div class="cb" style="display:flex;flex-direction:column;gap:8px">
         <button class="btn bs sm" onclick="exportJSON()">📥 Exportar JSON completo</button>
@@ -1484,7 +1514,14 @@ var GA = {
     if (d) Object.keys(d).forEach(function(k) { p += '&' + k + '=' + encodeURIComponent(d[k] || ''); });
     return fetch(CFG.AS + '?' + p, { redirect: 'follow' })
       .then(function(r) { return r.text(); })
-      .then(function(t) { try { return JSON.parse(t); } catch(e) { return {ok:false,error:'No JSON'};} })
+      .then(function(t) {
+        try { return JSON.parse(t); }
+        catch(e) {
+          // Log what came back to help debug
+          console.warn('Apps Script no retornó JSON. Primeros 200 chars:', t.substring(0,200));
+          return {ok:false,error:'Respuesta no es JSON. El Apps Script puede no estar bien desplegado.'};
+        }
+      })
       .catch(function(e) { return {ok:false,error:e.message}; });
   },
   post: function(ac, d) {
@@ -1541,7 +1578,9 @@ function initApp() {
   if(typeof renderEli==='function'){renderEli();}
   renderAgHoy(); renderAgProx();
   updateDash();
-  setTimeout(syncAll, 1200);
+  // Mostrar datos locales inmediatamente, luego sincronizar
+  updateDash();
+  setTimeout(syncAll, 500);
 }
 
 function loadCfg() {
@@ -1569,7 +1608,7 @@ function saveIAKey() {
 function syncAll() {
   var gs = document.getElementById('GS');
   if (gs) { gs.className = 'gs-b gs-wn'; gs.textContent = '⏳ Conectando...'; }
-  var timeout = new Promise(function(_, rej) { setTimeout(function() { rej(new Error('timeout')); }, 8000); });
+  var timeout = new Promise(function(_, rej) { setTimeout(function() { rej(new Error('timeout')); }, 20000); });
   Promise.race([GA.get('ping'), timeout]).then(function(r) {
     if (r && r.ok) {
       if (gs) { gs.className = 'gs-b gs-ok'; gs.textContent = '✅ Google Sheets'; }
@@ -1581,10 +1620,17 @@ function syncAll() {
       syncCal();
     } else throw new Error(r ? r.error : 'Sin respuesta');
   }).catch(function(e) {
-    if (gs) { gs.className = 'gs-b gs-er'; gs.textContent = '⚠ Sin conexión'; }
-    // Sin conexión a Sheets - mostrar datos locales (equipo pre-cargado)
+    if (gs) { gs.className = 'gs-b gs-er'; gs.textContent = '⚠ Sin conexión con Sheets'; }
+    console.error('syncAll falló:', e.message);
+    // Mostrar datos locales aunque Sheets no responda
     renderEq(); renderTar(); updateDash();
     if (CFG.MKEY) initMap();
+    // Mostrar instrucciones en la barra
+    setTimeout(function() {
+      if (gs && gs.textContent.includes('Sin conexión')) {
+        gs.title = 'Verifica: 1) Apps Script desplegado con acceso "Cualquiera" 2) Nueva versión publicada 3) Permisos aceptados';
+      }
+    }, 1000);
   });
 }
 
