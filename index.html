@@ -586,26 +586,30 @@ function abrirEdicionEq(idx) {
   // Poner índice en el hidden
   var h = m.querySelector('input[type=hidden]'); if (h) h.value = idx;
   
-  // Llenar campos con setTimeout para asegurar que el modal ya está visible
+  // Llenar campos con setTimeout
   setTimeout(function() {
     function sv(id, v) { var e = document.getElementById(id); if (e) e.value = v || ''; }
     function ss(id, v) {
-      var e = document.getElementById(id); if (!e || !v) return;
+      var e = document.getElementById(id); if (!e) return;
+      if (!v) { e.selectedIndex = 0; return; }
       for (var i = 0; i < e.options.length; i++) {
-        if (e.options[i].value === v || e.options[i].text === v) { e.selectedIndex = i; break; }
+        if (e.options[i].value === v || e.options[i].text === v) { e.selectedIndex = i; return; }
       }
+      // Si no existe la opción, añadirla
+      var opt = document.createElement('option'); opt.value = v; opt.text = v;
+      e.appendChild(opt); e.value = v;
     }
     sv('eq-nom', r.Nombre);
     sv('eq-tel', r.Telefono);
     ss('eq-cond', r.Condicion);
     sv('eq-ent', r.Entidad);
     sv('eq-car', r.Cargo);
-    sv('eq-lid', r.Lider12 || r.Lider);
+    sv('eq-lid', r.Lider12 || r.Lider || '');
     ss('eq-vig', r.Vigia || '');
     ss('eq-adh', r.Adhesion || 'Con nosotros');
     sv('eq-bar', r.Barrio);
     sv('eq-obs', r.Observaciones);
-  }, 30);
+  }, 80);
 }
 window.abrirEdicionEq = abrirEdicionEq;
 
@@ -663,11 +667,21 @@ function abrirEdicion(tipo, idx) {
   m.classList.add('on');
   var hoy = new Date().toISOString().split('T')[0];
   m.querySelectorAll('input[type=date]').forEach(function(i){if(!i.value)i.value=hoy;});
+  // Fill fields with small delay so modal is visible and selects are populated
   setTimeout(function(){
     var sv=function(id,v){var e=document.getElementById(id);if(e)e.value=v||'';};
-    var ss=function(id,v){var e=document.getElementById(id);if(!e||!v)return;for(var i=0;i<e.options.length;i++){if(e.options[i].value===v||e.options[i].text===v){e.selectedIndex=i;break;}}};
+    var ss=function(id,v){
+      var e=document.getElementById(id);if(!e)return;
+      if(!v){e.selectedIndex=0;return;}
+      for(var i=0;i<e.options.length;i++){
+        if(e.options[i].value===v||e.options[i].text===v){e.selectedIndex=i;return;}
+      }
+      // If not found, add as option and select it
+      var opt=document.createElement('option');opt.value=v;opt.text=v;
+      e.appendChild(opt);e.value=v;
+    };
     if(fillMap[tipo]) fillMap[tipo](arr[idx], sv, ss);
-  }, 30);
+  }, 80);
 }
 window.abrirEdicion = abrirEdicion;
 
@@ -791,6 +805,8 @@ function loadSheet(hoja) {
         'EliteTeam':'renderEli'
       }[hoja];
       if (renderFn && typeof window[renderFn] === 'function') window[renderFn]();
+      // Actualizar dashboard y badges del sidebar después de cada hoja
+      if (typeof updateDash === 'function') updateDash();
     }
   }).catch(function(e) { console.warn('loadSheet error ('+hoja+'):', e); });
 }
@@ -907,7 +923,6 @@ window.addEventListener('DOMContentLoaded',function(){
     <div class="ni" onclick="goMob('mapa',this)"><span class="ni-ic">🗺️</span><span class="ni-lb">Mapa Territorial</span></div>
     <div class="nb-sec">Inteligencia</div>
     <div class="ni" onclick="goMob('documentos',this)"><span class="ni-ic">📁</span><span class="ni-lb">Documentos</span></div>
-    <div class="ni" onclick="goMob('bitacora',this)"><span class="ni-ic">📓</span><span class="ni-lb">Bitácora</span></div>
     <div class="ni" onclick="goMob('ia',this)"><span class="ni-ic">🤖</span><span class="ni-lb">Asistente IA</span></div>
     <div class="ni" onclick="goMob('config',this)"><span class="ni-ic">⚙️</span><span class="ni-lb">Configuración</span></div>
   </nav>
@@ -2389,6 +2404,13 @@ function updateDash() {
   setText('d-eq-tot',  DB.equipos.length);
   setText('d-vol-tot', (DB.voluntarios||[]).length);
   setText('d-eli-tot', (DB.eliteTeam||[]).length);
+
+  // ── Badges del sidebar (numeritos naranjas)
+  setText('b-ref', DB.referidos.filter(function(r){return r.Estado==='Pendiente'||!r.Estado;}).length);
+  var tarPend = DB.tareas.filter(function(t){return t.Estado==='Pendiente'||t.Estado==='En proceso';}).length;
+  setText('b-tar', tarPend);
+  var comVenc = DB.compromisos.filter(function(c){return c.Estado==='Vencido'||c.Estado==='Pendiente';}).length;
+  setText('b-com', comVenc);
 
   // Compromisos hoy (vencimiento = hoy)
   var comHoy = DB.compromisos.filter(function(c){
