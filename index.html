@@ -479,6 +479,15 @@ function _editRBootstrap(tipo, idx) {
     setTimeout(function() { cfg.fill(arr[idx]); }, 10);
   }
 }
+// ── Helpers mínimos para render
+function setText(id,v){var e=document.getElementById(id);if(e)e.textContent=v||'';}
+function setHTML(id,v){var e=document.getElementById(id);if(e)e.innerHTML=v||'';}
+function setVal(id,v){var e=document.getElementById(id);if(e)e.value=v||'';}
+function gv(id){var e=document.getElementById(id);return e?e.value.trim():'';}
+function bkEst(v){return v==='Realizada'||v==='Cumplido'||v==='Publicada'||v==='Finalizada'?'bk-g':v==='Pendiente'||v==='Programada'||v==='Planeada'?'bk-y':v==='Seguimiento'||v==='En proceso'||v==='En producción'?'bk-b':v==='Vencido'||v==='Cancelada'?'bk-r':'bk-gr';}
+function bkPri(v){return v==='Urgente'?'bk-r':v==='Alta'?'bk-o':v==='Baja'?'bk-gr':'bk-b';}
+function getIdx(modal){var h=document.querySelector('#'+modal+' input[type=hidden]');return h&&h.value!==''?parseInt(h.value):null;}
+
 // ── LOGIN
 function doLogin(){
   var inp=document.getElementById('pwd');
@@ -765,19 +774,25 @@ window.syncAll = syncAll;
 function loadSheet(hoja) {
   return GA.get('leerHoja', { hoja: hoja }).then(function(r) {
     if (r && r.ok && r.filas) {
-      var key = hoja.toLowerCase();
       if (!window.DB) window.DB = {};
-      DB[key] = r.filas;
-      // Llamar render si está disponible
-      var renders = {
-        equipos:'renderEq', referidos:'renderRef', tareas:'renderTar',
-        reuniones:'renderReu', compromisos:'renderCom', lideres:'renderLid',
-        redes:'renderRed', bitacora:'renderBit', voluntarios:'renderVol', eliteTeam:'renderEli'
-      };
-      var fn = renders[key];
-      if (fn && typeof window[fn] === 'function') window[fn]();
+      // Mapa explícito hoja → clave DB (evita bugs de case)
+      var dbKey = {
+        'Equipos':'equipos', 'Referidos':'referidos', 'Tareas':'tareas',
+        'Reuniones':'reuniones', 'Compromisos':'compromisos', 'Lideres':'lideres',
+        'Redes':'redes', 'Bitacora':'bitacora', 'Voluntarios':'voluntarios',
+        'EliteTeam':'eliteTeam'
+      }[hoja] || hoja.toLowerCase();
+      DB[dbKey] = r.filas;
+      // Mapa explícito hoja → función render
+      var renderFn = {
+        'Equipos':'renderEq', 'Referidos':'renderRef', 'Tareas':'renderTar',
+        'Reuniones':'renderReu', 'Compromisos':'renderCom', 'Lideres':'renderLid',
+        'Redes':'renderRed', 'Bitacora':'renderBit', 'Voluntarios':'renderVol',
+        'EliteTeam':'renderEli'
+      }[hoja];
+      if (renderFn && typeof window[renderFn] === 'function') window[renderFn]();
     }
-  }).catch(function() {});
+  }).catch(function(e) { console.warn('loadSheet error ('+hoja+'):', e); });
 }
 window.loadSheet = loadSheet;
 
@@ -1050,7 +1065,11 @@ window.addEventListener('DOMContentLoaded',function(){
 <div class="pg" id="pg-referidos">
   <div class="ph">
     <div><div class="pt">🤝 Referidos</div><div class="ps">Citas con Felipe — sincronizadas con Google Calendar</div></div>
-    <button class="btn bp sm" onclick="openNewModal('m-ref','m-ref-t','Nuevo referido')">+ Nuevo referido</button>
+    <div style="display:flex;gap:8px">
+      <button class="btn bt sm" onclick="syncRefFormulario()">📋 Sync Formulario Google</button>
+      <button class="btn bs sm" onclick="loadSheet('Referidos')">🔄 Sync Sheets</button>
+      <button class="btn bp sm" onclick="openNewModal('m-ref','m-ref-t','Nuevo referido')">+ Nuevo referido</button>
+    </div>
   </div>
   <div class="g4" style="margin-bottom:20px">
     <div class="sc"><div class="si si-o">🤝</div><div><div class="sl">Total</div><div class="sv" id="r-tot">0</div></div></div>
@@ -1635,34 +1654,8 @@ var DB = {
 // ═══════════════════════════════════════════════════
 // GOOGLE APPS SCRIPT — FormData (sin CORS preflight)
 // ═══════════════════════════════════════════════════
-var GA = {
-  get: function(ac, d) {
-    var p = 'accion=' + ac;
-    if (d) Object.keys(d).forEach(function(k) { p += '&' + k + '=' + encodeURIComponent(d[k] || ''); });
-    return fetch(CFG.AS + '?' + p, { redirect: 'follow' })
-      .then(function(r) { return r.text(); })
-      .then(function(t) {
-        try { return JSON.parse(t); }
-        catch(e) {
-          // Log what came back to help debug
-          console.warn('Apps Script no retornó JSON. Primeros 200 chars:', t.substring(0,200));
-          return {ok:false,error:'Respuesta no es JSON. El Apps Script puede no estar bien desplegado.'};
-        }
-      })
-      .catch(function(e) { return {ok:false,error:e.message}; });
-  },
-  post: function(ac, d) {
-    var fd = new FormData();
-    fd.append('accion', ac);
-    if (d) Object.keys(d).forEach(function(k) {
-      fd.append(k, typeof d[k] === 'object' ? JSON.stringify(d[k]) : String(d[k] || ''));
-    });
-    return fetch(CFG.AS, { method: 'POST', body: fd, redirect: 'follow' })
-      .then(function(r) { return r.text(); })
-      .then(function(t) { try { return JSON.parse(t); } catch(e) { return {ok:false,error:'No JSON'};} })
-      .catch(function(e) { return {ok:false,error:e.message}; });
-  }
-};
+// GA defined in bootstrap
+
 
 // ═══════════════════════════════════════════════════
 // GOOGLE TASKS INTEGRATION
@@ -1732,48 +1725,19 @@ function saveIAKey() {
 // ═══════════════════════════════════════════════════
 // SYNC
 // ═══════════════════════════════════════════════════
-function syncAll() {
-  var gs = document.getElementById('GS');
-  if (gs) { gs.className = 'gs-b gs-wn'; gs.textContent = '⏳ Conectando...'; }
-  var timeout = new Promise(function(_, rej) { setTimeout(function() { rej(new Error('timeout')); }, 20000); });
-  Promise.race([GA.get('ping'), timeout]).then(function(r) {
-    if (r && r.ok) {
-      if (gs) { gs.className = 'gs-b gs-ok'; gs.textContent = '✅ Google Sheets'; }
-      var gst = document.getElementById('g-st'); if (gst) { gst.className = 'gs-b gs-ok'; gst.textContent = '✅ Conectado'; }
-      var hojas = ['Equipos','Referidos','Tareas','Reuniones','Compromisos','Lideres','Redes','Bitacora','Voluntarios','EliteTeam'];
-      var p = Promise.resolve();
-      hojas.forEach(function(h) { p = p.then(function() { return loadSheet(h); }); });
-      p.then(function() { updateDash(); });
-      syncCal();
-    } else throw new Error(r ? r.error : 'Sin respuesta');
-  }).catch(function(e) {
-    if (gs) { gs.className = 'gs-b gs-er'; gs.textContent = '⚠ Sin conexión con Sheets'; }
-    console.error('syncAll falló:', e.message);
-    // Mostrar datos locales aunque Sheets no responda
-    renderEq(); renderTar(); updateDash();
-    if (CFG.MKEY) initMap();
-    // Mostrar instrucciones en la barra
-    setTimeout(function() {
-      if (gs && gs.textContent.includes('Sin conexión')) {
-        gs.title = 'Verifica: 1) Apps Script desplegado con acceso "Cualquiera" 2) Nueva versión publicada 3) Permisos aceptados';
-      }
-    }, 1000);
-  });
-}
+// syncAll defined in bootstrap
 
-function loadSheet(hoja) {
-  return GA.get('leerHoja', {hoja: hoja}).then(function(r) {
-    if (r && r.ok && r.filas) {
-      DB[hoja.toLowerCase()] = r.filas;
-      renderSheet(hoja);
-    }
-  }).catch(function() {});
-}
+
+// loadSheet defined in bootstrap
+
 
 function renderSheet(h) {
   var m = { Equipos:'renderEq', Referidos:'renderRef', Tareas:'renderTar', Reuniones:'renderReu',
              Compromisos:'renderCom', Lideres:'renderLid', Redes:'renderRed', Bitacora:'renderBit',
-             Voluntarios:'renderVol', EliteTeam:'renderEli' };
+             Voluntarios:'renderVol', EliteTeam:'renderEli',
+             equipos:'renderEq', referidos:'renderRef', tareas:'renderTar', reuniones:'renderReu',
+             compromisos:'renderCom', lideres:'renderLid', redes:'renderRed', bitacora:'renderBit',
+             voluntarios:'renderVol', eliteTeam:'renderEli' };
   if (m[h] && window[m[h]]) window[m[h]]();
 }
 // ═══════════════════════════════════════════════════
@@ -2069,64 +2033,65 @@ function renderEq() {
 
 function renderRef() {
   var tb = document.getElementById('tb-ref'); if (!tb) return;
-  setText('r-tot', DB.referidos.length);
-  setText('r-pen', DB.referidos.filter(function(r){return r.Estado==='Pendiente';}).length);
-  setText('r-rel', DB.referidos.filter(function(r){return r.Estado==='Realizada';}).length);
-  setText('r-seg', DB.referidos.filter(function(r){return r.Estado==='Seguimiento';}).length);
-  setText('b-ref', DB.referidos.filter(function(r){return r.Estado==='Pendiente';}).length);
-  renderRefProg();
 
-  if (!DB.referidos.length) {
-    tb.innerHTML = '<tr><td colspan="10" class="empty">🤝 Sin referidos. Los miembros del equipo deben referir 5 personas cada uno.</td></tr>';
+  // Safety: ensure DB and DB.referidos exist
+  if (!window.DB) window.DB = {};
+  if (!DB.referidos) DB.referidos = [];
+
+  var refs = DB.referidos;
+
+  setText('r-tot', refs.length);
+  setText('r-pen', refs.filter(function(r){return r.Estado==='Pendiente';}).length);
+  setText('r-rel', refs.filter(function(r){return r.Estado==='Realizada';}).length);
+  setText('r-seg', refs.filter(function(r){return r.Estado==='Seguimiento';}).length);
+  setText('b-ref', refs.filter(function(r){return r.Estado==='Pendiente';}).length);
+  if (typeof renderRefProg === 'function') renderRefProg();
+
+  if (!refs.length) {
+    tb.innerHTML = '<tr><td colspan="10" class="empty" style="padding:32px;text-align:center">🤝 Sin referidos registrados aún.<br><small style="color:#aaa">Usa el botón "+ Nuevo referido" o el botón "📋 Sync Formulario"</small></td></tr>';
     return;
   }
 
-  // Helper para mostrar horarios disponibles del formulario de Google
-  function getHorarios(r) {
-    var hs = [];
-    var cols = ['8 am','9 am','10 am','11 am','12 pm','1 pm','2 pm','3 pm','4 pm','5 pm','6 pm','7 pm'];
-    cols.forEach(function(h) {
-      // Las columnas del form tienen nombres largos, buscar cualquier key que contenga la hora
-      Object.keys(r).forEach(function(k) {
-        if (k.indexOf(h) >= 0 && r[k] && String(r[k]).trim()) hs.push(h);
-      });
-    });
-    // Deduplicar
-    return hs.filter(function(v,i,a){return a.indexOf(v)===i;}).join(', ') || r.Horarios || '—';
-  }
-
   var rows = [];
-  for (var i = 0; i < DB.referidos.length; i++) {
-    var r = DB.referidos[i];
-    var llam = r.Llamada || 'Pendiente';
-    var llamCol = llam==='Confirmado'?'bk-g':llam==='No contesta'||llam==='Fuera de servicio'?'bk-r':llam==='Llamar después'?'bk-b':llam==='No interesado'?'bk-gr':'bk-y';
-    var horarios = getHorarios(r);
-    var nombre = r.Nombre || r['Nombre del referido'] || '';
-    var tel    = r.Telefono || r['Teléfono'] || '';
-    var barrio = r.Barrio || r['Barrio'] || '';
-    var quien  = r.QuienRefiere || r['Tu Nombre'] || '';
-    var estado = r.Estado || 'Pendiente';
-    var estCol = estado==='Realizada'||estado==='Confirmado'?'bk-g':estado==='Pendiente'?'bk-y':'bk-b';
-    var cita   = r.FechaCita ? '📅 '+r.FechaCita+' '+(r.HoraCita||'') : '<span style="color:#aaa">Sin agendar</span>';
-    var agendado = r.Agendado==='si'||r.FechaCita?'✅':'—';
+  for (var i = 0; i < refs.length; i++) {
+    try {
+      var r = refs[i];
+      var llam = r.Llamada || 'Pendiente';
+      var llamCol = llam==='Confirmado'?'bk-g':
+                    llam==='No contesta'||llam==='Fuera de servicio'?'bk-r':
+                    llam==='Llamar después'?'bk-b':
+                    llam==='No interesado'?'bk-gr':'bk-y';
+      var estado = r.Estado || 'Pendiente';
+      var estCol = estado==='Realizada'||estado==='Confirmado'?'bk-g':
+                   estado==='Pendiente'?'bk-y':'bk-b';
+      var nombre  = r.Nombre || r['Nombre del referido'] || '';
+      var tel     = r.Telefono || r['Teléfono'] || '';
+      var barrio  = r.Barrio || '';
+      var quien   = r.QuienRefiere || r['Tu Nombre'] || '';
+      var horarios = r.Horarios || '—';
+      var cita    = r.FechaCita ? '📅 ' + r.FechaCita + (r.HoraCita?' '+r.HoraCita:'') : '—';
+      var agendado = (r.Agendado==='si'||r.FechaCita) ? '✅' : '—';
 
-    var tr = document.createElement('tr');
-    tr.innerHTML =
-      '<td><div style="font-weight:700;font-size:13px">'+esc(nombre)+'</div>'
-      +'<div style="font-size:10px;color:#888">'+esc(r.Ocupacion||r['Ocupación']||'')+'</div></td>'
-      +'<td><a href="https://wa.me/57'+esc(tel)+'" target="_blank" style="color:#FF8C00;font-weight:600">📱'+esc(tel||'—')+'</a></td>'
-      +'<td style="font-size:12px">'+esc(barrio)+'</td>'
-      +'<td><span class="bk bk-o" style="font-size:10px">'+esc(quien.split(' ').slice(0,2).join(' '))+'</span></td>'
-      +'<td style="font-size:10px;color:#555;max-width:110px">'+esc(horarios)+'</td>'
-      +'<td><span class="bk '+llamCol+'" style="font-size:10px">'+esc(llam)+'</span></td>'
-      +'<td style="font-size:11px">'+cita+'</td>'
-      +'<td style="font-size:11px;text-align:center">'+agendado+'</td>'
-      +'<td><span class="bk '+estCol+'" style="font-size:10px">'+esc(estado)+'</span></td>'
-      +'<td><div style="display:flex;gap:3px">'
-      +'<button class="btn bp sm ref-edit-btn" data-idx="'+i+'" style="padding:3px 8px;font-size:11px">✏️</button>'
-      +'<button class="btn bd sm ref-del-btn" data-idx="'+i+'" style="padding:3px 8px;font-size:11px">🗑</button>'
-      +'</div></td>';
-    rows.push(tr);
+      var tr = document.createElement('tr');
+      tr.innerHTML =
+        '<td><div style="font-weight:700;font-size:13px">'+esc(nombre)+'</div>'
+        +'<div style="font-size:10px;color:#888">'+esc(r.Ocupacion||r['Ocupación']||'')+'</div></td>'
+        +'<td><a href="https://wa.me/57'+esc(tel)+'" target="_blank" style="color:#FF8C00;font-weight:600">📱 '+esc(tel||'—')+'</a></td>'
+        +'<td style="font-size:12px">'+esc(barrio)+'</td>'
+        +'<td><span class="bk bk-o" style="font-size:10px">'+esc(quien.split(' ').slice(0,2).join(' '))+'</span></td>'
+        +'<td style="font-size:10px;color:#555;max-width:100px">'+esc(horarios)+'</td>'
+        +'<td><span class="bk '+llamCol+'" style="font-size:10px">'+esc(llam)+'</span></td>'
+        +'<td style="font-size:11px">'+cita+'</td>'
+        +'<td style="font-size:12px;text-align:center">'+agendado+'</td>'
+        +'<td><span class="bk '+estCol+'" style="font-size:10px">'+esc(estado)+'</span></td>'
+        +'<td><div style="display:flex;gap:3px">'
+        +'<button class="btn bp sm ref-edit-btn" data-idx="'+i+'" style="padding:3px 8px;font-size:11px">✏️</button>'
+        +'<button class="btn bd sm ref-del-btn"  data-idx="'+i+'" style="padding:3px 8px;font-size:11px">🗑</button>'
+        +'</div></td>';
+      rows.push(tr);
+    } catch(err) {
+      console.warn('renderRef row error at '+i+':', err);
+    }
   }
 
   tb.innerHTML = '';
@@ -2136,9 +2101,14 @@ function renderRef() {
     var eb = e.target.closest('.ref-edit-btn');
     var db = e.target.closest('.ref-del-btn');
     if (eb) abrirEdicion('ref', parseInt(eb.getAttribute('data-idx')));
-    if (db) delR('referidos', parseInt(db.getAttribute('data-idx')), DB.referidos[parseInt(db.getAttribute('data-idx'))].Nombre||DB.referidos[parseInt(db.getAttribute('data-idx'))]['Nombre del referido']||'referido');
+    if (db) {
+      var idx2 = parseInt(db.getAttribute('data-idx'));
+      var nom2 = DB.referidos[idx2] ? (DB.referidos[idx2].Nombre||DB.referidos[idx2]['Nombre del referido']||'referido') : 'referido';
+      delR('referidos', idx2, nom2);
+    }
   };
 }
+
 
 function renderRefProg() {
   var c = document.getElementById('ref-prog'); if (!c) return;
