@@ -310,14 +310,22 @@ function ini2(n){return(n||'?').split(' ').map(function(w){return w[0]||'';}).jo
 function esc(s){return String(s||'').replace(/[&<>"]/g,function(c){return{'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c];});}
 
 function updateVigiasSelects(){
-  ['eq-vig','ref-vig'].forEach(function(id){
-    var sel=document.getElementById(id);if(!sel)return;
+  // eq-vig → select de vigías
+  var sel=document.getElementById('eq-vig');
+  if(sel){
     var cur=sel.value;
     sel.innerHTML='<option value="">-- Sin vigía --</option>'+VIGIAS.map(function(v){
       return '<option value="'+esc(v.nom)+'">'+esc(v.nom)+' ('+esc(v.area)+')</option>';
     }).join('');
     if(cur)sel.value=cur;
-  });
+  }
+  // ref-vig → datalist con miembros del equipo (texto libre)
+  var dl=document.getElementById('ref-vig-list');
+  if(dl && typeof DB!=='undefined' && DB.equipos){
+    dl.innerHTML=DB.equipos.map(function(r){
+      return '<option value="'+esc(r.Nombre)+'"></option>';
+    }).join('');
+  }
 }
 function renderVigiasAdmin(){
   var c=document.getElementById('vigias-admin-list');if(!c)return;
@@ -646,7 +654,7 @@ function abrirEdicion(tipo, idx) {
                 vol:'Editar voluntario',eli:'Editar integrante élite'};
   var fillMap = {
     eq:  function(r,sv,ss){ sv('eq-nom',r.Nombre);sv('eq-tel',r.Telefono);ss('eq-cond',r.Condicion);sv('eq-ent',r.Entidad);sv('eq-car',r.Cargo);sv('eq-lid',r.Lider12||r.Lider||'');ss('eq-vig',r.Vigia||'');ss('eq-adh',r.Adhesion||'Con nosotros');sv('eq-bar',r.Barrio);sv('eq-obs',r.Observaciones); },
-    ref: function(r,sv,ss){ sv('ref-nom',r.Nombre);sv('ref-tel',r.Telefono);sv('ref-bar',r.Barrio);sv('ref-ocu',r.Ocupacion||r['Ocupación']||'');ss('ref-vig',r.QuienRefiere||r['Tu Nombre']||'');ss('ref-est',r.Estado||'Pendiente');ss('ref-llam',r.Llamada||'Pendiente');sv('ref-tip',r.Tipificacion||r.Observaciones||r['Observaciones']||'');sv('ref-fci',r.FechaCita||'');sv('ref-hci',r.HoraCita||'');sv('ref-lug',r.Lugar||''); },
+    ref: function(r,sv,ss){ sv('ref-nom',r.Nombre);sv('ref-tel',r.Telefono);sv('ref-bar',r.Barrio);sv('ref-ocu',r.Ocupacion||r['Ocupación']||'');sv('ref-vig',r.QuienRefiere||r['Tu Nombre']||'');ss('ref-est',r.Estado||'Pendiente');ss('ref-llam',r.Llamada||'Pendiente');sv('ref-tip',r.Tipificacion||r.Observaciones||r['Observaciones']||'');sv('ref-fci',r.FechaCita||'');sv('ref-hci',r.HoraCita||'');sv('ref-lug',r.Lugar||''); },
     tar: function(r,sv,ss){ sv('tar-des',r.Descripcion);sv('tar-res',r.Responsable);sv('tar-fec',r.FechaEntrega);ss('tar-pri',r.Prioridad);ss('tar-est',r.Estado);ss('tar-cat',r.Categoria);sv('tar-reu',r.Reunion);sv('tar-obs',r.Observaciones); },
     reu: function(r,sv,ss){ sv('reu-nom',r.Nombre);sv('reu-lug',r.Lugar);sv('reu-fec',r.Fecha);sv('reu-hor',r.Hora);sv('reu-inv',r.Invitados);sv('reu-des',r.Descripcion);sv('reu-not',r.Notas);ss('reu-est',r.Estado); },
     com: function(r,sv,ss){ sv('com-nom',r.Nombre||r.Compromiso);sv('com-bar',r.Barrio);sv('com-sol',r.Solicitante);sv('com-res',r.Responsable);ss('com-est',r.Estado);sv('com-fec',r.FechaCumplimiento||r.Fecha);sv('com-pet',r.Peticion);sv('com-obs',r.Seguimiento); },
@@ -1390,7 +1398,7 @@ window.addEventListener('DOMContentLoaded',function(){
     <div class="fg"><div class="fl">Teléfono</div><input class="fc" id="ref-tel" placeholder="310..."></div>
     <div class="fg"><div class="fl">Barrio</div><input class="fc" id="ref-bar" placeholder="Barrio o sector"></div>
     <div class="fg"><div class="fl">Ocupación</div><input class="fc" id="ref-ocu" placeholder="A qué se dedica"></div>
-    <div class="fg"><div class="fl">Quién lo refiere (miembro del equipo)</div><select class="fc" id="ref-vig"></select></div>
+    <div class="fg"><div class="fl">Quién lo refiere (miembro del equipo)</div><input class="fc" id="ref-vig" placeholder="Nombre del miembro del equipo que refirió" list="ref-vig-list"><datalist id="ref-vig-list"></datalist></div>
     <div class="fg"><div class="fl">Estado</div><select class="fc" id="ref-est"><option>Pendiente</option><option>Agendada</option><option>Realizada</option><option>Seguimiento</option><option>Descartada</option></select></div>
     <div class="fg"><div class="fl">📞 Estado de llamada de confirmación</div><select class="fc" id="ref-llam"><option value="Pendiente">⏳ Pendiente</option><option value="Confirmado">✅ Contestó - Confirmado</option><option value="No contesta">📵 No contesta</option><option value="Fuera de servicio">📴 Fuera de servicio</option><option value="Llamar después">🔄 Llamar después</option><option value="No interesado">❌ No interesado</option></select></div>
     <div class="fg"><div class="fl">Tipificación / Observación de la llamada</div><textarea class="fc" id="ref-tip" placeholder="¿Qué dijo cuando lo llamaste?" style="min-height:60px"></textarea></div>
@@ -2726,13 +2734,29 @@ function saveRef() {
                HoraCita:gv('ref-hci'),Lugar:gv('ref-lug'),Horarios:hrs,Agendado:agendado,
                Observaciones:gv('ref-tip')};
   var idx = getIdx('m-ref');
-  if (agendado === 'si' && datos.FechaCita) {
-    toast('⏳ Agendando en Google Calendar...');
-    GA.post('crearEvento',{calendario:'corazonzipa@gmail.com',titulo:'☕ Cita FV con '+nom,
-      fecha:datos.FechaCita,horaInicio:datos.HoraCita||'09:00',horaFin:'10:00',lugar:datos.Lugar,
-      descripcion:'Referido por: '+(datos.QuienRefiere||'')+'\nHorarios: '+hrs,
-      observaciones:datos.Observaciones,verificarConflictos:'false'})
-      .then(function(r){if(r&&r.ok)toast('✅ Cita en Calendar 📅');else toast('⚠ '+( r?r.error:'Error'));});
+  // Crear evento en Calendar si hay fecha de cita y está marcado como agendado
+  if (datos.FechaCita && (agendado === 'si' || datos.Estado === 'Agendada')) {
+    var yaEnCalendar = (idx !== null && DB.referidos[idx] && DB.referidos[idx].CalendarId);
+    if (!yaEnCalendar) {
+      toast('⏳ Agendando en Google Calendar...');
+      GA.post('crearEvento',{
+        calendario:'corazonzipa@gmail.com',
+        titulo:'☕ Cita FV con '+nom,
+        fecha:datos.FechaCita,
+        horaInicio:datos.HoraCita||'09:00',
+        horaFin:'10:00',
+        lugar:datos.Lugar||'Por definir',
+        descripcion:'Referido por: '+(datos.QuienRefiere||'')+
+          '\nTeléfono: '+(datos.Telefono||'')+
+          '\nBarrio: '+(datos.Barrio||'')+
+          (datos.Tipificacion?'\nObservaciones: '+datos.Tipificacion:'')+
+          (hrs?'\nHorarios disponibles: '+hrs:''),
+        verificarConflictos:'false'
+      }).then(function(r){
+        if(r&&r.ok) toast('✅ Cita creada en Google Calendar 📅');
+        else toast('⚠ Calendar: '+(r?r.error:'sin respuesta'));
+      });
+    }
   }
   if (idx !== null) {
     DB.referidos[idx] = Object.assign({}, DB.referidos[idx], datos);
