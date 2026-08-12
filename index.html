@@ -696,6 +696,133 @@ window.renderTablaGenerica = renderTablaGenerica;
 window.abrirNuevoEq = abrirNuevoEq;
 
 // ── Setup al cargar
+
+// ── GA (Google Apps Script calls) — en bootstrap para garantizar acceso
+var GA = {
+  get: function(ac, d) {
+    var p = 'accion=' + ac;
+    if (d) Object.keys(d).forEach(function(k) { p += '&' + k + '=' + encodeURIComponent(d[k] || ''); });
+    return fetch(CFG.AS + '?' + p, { redirect: 'follow' })
+      .then(function(r) { return r.text(); })
+      .then(function(t) {
+        try { return JSON.parse(t); }
+        catch(e) {
+          console.warn('Apps Script no retornó JSON:', t.substring(0, 200));
+          return { ok: false, error: 'No JSON: ' + t.substring(0, 80) };
+        }
+      })
+      .catch(function(e) { return { ok: false, error: e.message }; });
+  },
+  post: function(ac, d) {
+    var fd = new FormData();
+    fd.append('accion', ac);
+    if (d) Object.keys(d).forEach(function(k) {
+      fd.append(k, typeof d[k] === 'object' ? JSON.stringify(d[k]) : String(d[k] || ''));
+    });
+    return fetch(CFG.AS, { method: 'POST', body: fd, redirect: 'follow' })
+      .then(function(r) { return r.text(); })
+      .then(function(t) { try { return JSON.parse(t); } catch(e) { return { ok: false, error: 'No JSON' }; } })
+      .catch(function(e) { return { ok: false, error: e.message }; });
+  }
+};
+window.GA = GA;
+
+// ── syncAll en bootstrap — conecta con Google Sheets
+function syncAll() {
+  var gs = document.getElementById('GS');
+  if (gs) { gs.className = 'gs-b gs-wn'; gs.textContent = '⏳ Conectando...'; }
+  var timeout = new Promise(function(_, rej) { setTimeout(function() { rej(new Error('timeout 20s')); }, 20000); });
+  Promise.race([GA.get('ping'), timeout])
+    .then(function(r) {
+      if (r && r.ok) {
+        if (gs) { gs.className = 'gs-b gs-ok'; gs.textContent = '✅ Sheets conectado'; }
+        var gst = document.getElementById('g-st');
+        if (gst) { gst.className = 'gs-b gs-ok'; gst.textContent = '✅ Conectado'; }
+        // Cargar todas las hojas en secuencia
+        var hojas = ['Equipos','Referidos','Tareas','Reuniones','Compromisos','Lideres','Redes','Bitacora','Voluntarios','EliteTeam'];
+        var p = Promise.resolve();
+        hojas.forEach(function(h) {
+          p = p.then(function() { return loadSheet(h); });
+        });
+        p.then(function() {
+          if (typeof updateDash === 'function') updateDash();
+        });
+        if (typeof syncCal === 'function') syncCal();
+      } else {
+        throw new Error(r ? (r.error || 'Sin respuesta ok') : 'Sin respuesta');
+      }
+    })
+    .catch(function(e) {
+      if (gs) { gs.className = 'gs-b gs-er'; gs.textContent = '⚠ Sin conexión'; }
+      console.error('syncAll error:', e.message);
+      if (typeof updateDash === 'function') updateDash();
+      if (CFG.MKEY && typeof initMap === 'function') initMap();
+    });
+}
+window.syncAll = syncAll;
+
+// ── loadSheet en bootstrap
+function loadSheet(hoja) {
+  return GA.get('leerHoja', { hoja: hoja }).then(function(r) {
+    if (r && r.ok && r.filas) {
+      var key = hoja.toLowerCase();
+      if (!window.DB) window.DB = {};
+      DB[key] = r.filas;
+      // Llamar render si está disponible
+      var renders = {
+        equipos:'renderEq', referidos:'renderRef', tareas:'renderTar',
+        reuniones:'renderReu', compromisos:'renderCom', lideres:'renderLid',
+        redes:'renderRed', bitacora:'renderBit', voluntarios:'renderVol', eliteTeam:'renderEli'
+      };
+      var fn = renders[key];
+      if (fn && typeof window[fn] === 'function') window[fn]();
+    }
+  }).catch(function() {});
+}
+window.loadSheet = loadSheet;
+
+// ── syncRefFormulario en bootstrap
+function syncRefFormulario() {
+  _toast('🔄 Cargando referidos del formulario...');
+  var SID = '1g120UJ763yWEveA1nF5KFNXKM74wWzEKoNbc7BLX1yo';
+  GA.get('leerHojaExt', { sid: SID, hoja: '' }).then(function(r) {
+    if (r && r.ok && r.filas && r.filas.length) {
+      DB.referidos = r.filas.map(function(row) {
+        var hor = [];
+        Object.keys(row).forEach(function(k) {
+          if ((k.indexOf('am]') >= 0 || k.indexOf('pm]') >= 0) && row[k] && String(row[k]).trim()) {
+            var m = k.match(/\[([^\]]+)\]/);
+            if (m) hor.push(m[1]);
+          }
+        });
+        return {
+          Nombre: row['Nombre del referido'] || row.Nombre || '',
+          Telefono: row['Teléfono'] || row.Telefono || '',
+          Barrio: row['Barrio'] || '',
+          Ocupacion: row['Ocupación'] || row.Ocupacion || '',
+          QuienRefiere: row['Tu Nombre'] || '',
+          Horarios: hor.filter(function(v,i,a){return a.indexOf(v)===i;}).join(', '),
+          Observaciones: row['Observaciones'] || '',
+          Estado: row.Estado || 'Pendiente',
+          Llamada: row.Llamada || 'Pendiente',
+          Tipificacion: row.Tipificacion || '',
+          FechaCita: row.FechaCita || '',
+          HoraCita: row.HoraCita || '',
+          Agendado: row.Agendado || 'no',
+          _fila: row._fila
+        };
+      });
+      _toast('✅ ' + DB.referidos.length + ' referidos del formulario');
+      if (typeof renderRef === 'function') renderRef();
+      if (typeof renderRefProg === 'function') renderRefProg();
+      if (typeof updateDash === 'function') updateDash();
+    } else {
+      _toast('⚠ Sin datos del formulario: ' + (r ? r.error || 'sin filas' : 'error'));
+    }
+  });
+}
+window.syncRefFormulario = syncRefFormulario;
+
 function toggleMobMenu() {
   var sb = document.querySelector('.sb');
   var ov = document.getElementById('mob-overlay');
