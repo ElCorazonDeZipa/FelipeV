@@ -231,6 +231,7 @@ textarea.fc{resize:vertical;min-height:80px;}
 
 /* ═══ RESPONSIVE ═══ */
 @media(max-width:900px){.dl{grid-template-columns:1fr;}.g4{grid-template-columns:1fr 1fr;}}
+.dash-stats{grid-template-columns:repeat(3,1fr)!important;}
 @media(max-width:768px){
   .sb{position:fixed;top:0;left:-100%;width:280px;height:100%;z-index:500;transition:left .28s cubic-bezier(.4,0,.2,1);box-shadow:none;}
   .sb.mob-open{left:0;box-shadow:4px 0 32px rgba(0,0,0,.4);}
@@ -782,54 +783,79 @@ window.addEventListener('DOMContentLoaded',function(){
 <!-- ═══ DASHBOARD ═══ -->
 <div class="pg on" id="pg-dashboard">
   <div class="ph">
-    <div><div class="pt">🧡 Centro de Inteligencia</div><div class="ps" id="d-fecha">Cargando...</div></div>
-    <div style="display:flex;gap:10px"><button class="btn bs sm" onclick="go('ia',null)">🤖 Asistente IA</button><button class="btn bp sm" onclick="openM('m-act')">+ Nueva actividad</button></div>
+    <div><div class="pt">🧡 Zipa con el Corazón</div><div class="ps" id="d-fecha">Cargando...</div></div>
+    <button class="btn bp sm" onclick="openM('m-act')">+ Nuevo evento</button>
   </div>
-  <div class="g4" style="margin-bottom:24px">
-    <div class="sc"><div class="si si-o">🤝</div><div><div class="sl">Referidos captados</div><div class="sv" id="d-ref">—</div></div></div>
-    <div class="sc"><div class="si si-g">✅</div><div><div class="sl">Tareas completadas</div><div class="sv" id="d-tar">—</div></div></div>
-    <div class="sc"><div class="si si-b">🏛️</div><div><div class="sl">Reuniones realizadas</div><div class="sv" id="d-reu">—</div></div></div>
-    <div class="sc"><div class="si si-r">📋</div><div><div class="sl">Compromisos pendientes</div><div class="sv" id="d-com">—</div></div></div>
+
+  <!-- FILA 1: Contadores principales -->
+  <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:20px" class="dash-stats" id="dash-stats-row">
+    <div class="sc"><div class="si si-o">🤝</div><div><div class="sl">Referidos</div><div class="sv" id="d-ref-tot">0</div></div></div>
+    <div class="sc"><div class="si si-g">👥</div><div><div class="sl">Equipo</div><div class="sv" id="d-eq-tot">0</div></div></div>
+    <div class="sc"><div class="si si-b">🙋</div><div><div class="sl">Voluntarios</div><div class="sv" id="d-vol-tot">0</div></div></div>
+    <div class="sc"><div class="si" style="background:linear-gradient(135deg,#EDE7F6,#D1C4E9)">⚡</div><div><div class="sl">Élite</div><div class="sv" id="d-eli-tot">0</div></div></div>
+    <div class="sc"><div class="si si-r">📋</div><div><div class="sl">Compromisos hoy</div><div class="sv" id="d-com-hoy">0</div></div></div>
+    <div class="sc"><div class="si si-t">🏆</div><div><div class="sl">Meta cumplida</div><div class="sv" id="d-meta-ok">0</div></div></div>
   </div>
-  <div style="display:grid;grid-template-columns:1fr 340px;gap:20px">
-    <div style="display:flex;flex-direction:column;gap:20px">
-      <div class="card">
-        <div class="ch"><span>📅</span><div class="ct">Agenda de hoy</div><span class="gs-b gs-wn" id="cal-st">⏳ Calendar</span></div>
-        <div class="cb" id="d-agenda"><div class="empty">🔄 Sincronizando con Google Calendar...</div></div>
+
+  <!-- FILA 2: Agenda + Tareas -->
+  <div class="g2" style="margin-bottom:20px">
+
+    <!-- AGENDA -->
+    <div class="card">
+      <div class="ch"><span>📅</span><div class="ct">Agenda</div><span class="gs-b gs-wn" id="cal-st">⏳</span></div>
+      <div style="display:flex;border-bottom:1px solid var(--s6)">
+        <div style="flex:1;padding:8px 16px;font-size:12px;font-weight:700;color:var(--n);border-bottom:2px solid var(--n);text-align:center">HOY</div>
+        <div style="flex:1;padding:8px 16px;font-size:12px;font-weight:600;color:var(--s4);text-align:center;cursor:pointer" onclick="dashToggle('ag','sem')" id="ag-tab-sem">ESTA SEMANA</div>
       </div>
-      <div class="card">
-        <div class="ch"><span>⚡</span><div class="ct">Alertas inteligentes</div><span class="bk bk-r" id="d-alerta-n">0 urgentes</span></div>
-        <div class="cb" id="d-alertas"><div class="empty">Analizando datos...</div></div>
-      </div>
-      <div class="card">
-        <div class="ch"><span>📈</span><div class="ct">Progreso de campaña</div></div>
-        <div class="cb">
-          <div style="margin-bottom:14px"><div style="display:flex;justify-content:space-between;margin-bottom:6px"><span style="font-size:12px;font-weight:600">🤝 Referidos captados</span><span style="font-size:12px;color:var(--s4)" id="p-ref-l">0/500</span></div><div class="pb"><div class="pf" id="p-ref" style="background:linear-gradient(90deg,var(--n),var(--p));width:0%"></div></div></div>
-          <div style="margin-bottom:14px"><div style="display:flex;justify-content:space-between;margin-bottom:6px"><span style="font-size:12px;font-weight:600">📋 Compromisos cumplidos</span><span style="font-size:12px;color:var(--s4)" id="p-com-l">0/0</span></div><div class="pb"><div class="pf" id="p-com" style="background:linear-gradient(90deg,var(--g),#00897B);width:0%"></div></div></div>
-          <div><div style="display:flex;justify-content:space-between;margin-bottom:6px"><span style="font-size:12px;font-weight:600">⭐ Líderes activos</span><span style="font-size:12px;color:var(--s4)" id="p-lid-l">0/0</span></div><div class="pb"><div class="pf" id="p-lid" style="background:linear-gradient(90deg,var(--b),#7986CB);width:0%"></div></div></div>
-        </div>
-      </div>
+      <div class="cb" id="d-agenda-hoy" style="max-height:220px;overflow-y:auto"></div>
+      <div class="cb" id="d-agenda-sem" style="max-height:220px;overflow-y:auto;display:none"></div>
     </div>
-    <div style="display:flex;flex-direction:column;gap:20px">
-      <div class="card">
-        <div class="ch"><span>🏃</span><div class="ct">Tareas urgentes</div><button class="btn bs sm" onclick="go('tareas',null)">Ver todo →</button></div>
-        <div class="cb" id="d-tareas"><div class="empty">Cargando...</div></div>
+
+    <!-- TAREAS -->
+    <div class="card">
+      <div class="ch"><span>✅</span><div class="ct">Tareas</div><button class="btn bs sm" onclick="go('tareas',null)">Ver todas →</button></div>
+      <div style="display:flex;border-bottom:1px solid var(--s6)">
+        <div style="flex:1;padding:8px 16px;font-size:12px;font-weight:700;color:var(--n);border-bottom:2px solid var(--n);text-align:center" id="tar-tab-hoy">HOY</div>
+        <div style="flex:1;padding:8px 16px;font-size:12px;font-weight:600;color:var(--s4);text-align:center;cursor:pointer" onclick="dashToggle('tar','sem')" id="tar-tab-sem">ESTA SEMANA</div>
       </div>
-      <div class="card" style="margin-bottom:20px">
-        <div class="ch"><span>📋</span><div class="ct">Tareas para hoy</div><button class="btn bs sm" onclick="go('tareas',null)">Ver todas →</button></div>
-        <div class="cb" id="d-tareas-hoy"><div class="empty">Cargando...</div></div>
-      </div>
-      <div class="card" style="margin-bottom:20px">
-        <div class="ch"><span>📱</span><div class="ct">Redes sociales hoy</div><button class="btn bs sm" onclick="go('redes',null)">Ver todas →</button></div>
-        <div class="cb" id="d-redes-hoy"><div class="empty">Cargando...</div></div>
-      </div>
-      <div class="card">
-        <div class="ch"><span>👁️</span><div class="ct">Vigías activos</div><button class="btn bs sm" onclick="go('config',null)">⚙️ Gestionar</button></div>
-        <div class="cb" id="d-vigias"><div class="empty">Cargando vigías...</div></div>
-      </div>
+      <div class="cb" id="d-tar-hoy" style="max-height:220px;overflow-y:auto"></div>
+      <div class="cb" id="d-tar-sem" style="max-height:220px;overflow-y:auto;display:none"></div>
     </div>
+
   </div>
-</div>
+
+  <!-- FILA 3: Redes + Compromisos -->
+  <div class="g2" style="margin-bottom:20px">
+
+    <!-- REDES SOCIALES -->
+    <div class="card">
+      <div class="ch"><span>📱</span><div class="ct">Redes Sociales</div><button class="btn bs sm" onclick="go('redes',null)">Ver todas →</button></div>
+      <div style="display:flex;border-bottom:1px solid var(--s6)">
+        <div style="flex:1;padding:8px 16px;font-size:12px;font-weight:700;color:var(--n);border-bottom:2px solid var(--n);text-align:center" id="red-tab-hoy">HOY</div>
+        <div style="flex:1;padding:8px 16px;font-size:12px;font-weight:600;color:var(--s4);text-align:center;cursor:pointer" onclick="dashToggle('red','sem')" id="red-tab-sem">ESTA SEMANA</div>
+      </div>
+      <div class="cb" id="d-red-hoy" style="max-height:220px;overflow-y:auto"></div>
+      <div class="cb" id="d-red-sem" style="max-height:220px;overflow-y:auto;display:none"></div>
+    </div>
+
+    <!-- COMPROMISOS -->
+    <div class="card">
+      <div class="ch"><span>📋</span><div class="ct">Compromisos</div><button class="btn bs sm" onclick="go('compromisos',null)">Ver todos →</button></div>
+      <div style="display:flex;border-bottom:1px solid var(--s6)">
+        <div style="flex:1;padding:8px 16px;font-size:12px;font-weight:700;color:var(--n);border-bottom:2px solid var(--n);text-align:center" id="com-tab-hoy">HOY</div>
+        <div style="flex:1;padding:8px 16px;font-size:12px;font-weight:600;color:var(--s4);text-align:center;cursor:pointer" onclick="dashToggle('com','sem')" id="com-tab-sem">ESTA SEMANA</div>
+      </div>
+      <div class="cb" id="d-com-hoy-list" style="max-height:220px;overflow-y:auto"></div>
+      <div class="cb" id="d-com-sem" style="max-height:220px;overflow-y:auto;display:none"></div>
+    </div>
+
+  </div>
+
+  <!-- FILA 4: Top 5 referidores -->
+  <div class="card">
+    <div class="ch"><span>🏆</span><div class="ct">Top 5 — Líderes con meta de referidos cumplida</div><span class="bk bk-g" id="d-meta-badge">0 con meta ✅</span></div>
+    <div class="cb" id="d-top5" style="display:grid;grid-template-columns:repeat(5,1fr);gap:12px"></div>
+  </div>
 
 <!-- ═══ AGENDA ═══ -->
 <div class="pg" id="pg-agenda">
@@ -1645,6 +1671,8 @@ function syncCal() {
         renderAgHoy(); renderAgProx(); renderCal();
         if (ag) { ag.className = 'gs-b gs-ok'; ag.textContent = '✅ ' + r.eventos.length + ' eventos'; }
         if (cs) { cs.className = 'gs-b gs-ok'; cs.textContent = '✅ Calendar'; }
+        // Refresh dashboard agenda after calendar loads
+        if (typeof updateDash === 'function') updateDash();
       } else throw new Error(r ? r.error : 'sin datos');
     }).catch(function() {
       if (ag) { ag.className = 'gs-b gs-er'; ag.textContent = '⚠ Sin eventos'; }
@@ -2208,648 +2236,206 @@ function renderBit() {
 // DASHBOARD
 // ═══════════════════════════════════════════════════
 function updateDash() {
-  setText('d-ref', DB.referidos.length);
-  setText('d-reu', DB.reuniones.filter(function(r){return r.Estado==='Realizada';}).length);
-  var ven = DB.compromisos.filter(function(c){return c.Estado==='Vencido';}).length;
-  var pen = DB.compromisos.filter(function(c){return c.Estado==='Pendiente'||c.Estado==='En proceso';}).length;
-  setText('d-com', pen + ven);
-  // Alertas
-  var als = [];
-  if (ven > 0) als.push('<div class="al al-r">🔴 <strong>' + ven + ' compromiso(s) vencido(s)</strong> — requieren atención urgente</div>');
-  var rp = DB.referidos.filter(function(r){return r.Estado==='Pendiente';}).length;
-  if (rp > 0) als.push('<div class="al al-o">🟠 <strong>' + rp + ' referido(s) pendientes</strong> de agendar cita</div>');
-  var nc = DB.referidos.filter(function(r){return r.Llamada==='No contesta';}).length;
-  if (nc > 0) als.push('<div class="al al-b">📵 <strong>' + nc + ' referido(s)</strong> no contestaron la llamada</div>');
-  var trp = DB.tareas.filter(function(t){return t.Prioridad==='Urgente'&&t.Estado!=='Finalizada';}).length;
-  if (trp > 0) als.push('<div class="al al-r">⚡ <strong>' + trp + ' tarea(s) urgente(s)</strong> sin completar</div>');
-  if (!als.length) als.push('<div class="al al-g">✅ <strong>¡Todo en orden!</strong> — No hay alertas urgentes en este momento 🎉</div>');
-  setHTML('d-alertas', als.join(''));
-  setText('d-alerta-n', (ven + trp) + ' urgentes');
-  document.getElementById('d-alerta-n').className = 'bk ' + (ven + trp > 0 ? 'bk-r' : 'bk-g');
-  // Progreso barras
-  var tot_ref = DB.referidos.length, meta_ref = Math.max(DB.equipos.length * 5, 100);
-  var pct_ref = Math.min(100, Math.round(tot_ref / meta_ref * 100));
-  setHTML('p-ref', '<div class="pf" style="background:linear-gradient(90deg,var(--n),var(--p));width:' + pct_ref + '%"></div>');
-  setText('p-ref-l', tot_ref + '/' + meta_ref);
-  var tot_com = DB.compromisos.length, cum_com = DB.compromisos.filter(function(c){return c.Estado==='Cumplido';}).length;
-  var pct_com = tot_com ? Math.round(cum_com/tot_com*100) : 0;
-  setHTML('p-com', '<div class="pf" style="background:linear-gradient(90deg,var(--g),#00897B);width:' + pct_com + '%"></div>');
-  setText('p-com-l', cum_com + '/' + tot_com);
-  var tot_lid = DB.lideres.length;
-  setHTML('p-lid', '<div class="pf" style="background:linear-gradient(90deg,var(--b),#7986CB);width:100%"></div>');
-  setText('p-lid-l', tot_lid + ' activos');
-  renderTar();
-  renderEq();
-  renderRefProg();
+  var hoy = new Date().toISOString().split('T')[0];
+  var semFin = new Date(); semFin.setDate(semFin.getDate() + 7);
+  var semFinStr = semFin.toISOString().split('T')[0];
+
+  // ── Contadores principales
+  setText('d-ref-tot', DB.referidos.length);
+  setText('d-eq-tot',  DB.equipos.length);
+  setText('d-vol-tot', (DB.voluntarios||[]).length);
+  setText('d-eli-tot', (DB.eliteTeam||[]).length);
+
+  // Compromisos hoy (vencimiento = hoy)
+  var comHoy = DB.compromisos.filter(function(c){
+    return (c.FechaCumplimiento||c.Fecha||'') === hoy && c.Estado !== 'Cumplido';
+  });
+  setText('d-com-hoy', comHoy.length);
+
+  // ── TOP 5 referidores
+  var byRef = {};
+  DB.referidos.forEach(function(r){
+    var q = (r.QuienRefiere||r['Tu Nombre']||'Sin asignar').trim();
+    if (!byRef[q]) byRef[q] = 0;
+    byRef[q]++;
+  });
+  var sorted = Object.keys(byRef).sort(function(a,b){ return byRef[b]-byRef[a]; });
+  var conMeta = sorted.filter(function(k){ return byRef[k] >= 5; });
+  setText('d-meta-ok', conMeta.length);
+  setText('d-meta-badge', conMeta.length + ' con meta ✅');
+
+  var top5 = sorted.slice(0, 5);
+  var top5el = document.getElementById('d-top5');
+  if (top5el) {
+    if (!top5.length) {
+      top5el.innerHTML = '<div class="empty" style="grid-column:1/-1">Sin referidos registrados aún</div>';
+    } else {
+      top5el.style.gridTemplateColumns = 'repeat('+Math.min(top5.length,5)+',1fr)';
+      top5el.innerHTML = top5.map(function(k, i) {
+        var n = byRef[k];
+        var pct = Math.min(100, Math.round(n/5*100));
+        var col = n>=5 ? '#2E7D32' : n>=3 ? '#FF8C00' : '#E53935';
+        var medal = i===0?'🥇':i===1?'🥈':i===2?'🥉':'';
+        return '<div style="text-align:center;padding:12px 8px;background:var(--s7);border-radius:var(--rad)">'
+          +'<div style="font-size:20px;margin-bottom:6px">'+medal+'<div class="av" style="margin:0 auto;background:linear-gradient(135deg,#FF8C00,#FF5722);color:#fff;font-size:11px;font-weight:700;width:40px;height:40px">'+ini2(k)+'</div></div>'
+          +'<div style="font-size:11px;font-weight:700;margin-bottom:4px">'+esc(k.split(' ').slice(0,2).join(' '))+'</div>'
+          +'<div style="font-size:20px;font-weight:800;color:'+col+'">'+n+'</div>'
+          +'<div style="font-size:10px;color:var(--s4);margin-bottom:6px">/ 5 referidos</div>'
+          +'<div class="pb"><div class="pf" style="background:'+col+';width:'+pct+'%"></div></div>'
+          +(n>=5?'<div style="font-size:10px;color:#2E7D32;font-weight:700;margin-top:4px">✅ Meta!</div>':'')
+          +'</div>';
+      }).join('');
+    }
+  }
+
+  // ── AGENDA HOY
+  var agHoy = document.getElementById('d-agenda-hoy');
+  if (agHoy) {
+    var evsHoy = DB.cal.filter(function(e){ return e.inicio && e.inicio.startsWith(hoy); });
+    evsHoy.sort(function(a,b){ return a.inicio.localeCompare(b.inicio); });
+    agHoy.innerHTML = evsHoy.length ? evsHoy.map(function(e){
+      var t = new Date(e.inicio).toLocaleTimeString('es-CO',{hour:'2-digit',minute:'2-digit'});
+      var col = e.calendario===CAL_CAM?'var(--n)':'var(--b)';
+      return '<div style="display:flex;gap:10px;padding:8px 0;border-bottom:1px solid var(--s6)">'
+        +'<div style="font-size:11px;font-weight:700;color:'+col+';min-width:44px">'+t+'</div>'
+        +'<div><div style="font-size:13px;font-weight:600">'+esc(e.titulo)+'</div>'
+        +(e.lugar?'<div style="font-size:11px;color:var(--s4)">📍 '+esc(e.lugar)+'</div>':'')
+        +'</div></div>';
+    }).join('') : '<div class="empty" style="padding:20px">Sin eventos hoy 📅</div>';
+  }
+
+  // ── AGENDA ESTA SEMANA
+  var agSem = document.getElementById('d-agenda-sem');
+  if (agSem) {
+    var evsSem = DB.cal.filter(function(e){
+      return e.inicio && e.inicio > hoy+'T' && e.inicio.split('T')[0] <= semFinStr;
+    }).slice(0,10);
+    evsSem.sort(function(a,b){ return a.inicio.localeCompare(b.inicio); });
+    agSem.innerHTML = evsSem.length ? evsSem.map(function(e){
+      var d  = new Date(e.inicio);
+      var dia = d.toLocaleDateString('es-CO',{weekday:'short',day:'numeric',month:'short'});
+      var t  = d.toLocaleTimeString('es-CO',{hour:'2-digit',minute:'2-digit'});
+      var col = e.calendario===CAL_CAM?'var(--n)':'var(--b)';
+      return '<div style="display:flex;gap:10px;padding:8px 0;border-bottom:1px solid var(--s6)">'
+        +'<div style="font-size:11px;font-weight:700;color:'+col+';min-width:72px">'+dia+' '+t+'</div>'
+        +'<div style="font-size:13px;font-weight:500">'+esc(e.titulo)+'</div></div>';
+    }).join('') : '<div class="empty" style="padding:20px">Sin eventos esta semana</div>';
+  }
+
+  // ── TAREAS HOY
+  var tarHoyEl = document.getElementById('d-tar-hoy');
+  if (tarHoyEl) {
+    var tarH = DB.tareas.filter(function(t){
+      return t.FechaEntrega===hoy && t.Estado!=='Finalizada' && t.Estado!=='Cancelada';
+    });
+    tarHoyEl.innerHTML = tarH.length ? tarH.map(function(t){
+      var priCol = t.Prioridad==='Urgente'?'bk-r':t.Prioridad==='Alta'?'bk-o':'bk-b';
+      return '<div style="display:flex;align-items:center;gap:8px;padding:8px 0;border-bottom:1px solid var(--s6)">'
+        +'<span class="bk '+priCol+'" style="font-size:10px;flex-shrink:0">'+esc(t.Prioridad||'Normal')+'</span>'
+        +'<div style="flex:1"><div style="font-size:13px">'+esc(t.Descripcion)+'</div>'
+        +(t.Responsable?'<div style="font-size:11px;color:var(--s4)">👤 '+esc(t.Responsable)+'</div>':'')
+        +'</div></div>';
+    }).join('') : '<div class="empty" style="padding:20px">Sin tareas para hoy 🎉</div>';
+  }
+
+  // ── TAREAS ESTA SEMANA
+  var tarSemEl = document.getElementById('d-tar-sem');
+  if (tarSemEl) {
+    var tarS = DB.tareas.filter(function(t){
+      return t.FechaEntrega>hoy && t.FechaEntrega<=semFinStr && t.Estado!=='Finalizada' && t.Estado!=='Cancelada';
+    }).slice(0,10);
+    tarSemEl.innerHTML = tarS.length ? tarS.map(function(t){
+      var priCol = t.Prioridad==='Urgente'?'bk-r':t.Prioridad==='Alta'?'bk-o':'bk-b';
+      return '<div style="display:flex;align-items:center;gap:8px;padding:8px 0;border-bottom:1px solid var(--s6)">'
+        +'<span class="bk bk-gr" style="font-size:10px;flex-shrink:0">'+esc(t.FechaEntrega)+'</span>'
+        +'<span class="bk '+priCol+'" style="font-size:10px;flex-shrink:0">'+esc(t.Prioridad||'Normal')+'</span>'
+        +'<div style="font-size:13px;flex:1">'+esc(t.Descripcion)+'</div></div>';
+    }).join('') : '<div class="empty" style="padding:20px">Sin tareas esta semana</div>';
+  }
+
+  // ── REDES HOY
+  var redHoyEl = document.getElementById('d-red-hoy');
+  if (redHoyEl) {
+    var redH = DB.redes.filter(function(r){ return r.Fecha===hoy; });
+    redHoyEl.innerHTML = redH.length ? redH.map(function(r){
+      var estCol = r.Estado==='Publicada'?'bk-g':r.Estado==='En producción'?'bk-b':'bk-y';
+      return '<div style="display:flex;align-items:center;gap:8px;padding:8px 0;border-bottom:1px solid var(--s6)">'
+        +'<span class="bk bk-b" style="font-size:10px">'+esc(r.Red||'')+'</span>'
+        +'<div style="flex:1"><div style="font-size:13px;font-weight:600">'+esc(r.Tema||'')+'</div>'
+        +(r.Responsable?'<div style="font-size:11px;color:var(--s4)">👤 '+esc(r.Responsable)+'</div>':'')
+        +'</div>'
+        +'<span class="bk '+estCol+'" style="font-size:10px">'+esc(r.Estado||'')+'</span></div>';
+    }).join('') : '<div class="empty" style="padding:20px">Sin publicaciones hoy</div>';
+  }
+
+  // ── REDES SEMANA
+  var redSemEl = document.getElementById('d-red-sem');
+  if (redSemEl) {
+    var redS = DB.redes.filter(function(r){ return r.Fecha>hoy && r.Fecha<=semFinStr; }).slice(0,10);
+    redSemEl.innerHTML = redS.length ? redS.map(function(r){
+      return '<div style="display:flex;align-items:center;gap:8px;padding:8px 0;border-bottom:1px solid var(--s6)">'
+        +'<span class="bk bk-gr" style="font-size:10px">'+esc(r.Fecha)+'</span>'
+        +'<span class="bk bk-b" style="font-size:10px">'+esc(r.Red||'')+'</span>'
+        +'<div style="font-size:13px;flex:1">'+esc(r.Tema||'')+'</div></div>';
+    }).join('') : '<div class="empty" style="padding:20px">Sin publicaciones esta semana</div>';
+  }
+
+  // ── COMPROMISOS HOY
+  var comHoyEl = document.getElementById('d-com-hoy-list');
+  if (comHoyEl) {
+    comHoyEl.innerHTML = comHoy.length ? comHoy.map(function(r){
+      return '<div style="display:flex;align-items:center;gap:8px;padding:8px 0;border-bottom:1px solid var(--s6)">'
+        +'<span class="bk bk-r" style="font-size:10px;flex-shrink:0">HOY</span>'
+        +'<div style="flex:1"><div style="font-size:13px;font-weight:600">'+esc(r.Nombre||r.Compromiso||'')+'</div>'
+        +'<div style="font-size:11px;color:var(--s4)">'+esc(r.Barrio||'')+' · 👤 '+esc(r.Responsable||'')+'</div></div></div>';
+    }).join('') : '<div class="empty" style="padding:20px">Sin compromisos venciendo hoy 🎉</div>';
+  }
+
+  // ── COMPROMISOS SEMANA
+  var comSemEl = document.getElementById('d-com-sem');
+  if (comSemEl) {
+    var comSem = DB.compromisos.filter(function(c){
+      var f = c.FechaCumplimiento||c.Fecha||'';
+      return f>hoy && f<=semFinStr && c.Estado!=='Cumplido';
+    }).slice(0,8);
+    comSemEl.innerHTML = comSem.length ? comSem.map(function(r){
+      return '<div style="display:flex;align-items:center;gap:8px;padding:8px 0;border-bottom:1px solid var(--s6)">'
+        +'<span class="bk bk-y" style="font-size:10px;flex-shrink:0">'+esc(r.FechaCumplimiento||r.Fecha||'')+'</span>'
+        +'<div style="flex:1"><div style="font-size:13px">'+esc(r.Nombre||r.Compromiso||'')+'</div>'
+        +'<div style="font-size:11px;color:var(--s4)">'+esc(r.Barrio||'')+'</div></div></div>';
+    }).join('') : '<div class="empty" style="padding:20px">Sin compromisos esta semana</div>';
+  }
+
   if (CFG.MKEY && window._ML) addMapMarkers();
 }
 
-// ═══════════════════════════════════════════════════
-// EDITAR — EDIT MAP + data-idx delegation
-// ═══════════════════════════════════════════════════
-var DB_KEY = {eq:'equipos',ref:'referidos',tar:'tareas',reu:'reuniones',com:'compromisos',lid:'lideres',bit:'bitacora',red:'redes'};
-var EDIT = {
-  eq:  {modal:'m-eq',  tit:'m-eq-t',  lbl:'Editar persona del equipo',
-    fill: function(r) { setVal('eq-nom',r.Nombre);setVal('eq-tel',r.Telefono);setSel('eq-cond',r.Condicion);setVal('eq-ent',r.Entidad);setVal('eq-car',r.Cargo);setVal('eq-lid',r.Lider12||r.Lider);setSel('eq-vig',r.Vigia||'');setSel('eq-adh',r.Adhesion);setVal('eq-bar',r.Barrio);setVal('eq-obs',r.Observaciones); }},
-  ref: {modal:'m-ref', tit:'m-ref-t', lbl:'Editar referido',
-    fill: function(r) { setVal('ref-nom',r.Nombre);setVal('ref-tel',r.Telefono);setVal('ref-bar',r.Barrio);setVal('ref-ocu',r.Ocupacion||'');setSel('ref-vig',r.QuienRefiere);setSel('ref-est',r.Estado);setSel('ref-llam',r.Llamada||'Pendiente');setVal('ref-tip',r.Tipificacion||r.Resultado||'');setVal('ref-fci',r.FechaCita);setVal('ref-hci',r.HoraCita);setVal('ref-lug',r.Lugar);
-      // Horarios checkboxes
-      [8,9,10,11,12,13,14,15,16,17,18,19].forEach(function(h){var e=document.getElementById('rh-'+h);if(e)e.checked=!!(r['H'+h]||((r.Horarios||'').includes(h+'h')));});
-    }},
-  tar: {modal:'m-tar', tit:'m-tar-t', lbl:'Editar tarea',
-    fill: function(r) { setVal('tar-des',r.Descripcion);setVal('tar-res',r.Responsable);setVal('tar-fec',r.FechaEntrega);setSel('tar-pri',r.Prioridad);setSel('tar-est',r.Estado);setSel('tar-cat',r.Categoria);setVal('tar-reu',r.Reunion);setVal('tar-obs',r.Observaciones); }},
-  reu: {modal:'m-reu', tit:'m-reu-t', lbl:'Editar reunión',
-    fill: function(r) { setVal('reu-nom',r.Nombre);setVal('reu-lug',r.Lugar);setVal('reu-fec',r.Fecha);setVal('reu-hor',r.Hora);setVal('reu-inv',r.Invitados);setVal('reu-des',r.Descripcion);setVal('reu-not',r.Notas);setSel('reu-est',r.Estado); }},
-  com: {modal:'m-com', tit:'m-com-t', lbl:'Editar compromiso',
-    fill: function(r) { setVal('com-nom',r.Nombre||r.Compromiso);setVal('com-bar',r.Barrio);setVal('com-sol',r.Solicitante);setVal('com-res',r.Responsable);setSel('com-est',r.Estado);setVal('com-fec',r.FechaCumplimiento||r.Fecha);setVal('com-pet',r.Peticion);setVal('com-obs',r.Seguimiento); }},
-  lid: {modal:'m-lid', tit:'m-lid-t', lbl:'Editar líder',
-    fill: function(r) { setVal('lid-nom',r.Nombre);setVal('lid-tel',r.Telefono);setSel('lid-sec',r.Sector);setVal('lid-bar',r.Barrio);setVal('lid-ocu',r.Ocupacion);setSel('lid-pri',r.Prioridad);setVal('lid-ult',r.UltimoContacto);setVal('lid-prx',r.ProximoSeguimiento);setVal('lid-obs',r.Observaciones); }},
-  bit: {modal:'m-bit', tit:'m-bit-t', lbl:'Editar entrada de bitácora',
-    fill: function(r) { setVal('bit-fec',r.Fecha);setVal('bit-per',r.Persona);setVal('bit-lug',r.Lugar);setVal('bit-res',r.Resumen);setVal('bit-pro',r.Problemas);setVal('bit-com',r.Compromisos);setVal('bit-tag',r.Tags); }},
-  red: {modal:'m-red', tit:'m-red-t', lbl:'Editar publicación',
-    fill: function(r) { setVal('red-fec',r.Fecha);setSel('red-red',r.Red);setSel('red-tipo',r.Tipo||r.TipoContenido);setVal('red-tem',r.Tema);setVal('red-res',r.Responsable);setSel('red-est',r.Estado);setVal('red-desc',r.Descripcion);setVal('red-met',r.Metricas); }},
-};
+var CAL_CAM = 'corazonzipa@gmail.com';
 
-function editR(tipo, idx) {
-  if (typeof EDIT === 'undefined') { toast('⚠ Sistema cargando, intenta en un momento'); return; }
-  var cfg = EDIT[tipo]; if (!cfg) return;
-  var arr = DB[DB_KEY[tipo]];
-  if (!arr || arr[idx] === undefined) { toast('⚠ Registro no encontrado'); return; }
-  // 1. Populate selects FIRST
-  updateVigiasSelects();
-  // 2. Set modal title and hidden index
-  setText(cfg.tit, cfg.lbl);
-  var h = document.querySelector('#' + cfg.modal + ' input[type=hidden]');
-  if (h) h.value = idx;
-  // 3. Open modal
-  var m = document.getElementById(cfg.modal);
-  if (!m) { toast('⚠ Modal no encontrado: ' + cfg.modal); return; }
-  m.classList.add('on');
-  // 4. Fill data (after modal is visible)
-  setTimeout(function() {
-    try { cfg.fill(arr[idx]); } catch(e) { toast('⚠ Error llenando formulario: ' + e.message); }
-  }, 20);
-}
+// Toggle hoy/semana en dashboard
+function dashToggle(prefix, tab) {
+  var hoyId = 'd-'+prefix+'-hoy';
+  var semId  = 'd-'+prefix+'-sem';
+  var tabHoy = prefix+'-tab-hoy';
+  var tabSem = prefix+'-tab-sem';
+  // para agenda los ids son diferentes
+  if (prefix === 'ag') { hoyId='d-agenda-hoy'; semId='d-agenda-sem'; tabHoy=''; tabSem='ag-tab-sem'; }
+  if (prefix === 'com') { hoyId='d-com-hoy-list'; semId='d-com-sem'; tabHoy='com-tab-hoy'; tabSem='com-tab-sem'; }
 
-function delR(tipo, idx, nombre) {
-  setText('conf-msg', '¿Eliminar "' + (nombre||'este registro') + '"? Esta acción no se puede deshacer.');
-  document.getElementById('conf-ok').onclick = function() {
-    var hMap = {equipos:'Equipos',referidos:'Referidos',tareas:'Tareas',reuniones:'Reuniones',compromisos:'Compromisos',lideres:'Lideres',redes:'Redes',bitacora:'Bitacora'};
-    var r = DB[tipo][idx];
-    if (r && r._fila) GA.post('eliminarFila', {hoja: hMap[tipo], id: r._fila});
-    DB[tipo].splice(idx, 1);
-    renderSheet(hMap[tipo]);
-    closeM('m-conf'); toast('✅ Registro eliminado');
-  };
-  openM('m-conf');
-}
+  var showing = tab === 'sem';
+  var elHoy = document.getElementById(hoyId);
+  var elSem = document.getElementById(semId);
+  if (elHoy) elHoy.style.display = showing ? 'none' : '';
+  if (elSem) elSem.style.display = showing ? '' : 'none';
 
-// ═══════════════════════════════════════════════════
-// GUARDAR
-// ═══════════════════════════════════════════════════
-function saveEq() {
-  var nom = gv('eq-nom'); if (!nom) { toast('⚠ El nombre es requerido'); return; }
-  var datos = {Nombre:nom,Telefono:gv('eq-tel'),Condicion:gv('eq-cond'),Entidad:gv('eq-ent'),Cargo:gv('eq-car'),Lider12:gv('eq-lid'),Vigia:gv('eq-vig'),Adhesion:gv('eq-adh'),Barrio:gv('eq-bar'),Observaciones:gv('eq-obs')};
-  var idx = getIdx('m-eq');
-  if (idx !== null) {
-    DB.equipos[idx] = Object.assign({}, DB.equipos[idx], datos);
-    if (DB.equipos[idx]._fila) GA.post('actualizarFila', {hoja:'Equipos', id:DB.equipos[idx]._fila, datos:JSON.stringify(datos)});
-    toast('✅ Contacto actualizado');
-  } else {
-    GA.post('guardarFila', {hoja:'Equipos', fila:JSON.stringify(datos)}).then(function(r) { toast(r&&r.ok?'✅ Guardado en Google Sheets':'⚠ Guardado localmente'); });
-    DB.equipos.push(datos);
-  }
-  closeM('m-eq'); renderEq();
-  // Reset form completely
-  var modal = document.getElementById('m-eq');
-  if (modal) {
-    modal.querySelectorAll('input:not([type=hidden]):not([type=date])').forEach(function(i){i.value='';});
-    modal.querySelectorAll('textarea').forEach(function(t){t.value='';});
-    modal.querySelectorAll('select').forEach(function(s){s.selectedIndex=0;});
-    var h = modal.querySelector('input[type=hidden]'); if(h) h.value='';
-  }
-  setText('m-eq-t','Agregar persona al equipo');
-}
-
-function saveRef() {
-  var nom = gv('ref-nom'); if (!nom) { toast('⚠ El nombre es requerido'); return; }
-  var hrs = [8,9,10,11,12,13,14,15,16,17,18,19].filter(function(h){var e=document.getElementById('rh-'+h);return e&&e.checked;}).map(function(h){return h+'h';}).join(', ');
-  var datos = {Nombre:nom,Telefono:gv('ref-tel'),Barrio:gv('ref-bar'),Ocupacion:gv('ref-ocu'),QuienRefiere:gv('ref-vig'),Estado:gv('ref-est'),Llamada:gv('ref-llam'),Tipificacion:gv('ref-tip'),FechaCita:gv('ref-fci'),HoraCita:gv('ref-hci'),Lugar:gv('ref-lug'),Horarios:hrs};
-  var idx = getIdx('m-ref');
-  if (datos.FechaCita && datos.Estado === 'Agendada' && idx === null) {
-    toast('⏳ Agendando cita en Google Calendar...');
-    GA.post('crearEvento', {calendario:'corazonzipa@gmail.com',titulo:'☕ Cita FV: '+nom,fecha:datos.FechaCita,horaInicio:datos.HoraCita||'09:00',horaFin:'10:00',lugar:datos.Lugar,descripcion:'Referido por: '+(datos.QuienRefiere||'')+'\nHorarios disponibles: '+hrs,verificarConflictos:'false'})
-      .then(function(r) { if (r && r.ok) toast('📅 Cita creada en Calendar'); });
-  }
-  if (idx !== null) {
-    DB.referidos[idx] = Object.assign({}, DB.referidos[idx], datos);
-    if (DB.referidos[idx]._fila) GA.post('actualizarFila', {hoja:'Referidos', id:DB.referidos[idx]._fila, datos:JSON.stringify(datos)});
-    toast('✅ Referido actualizado');
-  } else {
-    GA.post('guardarFila', {hoja:'Referidos', fila:JSON.stringify(datos)}).then(function(r) { toast(r&&r.ok?'✅ Guardado en Sheets':'⚠ Guardado local'); });
-    DB.referidos.push(datos);
-  }
-  closeM('m-ref'); renderRef(); resetM('m-ref','m-ref-t','Nuevo referido');
-}
-
-var reuTarTemp = [];
-function addReuTar() {
-  var des = gv('rt-des'); if (!des) { toast('⚠ Escribe la descripción'); return; }
-  reuTarTemp.push({des:des, res:gv('rt-res'), fec:gv('rt-fec'), pri:gv('rt-pri')});
-  var li = document.getElementById('rt-list');
-  if (li) li.innerHTML = reuTarTemp.map(function(t, i) {
-    return '<div style="display:flex;align-items:center;gap:8px;margin-bottom:6px;padding:8px;background:#fff;border-radius:6px;border:1px solid var(--s6)">'
-      + '<span style="font-size:12px;flex:1">' + esc(t.des) + '</span>'
-      + (t.res?'<span class="bk bk-gr" style="font-size:10px">👤 '+esc(t.res)+'</span>':'')
-      + '<button class="btn bd" style="padding:2px 8px;font-size:11px" data-rtt="' + i + '">×</button></div>';
-  }).join('');
-  li.onclick = function(e) {
-    var btn = e.target.closest('[data-rtt]');
-    if (btn) { reuTarTemp.splice(parseInt(btn.getAttribute('data-rtt')), 1); addReuTar.call({noop:true}); document.getElementById('rt-des').value=''; }
-  };
-  setVal('rt-des',''); setVal('rt-res','');
-}
-function tarFromReu(nom) { setVal('tar-reu', nom); openM('m-tar'); }
-
-function saveReu() {
-  var nom = gv('reu-nom'); if (!nom) { toast('⚠ El nombre es requerido'); return; }
-  var datos = {Fecha:gv('reu-fec'),Hora:gv('reu-hor'),Lugar:gv('reu-lug'),Nombre:nom,Invitados:gv('reu-inv'),Descripcion:gv('reu-des'),Notas:gv('reu-not'),Estado:gv('reu-est')};
-  var idx = getIdx('m-reu');
-  if (idx !== null) {
-    DB.reuniones[idx] = Object.assign({}, DB.reuniones[idx], datos);
-    if (DB.reuniones[idx]._fila) GA.post('actualizarFila', {hoja:'Reuniones', id:DB.reuniones[idx]._fila, datos:JSON.stringify(datos)});
-    toast('✅ Reunión actualizada');
-  } else {
-    if (datos.Fecha) GA.post('crearEvento', {calendario:'corazonzipa@gmail.com',titulo:'🏛️ '+nom,fecha:datos.Fecha,horaInicio:datos.Hora||'08:00',horaFin:'10:00',lugar:datos.Lugar,descripcion:datos.Descripcion,verificarConflictos:'false'});
-    GA.post('guardarFila', {hoja:'Reuniones', fila:JSON.stringify(datos)}).then(function(r) { toast(r&&r.ok?'✅ Reunión en Calendar + Sheets':'⚠ Guardado local'); });
-    DB.reuniones.push(datos);
-    reuTarTemp.forEach(function(t) {
-      var td = {FechaCreacion:new Date().toISOString().split('T')[0],FechaEntrega:t.fec||'',Responsable:t.res||'',Categoria:'Reunión',Descripcion:t.des,Prioridad:t.pri||'Normal',Estado:'Pendiente',Reunion:nom,Observaciones:''};
-      GA.post('guardarFila', {hoja:'Tareas', fila:JSON.stringify(td)}).then(function(r) {
-        if (r && r.ok) crearGoogleTask('✅ ' + t.des, 'Reunión: ' + nom + '\nResponsable: ' + (t.res||''), t.fec||'').then(function(tr) { if(tr&&tr.ok) td.GoogleTaskId=tr.id; });
-      });
-      DB.tareas.push(td);
-    });
-    if (reuTarTemp.length) toast('✅ ' + reuTarTemp.length + ' tarea(s) en Google Tasks');
-    reuTarTemp = []; var li = document.getElementById('rt-list'); if(li) li.innerHTML='';
-  }
-  closeM('m-reu'); renderReu(); renderTar(); resetM('m-reu','m-reu-t','Nueva reunión');
-}
-
-function saveTar() {
-  var des = gv('tar-des'); if (!des) { toast('⚠ La descripción es requerida'); return; }
-  var datos = {FechaCreacion:new Date().toISOString().split('T')[0],FechaEntrega:gv('tar-fec'),Responsable:gv('tar-res'),Categoria:gv('tar-cat'),Descripcion:des,Prioridad:gv('tar-pri'),Estado:gv('tar-est'),Reunion:gv('tar-reu'),Observaciones:gv('tar-obs')};
-  var idx = getIdx('m-tar');
-  if (idx !== null) {
-    DB.tareas[idx] = Object.assign({}, DB.tareas[idx], datos);
-    if (DB.tareas[idx]._fila) GA.post('actualizarFila', {hoja:'Tareas', id:DB.tareas[idx]._fila, datos:JSON.stringify(datos)});
-    toast('✅ Tarea actualizada');
-  } else {
-    GA.post('guardarFila', {hoja:'Tareas', fila:JSON.stringify(datos)}).then(function(r) {
-      if (r && r.ok) {
-        crearGoogleTask('✅ ' + des, 'Responsable: ' + (datos.Responsable||'') + '\nCategoría: ' + datos.Categoria, datos.FechaEntrega)
-          .then(function(tr) { if (tr && tr.ok) { datos.GoogleTaskId = tr.id; toast('✅ Tarea en Sheets + Google Tasks'); } });
-      } else toast('⚠ Guardado local');
-    });
-    DB.tareas.push(datos);
-  }
-  closeM('m-tar'); renderTar(); resetM('m-tar','m-tar-t','Nueva tarea');
-}
-
-function saveCom() {
-  var nom = gv('com-nom'); if (!nom) { toast('⚠ El nombre es requerido'); return; }
-  var datos = {Nombre:nom,Barrio:gv('com-bar'),Solicitante:gv('com-sol'),Responsable:gv('com-res'),Estado:gv('com-est'),FechaCumplimiento:gv('com-fec'),Peticion:gv('com-pet'),Seguimiento:gv('com-obs')};
-  var idx = getIdx('m-com');
-  if (idx !== null) {
-    DB.compromisos[idx] = Object.assign({}, DB.compromisos[idx], datos);
-    if (DB.compromisos[idx]._fila) GA.post('actualizarFila', {hoja:'Compromisos', id:DB.compromisos[idx]._fila, datos:JSON.stringify(datos)});
-    toast('✅ Compromiso actualizado');
-  } else {
-    GA.post('guardarFila', {hoja:'Compromisos', fila:JSON.stringify(datos)}).then(function(r) {
-      if (r && r.ok) crearGoogleTask('📋 ' + nom, 'Barrio: '+(datos.Barrio||'')+'\nSolicitante: '+(datos.Solicitante||''), datos.FechaCumplimiento)
-        .then(function(tr){ if(tr&&tr.ok){ datos.GoogleTaskId=tr.id; toast('✅ Compromiso en Sheets + Google Tasks'); }});
-      else toast('⚠ Guardado local');
-    });
-    DB.compromisos.push(datos);
-  }
-  closeM('m-com'); renderCom(); resetM('m-com','m-com-t','Nuevo compromiso');
-}
-
-function saveLid() {
-  var nom = gv('lid-nom'); if (!nom) { toast('⚠ El nombre es requerido'); return; }
-  var datos = {Nombre:nom,Telefono:gv('lid-tel'),Sector:gv('lid-sec'),Barrio:gv('lid-bar'),Ocupacion:gv('lid-ocu'),Prioridad:gv('lid-pri'),UltimoContacto:gv('lid-ult'),ProximoSeguimiento:gv('lid-prx'),Observaciones:gv('lid-obs')};
-  var idx = getIdx('m-lid');
-  if (idx !== null) { DB.lideres[idx]=Object.assign({},DB.lideres[idx],datos); if(DB.lideres[idx]._fila)GA.post('actualizarFila',{hoja:'Lideres',id:DB.lideres[idx]._fila,datos:JSON.stringify(datos)}); toast('✅ Líder actualizado'); }
-  else { GA.post('guardarFila',{hoja:'Lideres',fila:JSON.stringify(datos)}).then(function(r){toast(r&&r.ok?'✅ Guardado':'⚠ Local');}); DB.lideres.push(datos); }
-  closeM('m-lid'); renderLid(); resetM('m-lid','m-lid-t','Nuevo líder estratégico');
-}
-
-function saveBit() {
-  var per = gv('bit-per'); if (!per) { toast('⚠ Indica con quién fue la reunión'); return; }
-  var datos = {Fecha:gv('bit-fec'),Persona:per,Lugar:gv('bit-lug'),Resumen:gv('bit-res'),Problemas:gv('bit-pro'),Compromisos:gv('bit-com'),Tags:gv('bit-tag')};
-  var idx = getIdx('m-bit');
-  if (idx !== null) { DB.bitacora[idx]=Object.assign({},DB.bitacora[idx],datos); if(DB.bitacora[idx]._fila)GA.post('actualizarFila',{hoja:'Bitacora',id:DB.bitacora[idx]._fila,datos:JSON.stringify(datos)}); toast('✅ Entrada actualizada'); }
-  else { GA.post('guardarFila',{hoja:'Bitacora',fila:JSON.stringify(datos)}).then(function(r){toast(r&&r.ok?'✅ Guardado':'⚠ Local');}); DB.bitacora.push(datos); }
-  closeM('m-bit'); renderBit(); resetM('m-bit','m-bit-t','Nueva entrada — Bitácora');
-}
-
-function saveRed() {
-  var tem = gv('red-tem'); if (!tem) { toast('⚠ El tema es requerido'); return; }
-  var datos = {Fecha:gv('red-fec'),Red:gv('red-red'),Tipo:gv('red-tipo'),Tema:tem,Responsable:gv('red-res'),Estado:gv('red-est'),Descripcion:gv('red-desc'),Metricas:gv('red-met')};
-  var idx = getIdx('m-red');
-  if (idx !== null) { DB.redes[idx]=Object.assign({},DB.redes[idx],datos); if(DB.redes[idx]._fila)GA.post('actualizarFila',{hoja:'Redes',id:DB.redes[idx]._fila,datos:JSON.stringify(datos)}); toast('✅ Actualizado'); }
-  else {
-    GA.post('guardarFila',{hoja:'Redes',fila:JSON.stringify(datos)}).then(function(r){
-      if(r&&r.ok) crearGoogleTask('📱 '+datos.Red+': '+tem,'Tipo: '+datos.Tipo+'\nResponsable: '+datos.Responsable,datos.Fecha)
-        .then(function(tr){if(tr&&tr.ok){datos.GoogleTaskId=tr.id;toast('✅ Contenido en Sheets + Google Tasks');}});
-      else toast('⚠ Guardado local');
-    });
-    DB.redes.push(datos);
-  }
-  closeM('m-red'); renderRed(); resetM('m-red','m-red-t','Nueva publicación / contenido');
-}
-
-// ═══════════════════════════════════════════════════
-// MAPA
-// ═══════════════════════════════════════════════════
-var BARRIOS_ZIPA = [
-  {n:'Centro Histórico',lat:5.0232,lng:-74.0063},{n:'La Unión',lat:5.0190,lng:-74.0100},
-  {n:'San Jorge',lat:5.0280,lng:-74.0040},{n:'La Paz',lat:5.0250,lng:-74.0110},
-  {n:'Arco Iris',lat:5.0160,lng:-74.0130},{n:'El Progreso',lat:5.0310,lng:-74.0020},
-  {n:'Santa Isabel',lat:5.0150,lng:-74.0080},{n:'El Resurgir',lat:5.0200,lng:-74.0020},
-  {n:'El Tejar',lat:5.0270,lng:-74.0080},{n:'Villa del Prado',lat:5.0180,lng:-74.0050},
-  {n:'Los Cedros',lat:5.0240,lng:-74.0120},{n:'San Nicolás',lat:5.0220,lng:-74.0030},
-  {n:'La Granja',lat:5.0170,lng:-74.0140},{n:'El Carmelo',lat:5.0290,lng:-74.0060},
-  {n:'Olarte',lat:5.0140,lng:-74.0060},{n:'Bello Horizonte',lat:5.0260,lng:-74.0150},
-  {n:'La Estación',lat:5.0210,lng:-74.0090},{n:'Funza',lat:5.0300,lng:-74.0100}
-];
-window._ML = false; window._map = null; window._mapMarkers = [];
-
-function initMap() {
-  if (!CFG.MKEY) { setText('mapa-msg','Configura tu Google Maps API Key en Configuración'); return; }
-  var st = document.getElementById('mapa-st'); if (st) { st.className='gs-b gs-wn'; st.textContent='⏳ Cargando mapa...'; }
-  if (!document.getElementById('gms')) {
-    var s = document.createElement('script'); s.id = 'gms';
-    s.src = 'https://maps.googleapis.com/maps/api/js?key=' + CFG.MKEY + '&callback=onMapLoad&language=es';
-    s.async = true; s.onerror = function() {
-      var st=document.getElementById('mapa-st'); if(st){st.className='gs-b gs-er';st.textContent='⚠ Error Maps';}
-      toast('⚠ Error cargando Google Maps. Verifica tu API Key.');
-    };
-    document.head.appendChild(s);
-  } else if (window.google && window.google.maps) { onMapLoad(); }
-}
-
-window.onMapLoad = function() {
-  document.getElementById('mapa-nok').style.display = 'none';
-  document.getElementById('mapa-ok').style.display = 'block';
-  window._map = new google.maps.Map(document.getElementById('map-el'), {center:{lat:5.0226,lng:-74.0059},zoom:13,mapTypeControl:true,styles:[{featureType:'all',elementType:'labels.text.fill',stylers:[{color:'#444'}]}]});
-  window._ML = true;
-  var st = document.getElementById('mapa-st'); if(st){st.className='gs-b gs-ok';st.textContent='✅ Mapa activo';}
-  setTimeout(addMapMarkers, 400);
-};
-
-function addMapMarkers() {
-  if (!window._map) return;
-  window._mapMarkers.forEach(function(m){ m.setMap(null); }); window._mapMarkers = [];
-  var beq = DB.equipos.map(function(r){ return r.Barrio||''; }).filter(Boolean);
-  var bref = DB.referidos.map(function(r){ return r.Barrio||''; }).filter(Boolean);
-  var ueq = [...new Set(beq)], uref = [...new Set(bref)];
-  setText('m-eq', ueq.length); setText('m-ref', uref.length);
-  BARRIOS_ZIPA.forEach(function(b) {
-    var enEq = ueq.some(function(x){ return x.toLowerCase().includes(b.n.toLowerCase()) || b.n.toLowerCase().includes(x.toLowerCase()); });
-    var enRef = uref.some(function(x){ return x.toLowerCase().includes(b.n.toLowerCase()) || b.n.toLowerCase().includes(x.toLowerCase()); });
-    var col = '#BDBDBD', scale = 7;
-    if (enEq && enRef) { col = '#9C27B0'; scale = 14; }
-    else if (enEq) { col = '#E91E63'; scale = 12; }
-    else if (enRef) { col = '#FFD600'; scale = 11; }
-    var eqs = DB.equipos.filter(function(r){ return (r.Barrio||'').toLowerCase().includes(b.n.toLowerCase()) || b.n.toLowerCase().includes((r.Barrio||'').toLowerCase()); });
-    var refs = DB.referidos.filter(function(r){ return (r.Barrio||'').toLowerCase().includes(b.n.toLowerCase()) || b.n.toLowerCase().includes((r.Barrio||'').toLowerCase()); });
-    var m = new google.maps.Marker({position:{lat:b.lat,lng:b.lng},map:window._map,title:b.n,icon:{path:google.maps.SymbolPath.CIRCLE,scale:scale,fillColor:col,fillOpacity:.9,strokeWeight:2.5,strokeColor:'#fff'}});
-    var iw = new google.maps.InfoWindow({content:'<div style="font-family:Poppins,sans-serif;padding:8px;min-width:160px"><strong style="font-size:14px">'+b.n+'</strong><br>'+(eqs.length?'<div style="margin-top:5px;font-size:11px">🧡 <strong>Equipo:</strong> '+eqs.map(function(e){return e.Nombre.split(' ')[0];}).join(', ')+'</div>':'')+(refs.length?'<div style="font-size:11px">🤝 <strong>Referidos:</strong> '+refs.map(function(r){return r.Nombre.split(' ')[0];}).join(', ')+'</div>':'')+'</div>'});
-    m.addListener('click', function(){ iw.open(window._map, m); });
-    window._mapMarkers.push(m);
+  // Update tab styles
+  [tabHoy, tabSem].forEach(function(tid, ti) {
+    var el = document.getElementById(tid); if (!el) return;
+    var active = (ti===0 && !showing) || (ti===1 && showing);
+    el.style.fontWeight = active ? '700' : '600';
+    el.style.color      = active ? 'var(--n)' : 'var(--s4)';
+    el.style.borderBottom = active ? '2px solid var(--n)' : 'none';
+    el.style.cursor = active ? 'default' : 'pointer';
   });
 }
-
-// ═══════════════════════════════════════════════════
-// ASISTENTE IA
-// ═══════════════════════════════════════════════════
-function sendIA() {
-  var inp = document.getElementById('ia-in');
-  var msg = inp ? inp.value.trim() : ''; if (!msg) return;
-  if (inp) inp.value = '';
-  var chat = document.getElementById('ia-chat');
-  chat.innerHTML += '<div class="im usr">' + esc(msg) + '</div>';
-  var lid = 'ia' + Date.now();
-  chat.innerHTML += '<div class="im bot" id="' + lid + '">💭 Analizando...</div>';
-  chat.scrollTop = chat.scrollHeight;
-  if (CFG.IA_KEY) {
-    var ctx = 'Eres el asistente de campaña de Felipe Vanegas, candidato a la alcaldía de Zipaquirá 2028. Campaña: "Zipa con el Corazón" 🧡. Responde en español, de forma concisa y útil. Datos actuales: Referidos='+DB.referidos.length+' (pendientes='+DB.referidos.filter(function(r){return r.Estado==='Pendiente';}).length+'), Tareas='+DB.tareas.length+' (urgentes='+DB.tareas.filter(function(t){return t.Prioridad==='Urgente'&&t.Estado!=='Finalizada';}).length+'), Compromisos='+DB.compromisos.length+' (vencidos='+DB.compromisos.filter(function(c){return c.Estado==='Vencido';}).length+'), Reuniones='+DB.reuniones.length+', Líderes='+DB.lideres.length+', Equipo='+DB.equipos.length+' personas.';
-    fetch('https://api.anthropic.com/v1/messages', {method:'POST',headers:{'Content-Type':'application/json','x-api-key':CFG.IA_KEY,'anthropic-version':'2023-06-01'},body:JSON.stringify({model:'claude-sonnet-4-6',max_tokens:600,system:ctx,messages:[{role:'user',content:msg}]})})
-      .then(function(r){ return r.json(); })
-      .then(function(d){ var e=document.getElementById(lid); if(e) e.innerHTML=(d.content&&d.content[0]?d.content[0].text:'Sin respuesta').replace(/\n/g,'<br>'); chat.scrollTop=chat.scrollHeight; })
-      .catch(function(){ var e=document.getElementById(lid); if(e) e.innerHTML=localIA(msg); });
-  } else {
-    setTimeout(function(){ var e=document.getElementById(lid); if(e) e.innerHTML=localIA(msg); chat.scrollTop=chat.scrollHeight; }, 500);
-  }
-}
-
-function localIA(msg) {
-  var m = msg.toLowerCase();
-  if (m.includes('referid')) return '🤝 Referidos: '+DB.referidos.length+' total · Pendientes: '+DB.referidos.filter(function(r){return r.Estado==='Pendiente';}).length+' · Realizadas: '+DB.referidos.filter(function(r){return r.Estado==='Realizada';}).length;
-  if (m.includes('compromis')) return '📋 Compromisos — Pendientes: '+DB.compromisos.filter(function(c){return c.Estado==='Pendiente';}).length+' · Vencidos: '+DB.compromisos.filter(function(c){return c.Estado==='Vencido';}).length+' · Cumplidos: '+DB.compromisos.filter(function(c){return c.Estado==='Cumplido';}).length;
-  if (m.includes('tarea')) return '✅ Tareas — Pendientes: '+DB.tareas.filter(function(t){return t.Estado==='Pendiente';}).length+' · En proceso: '+DB.tareas.filter(function(t){return t.Estado==='En proceso';}).length+' · Urgentes: '+DB.tareas.filter(function(t){return t.Prioridad==='Urgente'&&t.Estado!=='Finalizada';}).length;
-  if (m.includes('priorizar') || m.includes('semana')) return '🎯 Recomendación: (1) Contactar los '+DB.referidos.filter(function(r){return r.Llamada==='No contesta';}).length+' referidos que no contestaron. (2) Resolver '+DB.compromisos.filter(function(c){return c.Estado==='Vencido';}).length+' compromisos vencidos. (3) Completar tareas urgentes.';
-  if (m.includes('resumen')) return '📊 Estado actual de la campaña 🧡\n\nEquipo: '+DB.equipos.length+' personas · Referidos: '+DB.referidos.length+' captados · Reuniones: '+DB.reuniones.length+' realizadas · Compromisos: '+DB.compromisos.filter(function(c){return c.Estado!=='Cumplido';}).length+' pendientes · Líderes: '+DB.lideres.length+' activos\n\n💡 Configura tu API Key de Claude para análisis más profundo.';
-  return '🤖 Puedo analizar referidos, compromisos, tareas, reuniones y líderes estratégicos. ¿Qué necesitas saber?';
-}
-
-function askIA(p) { var inp = document.getElementById('ia-in'); if (inp) { inp.value = p; sendIA(); } }
-function clrChat() { setHTML('ia-chat', '<div class="im bot">¡Chat limpio! ¿En qué te ayudo? 🧡</div>'); }
-
-// ═══════════════════════════════════════════════════
-// CONFIGURACIÓN
-// ═══════════════════════════════════════════════════
-function saveCfg() {
-  CFG.TASKLIST = gv('cfg-tasklist');
-  try { var c=JSON.parse(localStorage.getItem('zipa_cfg')||'{}'); c.tasklist=CFG.TASKLIST; localStorage.setItem('zipa_cfg',JSON.stringify(c)); } catch(e) {}
-  toast('✅ Configuración guardada. Sincronizando...'); syncAll();
-}
-
-function testConn() {
-  toast('🔄 Probando conexión...');
-  GA.get('ping').then(function(r) {
-    if (r && r.ok) { toast('✅ Conectado a Google Apps Script'); var g=document.getElementById('g-st'); if(g){g.className='gs-b gs-ok';g.textContent='✅ Conectado';} }
-    else toast('⚠ Error: ' + (r ? r.error : 'Sin respuesta'));
-  });
-}
-
-function saveMapsKey() {
-  var k = gv('cfg-mkey'); if (!k) { toast('⚠ Ingresa tu Maps API Key'); return; }
-  CFG.MKEY = k;
-  try { var c=JSON.parse(localStorage.getItem('zipa_cfg')||'{}'); c.mkey=k; localStorage.setItem('zipa_cfg',JSON.stringify(c)); } catch(e) {}
-  var st = document.getElementById('maps-st'); if (st) { st.className='gs-b gs-ok'; st.textContent='✅ Key guardada'; }
-  toast('✅ Google Maps Key guardada. Abriendo mapa...');
-  go('mapa', null); setTimeout(initMap, 400);
-}
-
-function changePwd() {
-  var n = gv('pw-n'), cc = gv('pw-c');
-  if (!n) return toast('⚠ Ingresa la nueva contraseña');
-  if (n !== cc) return toast('⚠ Las contraseñas no coinciden');
-  CFG.PWD = n; toast('✅ Contraseña actualizada para esta sesión');
-}
-
-function openFolder(n) { window.open('https://drive.google.com/drive/search?q=' + encodeURIComponent(n), '_blank'); }
-
-function exportJSON() {
-  var d = JSON.stringify({meta:{fecha:new Date().toISOString(),candidato:'Felipe Vanegas',campaña:'Zipa con el Corazón 2028'},db:DB}, null, 2);
-  var b = new Blob([d], {type:'application/json'});
-  var u = URL.createObjectURL(b); var a = document.createElement('a');
-  a.href = u; a.download = 'zipa_backup_' + new Date().toISOString().split('T')[0] + '.json';
-  a.click(); toast('✅ Datos exportados');
-}
-// ═══════════════════════════════════════════════════
-// EXPONER TODAS LAS FUNCIONES GLOBALMENTE
-// Necesario para que onclick="fn()" funcione en GitHub Pages
-// ═══════════════════════════════════════════════════
-window.go=go; window.openM=openM; window.closeM=closeM; window.stab=stab;
-window.doLogin=doLogin; window.doLogout=doLogout; window.syncAll=syncAll;
-window.syncCal=syncCal; window.syncGoogleTasks=syncGoogleTasks;
-window.saveAct=saveAct; window.saveEq=saveEq; window.saveRef=saveRef;
-window.saveReu=saveReu; window.saveTar=saveTar; window.saveCom=saveCom;
-window.saveLid=saveLid; window.saveBit=saveBit; window.saveRed=saveRed;
-window.addVigia=addVigia; window.removeVigia=removeVigia;
-window.addReuTar=addReuTar; window.tarFromReu=tarFromReu;
-window.renderEq=renderEq; window.renderRef=renderRef;
-window.cambMes=cambMes; window.clickDia=clickDia;
-window.sendIA=sendIA; window.askIA=askIA; window.clrChat=clrChat;
-window.saveIAKey=saveIAKey; window.saveCfg=saveCfg; window.saveMapsKey=saveMapsKey;
-window.testConn=testConn; window.changePwd=changePwd;
-window.openFolder=openFolder; window.exportJSON=exportJSON;
-window.loadSheet=loadSheet; window.filEq=filEq; window.filT=filT; window.filLid=filLid;
-window.initApp=initApp;
-window.renderReu=renderReu; window.renderBit=renderBit; window.renderLid=renderLid;
-window.renderTar=renderTar; window.renderCom=renderCom; window.renderRed=renderRed;
-window.updateDash=updateDash; window.renderRefProg=renderRefProg;
-window.editR=editR; window.delR=delR; window.updateVigiasSelects=updateVigiasSelects;
-// ═══ VOLUNTARIOS ═══
-if (!DB.voluntarios) DB.voluntarios = [];
-if (!DB.eliteTeam)   DB.eliteTeam   = [];
-
-function renderVol() {
-  var arr = DB.voluntarios;
-  var c1=arr.filter(function(r){return r.Adhesion==='Con nosotros';}).length;
-  var c2=arr.filter(function(r){return r.Adhesion==='Aún pensándolo';}).length;
-  var c3=arr.filter(function(r){return r.Adhesion==='No está aquí';}).length;
-  setText('vol-c1',c1);setText('vol-c2',c2);setText('vol-c3',c3);
-  renderPersonasTabla('tb-vol','vol',arr);
-}
-function renderEli() {
-  var arr = DB.eliteTeam;
-  var c1=arr.filter(function(r){return r.Adhesion==='Con nosotros';}).length;
-  var c2=arr.filter(function(r){return r.Adhesion==='Aún pensándolo';}).length;
-  var c3=arr.filter(function(r){return r.Adhesion==='No está aquí';}).length;
-  setText('eli-c1',c1);setText('eli-c2',c2);setText('eli-c3',c3);
-  renderPersonasTabla('tb-eli','eli',arr);
-}
-
-function renderPersonasTabla(tbId, tipo, arr) {
-  var tb = document.getElementById(tbId); if (!tb) return;
-  if (!arr.length) {
-    tb.innerHTML='<tr><td colspan="9" class="empty">Sin registros. Agrega el primero.</td></tr>';
-    return;
-  }
-  var CCOL={'Contratista':'bk-b','Funcionario':'bk-g','Equipo MCI':'bk-o','EQUIPO VISION DE CIUDAD':'bk-t','M180':'bk-r'};
-  var rows = [];
-  for (var i = 0; i < arr.length; i++) {
-    var r = arr[i];
-    var adh = r.Adhesion||'Con nosotros';
-    var adhIco = adh==='Con nosotros'?'✅':adh==='Aún pensándolo'?'🤔':'❌';
-    var adhCol = adh==='Con nosotros'?'bk-g':adh==='Aún pensándolo'?'bk-y':'bk-r';
-    var tr = document.createElement('tr');
-    tr.innerHTML =
-      '<td><div style="display:flex;align-items:center;gap:8px">'
-      +'<div class="av" style="background:linear-gradient(135deg,#FF8C00,#FF5722);color:#fff;font-size:11px;font-weight:700">'+ini2(r.Nombre)+'</div>'
-      +'<div><div style="font-weight:700;font-size:13px">'+esc(r.Nombre)+'</div>'
-      +'<div style="font-size:10px;color:#999">'+esc(r.Condicion||'')+'</div></div></div></td>'
-      +'<td><a href="https://wa.me/57'+esc(r.Telefono||'')+'" target="_blank" style="color:#FF8C00;font-weight:500">📱'+esc(r.Telefono||'—')+'</a></td>'
-      +'<td><span class="bk '+(CCOL[r.Condicion]||'bk-gr')+'" style="font-size:10px">'+esc(r.Condicion||'')+'</span></td>'
-      +'<td style="font-size:12px">'+esc(r.Entidad||'')+'</td>'
-      +'<td style="font-size:11px;max-width:140px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+esc(r.Cargo||'')+'</td>'
-      +'<td style="font-size:11px;color:#555">'+esc((r.Lider12||'').split(' ').slice(0,2).join(' '))+'</td>'
-      +'<td><span class="bk bk-o" style="font-size:10px">'+esc(r.Vigia||'—')+'</span></td>'
-      +'<td><span class="bk '+adhCol+'">'+adhIco+' '+adh+'</span></td>'
-      +'<td><div style="display:flex;gap:4px">'
-      +'<button class="btn bp sm pers-edit" data-idx="'+i+'" data-tipo="'+tipo+'" style="padding:4px 9px;font-size:11px">✏️</button>'
-      +'<button class="btn bd sm pers-del" data-idx="'+i+'" data-tipo="'+tipo+'" data-nom="'+esc(r.Nombre||'')+'" style="padding:4px 9px;font-size:11px">🗑</button>'
-      +'</div></td>';
-    rows.push(tr);
-  }
-  tb.innerHTML = '';
-  for (var k = 0; k < rows.length; k++) tb.appendChild(rows[k]);
-  tb.onclick = function(e) {
-    var eb = e.target.closest('.pers-edit');
-    var db = e.target.closest('.pers-del');
-    if (eb) abrirEdicion(eb.getAttribute('data-tipo'), parseInt(eb.getAttribute('data-idx')));
-    if (db) {
-      var t = db.getAttribute('data-tipo');
-      var dbKey = t==='vol'?'voluntarios':'eliteTeam';
-      delR(dbKey, parseInt(db.getAttribute('data-idx')), db.getAttribute('data-nom'));
-    }
-  };
-}
-window.renderVol=renderVol; window.renderEli=renderEli;
-
-function saveVol() {
-  var nom=gv('vol-nom'); if(!nom){toast('⚠ El nombre es requerido');return;}
-  var datos={Nombre:nom,Telefono:gv('vol-tel'),Condicion:gv('vol-cond'),Entidad:gv('vol-ent'),Cargo:gv('vol-car'),Lider12:gv('vol-lid'),Vigia:gv('vol-vig'),Adhesion:gv('vol-adh'),Barrio:gv('vol-bar'),Observaciones:gv('vol-obs')};
-  var idx=getIdx('m-vol');
-  if(idx!==null){DB.voluntarios[idx]=Object.assign({},DB.voluntarios[idx],datos);GA.post('actualizarFila',{hoja:'Voluntarios',id:DB.voluntarios[idx]._fila,datos:JSON.stringify(datos)});toast('✅ Actualizado');}
-  else{GA.post('guardarFila',{hoja:'Voluntarios',fila:JSON.stringify(datos)}).then(function(r){toast(r&&r.ok?'✅ Guardado':'⚠ Local');});DB.voluntarios.push(datos);}
-  closeM('m-vol'); renderVol();
-}
-function saveEli() {
-  var nom=gv('eli-nom'); if(!nom){toast('⚠ El nombre es requerido');return;}
-  var datos={Nombre:nom,Telefono:gv('eli-tel'),Condicion:gv('eli-cond'),Entidad:gv('eli-ent'),Cargo:gv('eli-car'),Lider12:gv('eli-lid'),Vigia:gv('eli-vig'),Adhesion:gv('eli-adh'),Barrio:gv('eli-bar'),Observaciones:gv('eli-obs')};
-  var idx=getIdx('m-eli');
-  if(idx!==null){DB.eliteTeam[idx]=Object.assign({},DB.eliteTeam[idx],datos);GA.post('actualizarFila',{hoja:'EliteTeam',id:DB.eliteTeam[idx]._fila,datos:JSON.stringify(datos)});toast('✅ Actualizado');}
-  else{GA.post('guardarFila',{hoja:'EliteTeam',fila:JSON.stringify(datos)}).then(function(r){toast(r&&r.ok?'✅ Guardado':'⚠ Local');});DB.eliteTeam.push(datos);}
-  closeM('m-eli'); renderEli();
-}
-window.saveVol=saveVol; window.saveEli=saveEli;
-
-// ═══ REFERIDOS DESDE SHEETS FORMULARIO ═══
-var SID_FORM_REF = '1g120UJ763yWEveA1nF5KFNXKM74wWzEKoNbc7BLX1yo';
-
-function syncRefFormulario() {
-  toast('🔄 Cargando referidos del formulario...');
-  GA.get('leerHojaExt', {sid: SID_FORM_REF, hoja: 'Respuestas de formulario 1'}).then(function(r) {
-    if (r && r.ok && r.filas && r.filas.length) {
-      // Mapear columnas del formulario de Google
-      DB.referidos = r.filas.map(function(row) {
-        var nombre = row['Nombre del referido'] || row.Nombre || '';
-        var hor = [];
-        Object.keys(row).forEach(function(k) {
-          if (k.indexOf('am]') >= 0 || k.indexOf('pm]') >= 0) {
-            if (row[k] && String(row[k]).trim()) {
-              var h = k.match(/\[([^\]]+)\]/); if (h) hor.push(h[1]);
-            }
-          }
-        });
-        return {
-          Nombre: nombre,
-          Telefono: row['Teléfono'] || row.Telefono || '',
-          Barrio: row['Barrio'] || '',
-          Ocupacion: row['Ocupación'] || row.Ocupacion || '',
-          QuienRefiere: row['Tu Nombre'] || '',
-          Horarios: hor.join(', '),
-          Observaciones: row['Observaciones'] || '',
-          Estado: row.Estado || 'Pendiente',
-          Llamada: row.Llamada || 'Pendiente',
-          Tipificacion: row.Tipificacion || '',
-          FechaCita: row.FechaCita || '',
-          HoraCita: row.HoraCita || '',
-          Agendado: row.Agendado || 'no',
-          _fila: row._fila
-        };
-      });
-      toast('✅ ' + DB.referidos.length + ' referidos cargados del formulario');
-      renderRef(); renderRefProg();
-    } else {
-      toast('⚠ Sin datos del formulario: ' + (r ? r.error || 'sin filas' : 'error'));
-    }
-  });
-}
-window.syncRefFormulario = syncRefFormulario;
-
-// toggleRefCita — mostrar/ocultar campos de cita
-function toggleRefCita(val) {
-  var campos = ['ref-fci','ref-hci','ref-lug'];
-  campos.forEach(function(id) {
-    var el = document.getElementById(id);
-    if (el) el.closest('.fg').style.display = val === 'si' ? '' : 'none';
-  });
-}
-window.toggleRefCita = toggleRefCita;
-
-
-window.addReuTar=addReuTar; window.tarFromReu=tarFromReu;
-
-function openNewEq() {
-  updateVigiasSelects();
-  // Clear the form completely
-  var m = document.getElementById('m-eq'); if (!m) return;
-  m.querySelectorAll('input').forEach(function(i){ i.value=''; if(i.type==='checkbox')i.checked=false; });
-  m.querySelectorAll('textarea').forEach(function(t){ t.value=''; });
-  m.querySelectorAll('select').forEach(function(s){ s.selectedIndex=0; });
-  // Set title for new entry
-  setText('m-eq-t','Agregar persona al equipo');
-  // Open
-  m.classList.add('on');
-  var hoy=new Date().toISOString().split('T')[0];
-  m.querySelectorAll('input[type=date]').forEach(function(i){if(!i.value)i.value=hoy;});
-}
-window.openNewEq=openNewEq;
-
-function openNewModal(modalId, titId, titTxt) {
-  updateVigiasSelects();
-  var m = document.getElementById(modalId); if (!m) return;
-  m.querySelectorAll('input').forEach(function(i){ if(i.type!=='hidden')i.value=''; });
-  m.querySelectorAll('textarea').forEach(function(t){ t.value=''; });
-  m.querySelectorAll('select').forEach(function(s){ s.selectedIndex=0; });
-  m.querySelectorAll('input[type=hidden]').forEach(function(h){ h.value=''; });
-  m.querySelectorAll('input[type=checkbox]').forEach(function(ch){ ch.checked=false; });
-  if(titId) setText(titId, titTxt||'');
-  m.classList.add('on');
-  var hoy=new Date().toISOString().split('T')[0];
-  m.querySelectorAll('input[type=date]').forEach(function(i){if(!i.value)i.value=hoy;});
-}
-window.openNewModal=openNewModal;
-
-</script>
-
-<div class="mo" id="m-vol"><div class="md lg"><div class="mh"><span class="mico">🙋</span><div class="mt" id="m-vol-t">Agregar voluntario</div><button class="mx" onclick="closeM('m-vol')">×</button></div><div class="mb">
-  <input type="hidden" id="vol-idx" value="">
-  <div class="g2">
-    <div class="fg"><div class="fl">Nombre completo *</div><input class="fc" id="vol-nom" placeholder="Nombres y Apellidos"></div>
-    <div class="fg"><div class="fl">WhatsApp</div><input class="fc" id="vol-tel" placeholder="3XX XXXXXXX"></div>
-    <div class="fg"><div class="fl">Condición</div><select class="fc" id="vol-cond"><option>Contratista</option><option>Funcionario</option><option>Equipo MCI</option><option>EQUIPO VISION DE CIUDAD</option><option>M180</option></select></div>
-    <div class="fg"><div class="fl">Entidad</div><input class="fc" id="vol-ent" placeholder="SFDS, IMCRDZ..."></div>
-    <div class="fg"><div class="fl">Cargo / Rol</div><input class="fc" id="vol-car" placeholder="Cargo"></div>
-    <div class="fg"><div class="fl">Líder 12</div><input class="fc" id="vol-lid" placeholder="Nombre del Líder 12"></div>
-    <div class="fg"><div class="fl">Vigía asignado 🧡</div><select class="fc" id="vol-vig"></select></div>
-    <div class="fg"><div class="fl">Adhesión a la campaña</div>
-      <select class="fc" id="vol-adh">
-        <option value="Con nosotros">✅ Con nosotros</option>
-        <option value="Aún pensándolo">🤔 Aún pensándolo</option>
-        <option value="No está aquí">❌ No está aquí</option>
-      </select>
-    </div>
-    <div class="fg"><div class="fl">Barrio</div><input class="fc" id="vol-bar" placeholder="Barrio o sector"></div>
-  </div>
-  <div class="fg"><div class="fl">Observaciones</div><textarea class="fc" id="vol-obs" placeholder="Notas..."></textarea></div>
-</div><div class="mf"><button class="btn bs" onclick="closeM('m-vol')">Cancelar</button><button class="btn bp" onclick="saveVol()">✅ Guardar</button></div></div></div>
-<div class="mo" id="m-eli"><div class="md lg"><div class="mh"><span class="mico">⚡</span><div class="mt" id="m-eli-t">Agregar integrante élite</div><button class="mx" onclick="closeM('m-eli')">×</button></div><div class="mb">
-  <input type="hidden" id="eli-idx" value="">
-  <div class="g2">
-    <div class="fg"><div class="fl">Nombre completo *</div><input class="fc" id="eli-nom" placeholder="Nombres y Apellidos"></div>
-    <div class="fg"><div class="fl">WhatsApp</div><input class="fc" id="eli-tel" placeholder="3XX XXXXXXX"></div>
-    <div class="fg"><div class="fl">Condición</div><select class="fc" id="eli-cond"><option>Contratista</option><option>Funcionario</option><option>Equipo MCI</option><option>EQUIPO VISION DE CIUDAD</option><option>M180</option></select></div>
-    <div class="fg"><div class="fl">Entidad</div><input class="fc" id="eli-ent" placeholder="SFDS, IMCRDZ..."></div>
-    <div class="fg"><div class="fl">Cargo / Rol</div><input class="fc" id="eli-car" placeholder="Cargo"></div>
-    <div class="fg"><div class="fl">Líder 12</div><input class="fc" id="eli-lid" placeholder="Nombre del Líder 12"></div>
-    <div class="fg"><div class="fl">Vigía asignado 🧡</div><select class="fc" id="eli-vig"></select></div>
-    <div class="fg"><div class="fl">Adhesión a la campaña</div>
-      <select class="fc" id="eli-adh">
-        <option value="Con nosotros">✅ Con nosotros</option>
-        <option value="Aún pensándolo">🤔 Aún pensándolo</option>
-        <option value="No está aquí">❌ No está aquí</option>
-      </select>
-    </div>
-    <div class="fg"><div class="fl">Barrio</div><input class="fc" id="eli-bar" placeholder="Barrio o sector"></div>
-  </div>
-  <div class="fg"><div class="fl">Observaciones</div><textarea class="fc" id="eli-obs" placeholder="Notas..."></textarea></div>
-</div><div class="mf"><button class="btn bs" onclick="closeM('m-eli')">Cancelar</button><button class="btn bp" onclick="saveEli()">✅ Guardar</button></div></div></div>
-</body>
-</html>
+window.dashToggle = dashToggle;
+window.updateDash = updateDash;
