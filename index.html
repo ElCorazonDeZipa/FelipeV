@@ -1185,8 +1185,8 @@ window.addEventListener('DOMContentLoaded',function(){
 <div class="pg" id="pg-mapa">
   <div class="ph"><div><div class="pt">🗺️ Mapa Territorial</div><div class="ps">Zipaquirá — marcadores en tiempo real desde datos del equipo y referidos</div></div></div>
   <div class="g2" style="margin-bottom:20px">
-    <div class="sc"><div class="si" style="background:linear-gradient(135deg,#FCE4EC,#F8BBD0)">🩷</div><div><div class="sl">Barrios del equipo (rosado)</div><div class="sv" id="m-eq">0</div></div></div>
-    <div class="sc"><div class="si" style="background:linear-gradient(135deg,#FFFDE7,#FFF9C4)">💛</div><div><div class="sl">Barrios de referidos (amarillo)</div><div class="sv" id="m-ref">0</div></div></div>
+    <div class="sc"><div class="si" style="background:linear-gradient(135deg,#FCE4EC,#F8BBD0)">🩷</div><div><div class="sl">Barrios del equipo (rosado)</div><div class="sv" id="mapa-eq-cnt">0</div></div></div>
+    <div class="sc"><div class="si" style="background:linear-gradient(135deg,#FFFDE7,#FFF9C4)">💛</div><div><div class="sl">Barrios de referidos (amarillo)</div><div class="sv" id="mapa-ref-cnt">0</div></div></div>
   </div>
   <div class="card">
     <div class="ch"><span>🗺️</span><div class="ct">Mapa de Zipaquirá</div><span class="gs-b gs-wn" id="mapa-st">⏳ Cargando...</span></div>
@@ -2038,12 +2038,19 @@ function renderEq() {
   tb.innerHTML = '';
   for (var k = 0; k < rows.length; k++) tb.appendChild(rows[k]);
 
-  // Single event listener - works always, no onclick string bugs
+  // Event delegation
   tb.onclick = function(e) {
     var editBtn = e.target.closest('.eq-edit-btn');
     var delBtn  = e.target.closest('.eq-del-btn');
-    if (editBtn) abrirEdicionEq(parseInt(editBtn.getAttribute('data-idx')));
-    if (delBtn)  delR('equipos', parseInt(delBtn.getAttribute('data-idx')), DB.equipos[parseInt(delBtn.getAttribute('data-idx'))].Nombre);
+    if (editBtn) {
+      var i = parseInt(editBtn.getAttribute('data-idx'));
+      console.log('Edit equipo:', i, DB.equipos[i]);
+      abrirEdicionEq(i);
+    }
+    if (delBtn) {
+      var i2 = parseInt(delBtn.getAttribute('data-idx'));
+      delR('equipos', i2, DB.equipos[i2] ? DB.equipos[i2].Nombre : '');
+    }
   };
 }
 
@@ -3023,7 +3030,7 @@ function addMapMarkers(){
   var beq=(DB.equipos||[]).map(function(r){return r.Barrio||'';}).filter(Boolean);
   var bref=(DB.referidos||[]).map(function(r){return r.Barrio||'';}).filter(Boolean);
   var ueq=[...new Set(beq)],uref=[...new Set(bref)];
-  setText('m-eq',ueq.length); setText('m-ref',uref.length);
+  setText('mapa-eq-cnt',ueq.length); setText('mapa-ref-cnt',uref.length);
   BARRIOS_ZIPA.forEach(function(b){
     var enEq=ueq.some(function(x){return x.toLowerCase().includes(b.n.toLowerCase())||b.n.toLowerCase().includes(x.toLowerCase());});
     var enRef=uref.some(function(x){return x.toLowerCase().includes(b.n.toLowerCase())||b.n.toLowerCase().includes(x.toLowerCase());});
