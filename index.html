@@ -2582,3 +2582,460 @@ function dashToggle(prefix, tab) {
 }
 window.dashToggle = dashToggle;
 window.updateDash = updateDash;
+
+// ═══════════════════════════════════════════════════
+// EDITAR / ELIMINAR
+// ═══════════════════════════════════════════════════
+var DB_KEY = {eq:'equipos',ref:'referidos',tar:'tareas',reu:'reuniones',
+              com:'compromisos',lid:'lideres',bit:'bitacora',red:'redes',
+              vol:'voluntarios',eli:'eliteTeam'};
+var EDIT = {
+  eq:  {modal:'m-eq',  tit:'m-eq-t',  lbl:'Editar persona del equipo',
+    fill: function(r) { setVal('eq-nom',r.Nombre);setVal('eq-tel',r.Telefono);setSel('eq-cond',r.Condicion);setVal('eq-ent',r.Entidad);setVal('eq-car',r.Cargo);setVal('eq-lid',r.Lider12||r.Lider);setSel('eq-vig',r.Vigia||'');setSel('eq-adh',r.Adhesion);setVal('eq-bar',r.Barrio);setVal('eq-obs',r.Observaciones); }},
+  ref: {modal:'m-ref', tit:'m-ref-t', lbl:'Editar referido',
+    fill: function(r) { setVal('ref-nom',r.Nombre);setVal('ref-tel',r.Telefono);setVal('ref-bar',r.Barrio);setVal('ref-ocu',r.Ocupacion||'');setSel('ref-vig',r.QuienRefiere||'');setSel('ref-est',r.Estado);setSel('ref-llam',r.Llamada||'Pendiente');setVal('ref-tip',r.Tipificacion||'');setVal('ref-fci',r.FechaCita||'');setVal('ref-hci',r.HoraCita||'');setVal('ref-lug',r.Lugar||''); }},
+  tar: {modal:'m-tar', tit:'m-tar-t', lbl:'Editar tarea',
+    fill: function(r) { setVal('tar-des',r.Descripcion);setVal('tar-res',r.Responsable);setVal('tar-fec',r.FechaEntrega);setSel('tar-pri',r.Prioridad);setSel('tar-est',r.Estado);setSel('tar-cat',r.Categoria);setVal('tar-reu',r.Reunion);setVal('tar-obs',r.Observaciones); }},
+  reu: {modal:'m-reu', tit:'m-reu-t', lbl:'Editar reunión',
+    fill: function(r) { setVal('reu-nom',r.Nombre);setVal('reu-lug',r.Lugar);setVal('reu-fec',r.Fecha);setVal('reu-hor',r.Hora);setVal('reu-inv',r.Invitados);setVal('reu-des',r.Descripcion);setVal('reu-not',r.Notas);setSel('reu-est',r.Estado); }},
+  com: {modal:'m-com', tit:'m-com-t', lbl:'Editar compromiso',
+    fill: function(r) { setVal('com-nom',r.Nombre||r.Compromiso);setVal('com-bar',r.Barrio);setVal('com-sol',r.Solicitante);setVal('com-res',r.Responsable);setSel('com-est',r.Estado);setVal('com-fec',r.FechaCumplimiento||r.Fecha);setVal('com-pet',r.Peticion);setVal('com-obs',r.Seguimiento); }},
+  lid: {modal:'m-lid', tit:'m-lid-t', lbl:'Editar líder',
+    fill: function(r) { setVal('lid-nom',r.Nombre);setVal('lid-tel',r.Telefono);setSel('lid-sec',r.Sector);setVal('lid-bar',r.Barrio);setVal('lid-ocu',r.Ocupacion);setSel('lid-pri',r.Prioridad);setVal('lid-ult',r.UltimoContacto);setVal('lid-prx',r.ProximoSeguimiento);setVal('lid-obs',r.Observaciones); }},
+  bit: {modal:'m-bit', tit:'m-bit-t', lbl:'Editar entrada de bitácora',
+    fill: function(r) { setVal('bit-fec',r.Fecha);setVal('bit-per',r.Persona);setVal('bit-lug',r.Lugar);setVal('bit-res',r.Resumen);setVal('bit-pro',r.Problemas);setVal('bit-com',r.Compromisos);setVal('bit-tag',r.Tags); }},
+  red: {modal:'m-red', tit:'m-red-t', lbl:'Editar publicación',
+    fill: function(r) { setVal('red-fec',r.Fecha);setSel('red-red',r.Red);setSel('red-tipo',r.Tipo||r.TipoContenido);setVal('red-tem',r.Tema);setVal('red-res',r.Responsable);setSel('red-est',r.Estado);setVal('red-desc',r.Descripcion);setVal('red-met',r.Metricas); }},
+  vol: {modal:'m-vol', tit:'m-vol-t', lbl:'Editar voluntario',
+    fill: function(r) { setVal('vol-nom',r.Nombre);setVal('vol-tel',r.Telefono);setSel('vol-cond',r.Condicion);setVal('vol-ent',r.Entidad);setVal('vol-car',r.Cargo);setVal('vol-lid',r.Lider12||'');setSel('vol-vig',r.Vigia||'');setSel('vol-adh',r.Adhesion||'Con nosotros');setVal('vol-bar',r.Barrio);setVal('vol-obs',r.Observaciones); }},
+  eli: {modal:'m-eli', tit:'m-eli-t', lbl:'Editar integrante élite',
+    fill: function(r) { setVal('eli-nom',r.Nombre);setVal('eli-tel',r.Telefono);setSel('eli-cond',r.Condicion);setVal('eli-ent',r.Entidad);setVal('eli-car',r.Cargo);setVal('eli-lid',r.Lider12||'');setSel('eli-vig',r.Vigia||'');setSel('eli-adh',r.Adhesion||'Con nosotros');setVal('eli-bar',r.Barrio);setVal('eli-obs',r.Observaciones); }}
+};
+
+function editR(tipo, idx) {
+  if (typeof EDIT === 'undefined') { toast('⚠ Sistema cargando...'); return; }
+  var cfg = EDIT[tipo]; if (!cfg) return;
+  var arr = DB[DB_KEY[tipo]];
+  if (!arr || arr[idx] === undefined) { toast('⚠ Registro no encontrado'); return; }
+  updateVigiasSelects();
+  setText(cfg.tit, cfg.lbl);
+  var h = document.querySelector('#' + cfg.modal + ' input[type=hidden]');
+  if (h) h.value = idx;
+  var m = document.getElementById(cfg.modal); if (!m) return;
+  m.classList.add('on');
+  var hoy = new Date().toISOString().split('T')[0];
+  m.querySelectorAll('input[type=date]').forEach(function(i){if(!i.value)i.value=hoy;});
+  setTimeout(function(){
+    var sv2=function(id,v){var e=document.getElementById(id);if(e)e.value=v||'';};
+    var ss2=function(id,v){var e=document.getElementById(id);if(!e||!v)return;for(var i=0;i<e.options.length;i++){if(e.options[i].value===v||e.options[i].text===v){e.selectedIndex=i;break;}}};
+    cfg.fill(arr[idx]);
+  }, 30);
+}
+window.editR = editR;
+
+function delR(tipo, idx, nombre) {
+  setText('conf-msg', '¿Eliminar "' + (nombre||'este registro') + '"?');
+  var confOk = document.getElementById('conf-ok');
+  if (confOk) confOk.onclick = function() {
+    var hMap = {equipos:'Equipos',referidos:'Referidos',tareas:'Tareas',reuniones:'Reuniones',
+                compromisos:'Compromisos',lideres:'Lideres',redes:'Redes',bitacora:'Bitacora',
+                voluntarios:'Voluntarios',eliteTeam:'EliteTeam'};
+    var r = DB[tipo] ? DB[tipo][idx] : null;
+    if (r && r._fila) GA.post('eliminarFila', {hoja: hMap[tipo], id: r._fila});
+    if (DB[tipo]) DB[tipo].splice(idx, 1);
+    var renders2 = {equipos:'renderEq',referidos:'renderRef',tareas:'renderTar',reuniones:'renderReu',
+                   compromisos:'renderCom',lideres:'renderLid',redes:'renderRed',bitacora:'renderBit',
+                   voluntarios:'renderVol',eliteTeam:'renderEli'};
+    var fn = renders2[tipo];
+    if (fn && typeof window[fn]==='function') window[fn]();
+    closeM('m-conf'); toast('✅ Eliminado');
+  };
+  openM('m-conf');
+}
+window.delR = delR;
+
+function setSel(id, v) {
+  var e = document.getElementById(id); if (!e || !v) return;
+  for (var i = 0; i < e.options.length; i++) {
+    if (e.options[i].value === v || e.options[i].text === v) { e.selectedIndex = i; break; }
+  }
+}
+function resetM(modal, titId, titTxt) {
+  var h = document.querySelector('#' + modal + ' input[type=hidden]'); if (h) h.value = '';
+  setText(titId, titTxt);
+}
+
+// ═══════════════════════════════════════════════════
+// GUARDAR REGISTROS
+// ═══════════════════════════════════════════════════
+function saveEq() {
+  var nom = gv('eq-nom'); if (!nom) { toast('⚠ El nombre es requerido'); return; }
+  var datos = {Nombre:nom,Telefono:gv('eq-tel'),Condicion:gv('eq-cond'),Entidad:gv('eq-ent'),
+               Cargo:gv('eq-car'),Lider12:gv('eq-lid'),Vigia:gv('eq-vig'),Adhesion:gv('eq-adh'),
+               Barrio:gv('eq-bar'),Observaciones:gv('eq-obs')};
+  var idx = getIdx('m-eq');
+  if (idx !== null) {
+    DB.equipos[idx] = Object.assign({}, DB.equipos[idx], datos);
+    if (DB.equipos[idx]._fila) GA.post('actualizarFila',{hoja:'Equipos',id:DB.equipos[idx]._fila,datos:JSON.stringify(datos)});
+    toast('✅ Actualizado');
+  } else {
+    GA.post('guardarFila',{hoja:'Equipos',fila:JSON.stringify(datos)}).then(function(r){toast(r&&r.ok?'✅ Guardado en Sheets':'⚠ Guardado local');});
+    DB.equipos.push(datos);
+  }
+  closeM('m-eq'); renderEq(); resetM('m-eq','m-eq-t','Agregar persona al equipo');
+}
+window.saveEq = saveEq;
+
+function saveRef() {
+  var nom = gv('ref-nom'); if (!nom) { toast('⚠ El nombre es requerido'); return; }
+  var agendado = gv('ref-agendado') || 'no';
+  var hrs = [8,9,10,11,12,13,14,15,16,17,18,19].filter(function(h){var e=document.getElementById('rh-'+h);return e&&e.checked;}).map(function(h){return h+'h';}).join(', ');
+  var datos = {Nombre:nom,Telefono:gv('ref-tel'),Barrio:gv('ref-bar'),Ocupacion:gv('ref-ocu'),
+               QuienRefiere:gv('ref-vig'),Estado:agendado==='si'?'Agendada':gv('ref-est'),
+               Llamada:gv('ref-llam'),Tipificacion:gv('ref-tip'),FechaCita:gv('ref-fci'),
+               HoraCita:gv('ref-hci'),Lugar:gv('ref-lug'),Horarios:hrs,Agendado:agendado,
+               Observaciones:gv('ref-tip')};
+  var idx = getIdx('m-ref');
+  if (agendado === 'si' && datos.FechaCita) {
+    toast('⏳ Agendando en Google Calendar...');
+    GA.post('crearEvento',{calendario:'corazonzipa@gmail.com',titulo:'☕ Cita FV con '+nom,
+      fecha:datos.FechaCita,horaInicio:datos.HoraCita||'09:00',horaFin:'10:00',lugar:datos.Lugar,
+      descripcion:'Referido por: '+(datos.QuienRefiere||'')+'\nHorarios: '+hrs,
+      observaciones:datos.Observaciones,verificarConflictos:'false'})
+      .then(function(r){if(r&&r.ok)toast('✅ Cita en Calendar 📅');else toast('⚠ '+( r?r.error:'Error'));});
+  }
+  if (idx !== null) {
+    DB.referidos[idx] = Object.assign({}, DB.referidos[idx], datos);
+    if (DB.referidos[idx]._fila) GA.post('actualizarFila',{hoja:'Referidos',id:DB.referidos[idx]._fila,datos:JSON.stringify(datos)});
+    toast('✅ Referido actualizado');
+  } else {
+    GA.post('guardarFila',{hoja:'Referidos',fila:JSON.stringify(datos)}).then(function(r){toast(r&&r.ok?'✅ Guardado':'⚠ Local');});
+    DB.referidos.push(datos);
+  }
+  closeM('m-ref'); renderRef(); resetM('m-ref','m-ref-t','Nuevo referido');
+}
+window.saveRef = saveRef;
+
+function saveTar() {
+  var des = gv('tar-des'); if (!des) { toast('⚠ Descripción requerida'); return; }
+  var datos = {FechaCreacion:new Date().toISOString().split('T')[0],FechaEntrega:gv('tar-fec'),
+               Responsable:gv('tar-res'),Categoria:gv('tar-cat'),Descripcion:des,
+               Prioridad:gv('tar-pri'),Estado:gv('tar-est'),Reunion:gv('tar-reu'),Observaciones:gv('tar-obs')};
+  var idx = getIdx('m-tar');
+  if (idx !== null) {
+    DB.tareas[idx] = Object.assign({}, DB.tareas[idx], datos);
+    if (DB.tareas[idx]._fila) GA.post('actualizarFila',{hoja:'Tareas',id:DB.tareas[idx]._fila,datos:JSON.stringify(datos)});
+    toast('✅ Tarea actualizada');
+  } else {
+    GA.post('guardarFila',{hoja:'Tareas',fila:JSON.stringify(datos)}).then(function(r){
+      if(r&&r.ok) crearGoogleTask('✅ '+des,'Responsable: '+(datos.Responsable||''),datos.FechaEntrega)
+        .then(function(tr){if(tr&&tr.ok)datos.GoogleTaskId=tr.id;});
+      toast(r&&r.ok?'✅ Guardado':'⚠ Local');
+    });
+    DB.tareas.push(datos);
+  }
+  closeM('m-tar'); renderTar(); resetM('m-tar','m-tar-t','Nueva tarea');
+}
+window.saveTar = saveTar;
+
+var reuTarTemp = [];
+function addReuTar() {
+  var des = gv('rt-des'); if (!des) { toast('⚠ Escribe la tarea'); return; }
+  reuTarTemp.push({des:des,res:gv('rt-res'),fec:gv('rt-fec'),pri:gv('rt-pri')});
+  var li = document.getElementById('rt-list');
+  if (li) li.innerHTML = reuTarTemp.map(function(t,i){
+    return '<div style="display:flex;align-items:center;gap:8px;padding:8px;background:#fff;border-radius:6px;margin-bottom:4px;border:1px solid var(--s6)">'
+      +'<span style="flex:1;font-size:12px">'+esc(t.des)+'</span>'
+      +'<button class="btn bd" style="padding:2px 8px;font-size:11px" data-rtt="'+i+'">×</button></div>';
+  }).join('');
+  setVal('rt-des',''); setVal('rt-res','');
+}
+window.addReuTar = addReuTar;
+function tarFromReu(nom){setVal('tar-reu',nom);openM('m-tar');}
+window.tarFromReu = tarFromReu;
+
+function saveReu() {
+  var nom = gv('reu-nom'); if (!nom) { toast('⚠ El nombre es requerido'); return; }
+  var datos = {Fecha:gv('reu-fec'),Hora:gv('reu-hor'),Lugar:gv('reu-lug'),Nombre:nom,
+               Invitados:gv('reu-inv'),Descripcion:gv('reu-des'),Notas:gv('reu-not'),Estado:gv('reu-est')};
+  var idx = getIdx('m-reu');
+  if (idx !== null) {
+    DB.reuniones[idx] = Object.assign({}, DB.reuniones[idx], datos);
+    if (DB.reuniones[idx]._fila) GA.post('actualizarFila',{hoja:'Reuniones',id:DB.reuniones[idx]._fila,datos:JSON.stringify(datos)});
+    toast('✅ Reunión actualizada');
+  } else {
+    if (datos.Fecha) GA.post('crearEvento',{calendario:'corazonzipa@gmail.com',titulo:'🏛️ '+nom,fecha:datos.Fecha,horaInicio:datos.Hora||'08:00',horaFin:'10:00',lugar:datos.Lugar,descripcion:datos.Descripcion,verificarConflictos:'false'});
+    GA.post('guardarFila',{hoja:'Reuniones',fila:JSON.stringify(datos)}).then(function(r){toast(r&&r.ok?'✅ Guardado':'⚠ Local');});
+    DB.reuniones.push(datos);
+    reuTarTemp.forEach(function(t){
+      var td={FechaCreacion:new Date().toISOString().split('T')[0],FechaEntrega:t.fec||'',Responsable:t.res||'',Categoria:'Reunión',Descripcion:t.des,Prioridad:t.pri||'Normal',Estado:'Pendiente',Reunion:nom};
+      DB.tareas.push(td);
+      GA.post('guardarFila',{hoja:'Tareas',fila:JSON.stringify(td)});
+      crearGoogleTask('✅ '+t.des,'Reunión: '+nom,t.fec||'');
+    });
+    reuTarTemp=[]; var li=document.getElementById('rt-list');if(li)li.innerHTML='';
+  }
+  closeM('m-reu'); renderReu(); renderTar(); resetM('m-reu','m-reu-t','Nueva reunión');
+}
+window.saveReu = saveReu;
+
+function saveCom() {
+  var nom = gv('com-nom'); if (!nom) { toast('⚠ El nombre es requerido'); return; }
+  var datos = {Nombre:nom,Barrio:gv('com-bar'),Solicitante:gv('com-sol'),Responsable:gv('com-res'),
+               Estado:gv('com-est'),FechaCumplimiento:gv('com-fec'),Peticion:gv('com-pet'),Seguimiento:gv('com-obs')};
+  var idx = getIdx('m-com');
+  if (idx !== null) {
+    DB.compromisos[idx]=Object.assign({},DB.compromisos[idx],datos);
+    if(DB.compromisos[idx]._fila) GA.post('actualizarFila',{hoja:'Compromisos',id:DB.compromisos[idx]._fila,datos:JSON.stringify(datos)});
+    toast('✅ Actualizado');
+  } else {
+    GA.post('guardarFila',{hoja:'Compromisos',fila:JSON.stringify(datos)}).then(function(r){
+      if(r&&r.ok) crearGoogleTask('📋 '+nom,'Barrio: '+(datos.Barrio||'')+'\nSolicitante: '+(datos.Solicitante||''),datos.FechaCumplimiento);
+      toast(r&&r.ok?'✅ Guardado':'⚠ Local');
+    });
+    DB.compromisos.push(datos);
+  }
+  closeM('m-com'); renderCom(); resetM('m-com','m-com-t','Nuevo compromiso');
+}
+window.saveCom = saveCom;
+
+function saveLid() {
+  var nom = gv('lid-nom'); if (!nom) { toast('⚠ El nombre es requerido'); return; }
+  var datos={Nombre:nom,Telefono:gv('lid-tel'),Sector:gv('lid-sec'),Barrio:gv('lid-bar'),
+             Ocupacion:gv('lid-ocu'),Prioridad:gv('lid-pri'),UltimoContacto:gv('lid-ult'),
+             ProximoSeguimiento:gv('lid-prx'),Observaciones:gv('lid-obs')};
+  var idx=getIdx('m-lid');
+  if(idx!==null){DB.lideres[idx]=Object.assign({},DB.lideres[idx],datos);if(DB.lideres[idx]._fila)GA.post('actualizarFila',{hoja:'Lideres',id:DB.lideres[idx]._fila,datos:JSON.stringify(datos)});toast('✅ Actualizado');}
+  else{GA.post('guardarFila',{hoja:'Lideres',fila:JSON.stringify(datos)}).then(function(r){toast(r&&r.ok?'✅ Guardado':'⚠ Local');});DB.lideres.push(datos);}
+  closeM('m-lid'); renderLid(); resetM('m-lid','m-lid-t','Nuevo líder estratégico');
+}
+window.saveLid = saveLid;
+
+function saveBit() {
+  var per=gv('bit-per'); if(!per){toast('⚠ Indica con quién fue');return;}
+  var datos={Fecha:gv('bit-fec'),Persona:per,Lugar:gv('bit-lug'),Resumen:gv('bit-res'),
+             Problemas:gv('bit-pro'),Compromisos:gv('bit-com'),Tags:gv('bit-tag')};
+  var idx=getIdx('m-bit');
+  if(idx!==null){DB.bitacora[idx]=Object.assign({},DB.bitacora[idx],datos);if(DB.bitacora[idx]._fila)GA.post('actualizarFila',{hoja:'Bitacora',id:DB.bitacora[idx]._fila,datos:JSON.stringify(datos)});toast('✅ Actualizado');}
+  else{GA.post('guardarFila',{hoja:'Bitacora',fila:JSON.stringify(datos)}).then(function(r){toast(r&&r.ok?'✅ Guardado':'⚠ Local');});DB.bitacora.push(datos);}
+  closeM('m-bit'); renderBit(); resetM('m-bit','m-bit-t','Nueva entrada — Bitácora');
+}
+window.saveBit = saveBit;
+
+function saveRed() {
+  var tem=gv('red-tem'); if(!tem){toast('⚠ El tema es requerido');return;}
+  var datos={Fecha:gv('red-fec'),Red:gv('red-red'),Tipo:gv('red-tipo'),Tema:tem,
+             Responsable:gv('red-res'),Estado:gv('red-est'),Descripcion:gv('red-desc'),Metricas:gv('red-met')};
+  var idx=getIdx('m-red');
+  if(idx!==null){DB.redes[idx]=Object.assign({},DB.redes[idx],datos);if(DB.redes[idx]._fila)GA.post('actualizarFila',{hoja:'Redes',id:DB.redes[idx]._fila,datos:JSON.stringify(datos)});toast('✅ Actualizado');}
+  else{GA.post('guardarFila',{hoja:'Redes',fila:JSON.stringify(datos)}).then(function(r){
+    if(r&&r.ok) crearGoogleTask('📱 '+datos.Red+': '+tem,'Tipo: '+datos.Tipo+'\nResponsable: '+datos.Responsable,datos.Fecha);
+    toast(r&&r.ok?'✅ Guardado':'⚠ Local');
+  });DB.redes.push(datos);}
+  closeM('m-red'); renderRed(); resetM('m-red','m-red-t','Nueva publicación');
+}
+window.saveRed = saveRed;
+
+function saveVol() {
+  var nom=gv('vol-nom'); if(!nom){toast('⚠ El nombre es requerido');return;}
+  var datos={Nombre:nom,Telefono:gv('vol-tel'),Condicion:gv('vol-cond'),Entidad:gv('vol-ent'),
+             Cargo:gv('vol-car'),Lider12:gv('vol-lid'),Vigia:gv('vol-vig'),Adhesion:gv('vol-adh'),
+             Barrio:gv('vol-bar'),Observaciones:gv('vol-obs')};
+  var idx=getIdx('m-vol');
+  if(idx!==null){DB.voluntarios[idx]=Object.assign({},DB.voluntarios[idx],datos);if(DB.voluntarios[idx]._fila)GA.post('actualizarFila',{hoja:'Voluntarios',id:DB.voluntarios[idx]._fila,datos:JSON.stringify(datos)});toast('✅ Actualizado');}
+  else{GA.post('guardarFila',{hoja:'Voluntarios',fila:JSON.stringify(datos)}).then(function(r){toast(r&&r.ok?'✅ Guardado':'⚠ Local');});DB.voluntarios.push(datos);}
+  closeM('m-vol'); renderVol();
+}
+window.saveVol = saveVol;
+
+function saveEli() {
+  var nom=gv('eli-nom'); if(!nom){toast('⚠ El nombre es requerido');return;}
+  var datos={Nombre:nom,Telefono:gv('eli-tel'),Condicion:gv('eli-cond'),Entidad:gv('eli-ent'),
+             Cargo:gv('eli-car'),Lider12:gv('eli-lid'),Vigia:gv('eli-vig'),Adhesion:gv('eli-adh'),
+             Barrio:gv('eli-bar'),Observaciones:gv('eli-obs')};
+  var idx=getIdx('m-eli');
+  if(idx!==null){DB.eliteTeam[idx]=Object.assign({},DB.eliteTeam[idx],datos);if(DB.eliteTeam[idx]._fila)GA.post('actualizarFila',{hoja:'EliteTeam',id:DB.eliteTeam[idx]._fila,datos:JSON.stringify(datos)});toast('✅ Actualizado');}
+  else{GA.post('guardarFila',{hoja:'EliteTeam',fila:JSON.stringify(datos)}).then(function(r){toast(r&&r.ok?'✅ Guardado':'⚠ Local');});DB.eliteTeam.push(datos);}
+  closeM('m-eli'); renderEli();
+}
+window.saveEli = saveEli;
+
+function saveAct() {
+  var tit=gv('a-tit'),fec=gv('a-fec');
+  if(!tit||!fec){toast('⚠ Completa título y fecha');return;}
+  toast('⏳ Creando evento...');
+  GA.post('crearEvento',{calendario:gv('a-cal'),titulo:tit,fecha:fec,horaInicio:gv('a-hi')||'08:00',
+    horaFin:gv('a-hf')||'09:00',lugar:gv('a-lug'),descripcion:gv('a-des'),verificarConflictos:'false'})
+    .then(function(r){if(r&&r.ok){toast('✅ Evento en Calendar 📅');closeM('m-act');if(typeof syncCal==='function')syncCal();}
+    else toast('⚠ '+(r?r.error:'Error'));});
+}
+window.saveAct = saveAct;
+
+// ═══════════════════════════════════════════════════
+// VOLUNTARIOS y ÉLITE — render
+// ═══════════════════════════════════════════════════
+function renderPersonasTabla(tbId, tipo, arr) {
+  var tb = document.getElementById(tbId); if (!tb) return;
+  if (!arr || !arr.length) {
+    tb.innerHTML='<tr><td colspan="9" class="empty">Sin registros. Agrega el primero.</td></tr>'; return;
+  }
+  var CCOL={'Contratista':'bk-b','Funcionario':'bk-g','Equipo MCI':'bk-o','EQUIPO VISION DE CIUDAD':'bk-t','M180':'bk-r'};
+  var rows=[];
+  for(var i=0;i<arr.length;i++){
+    var r=arr[i];
+    var adh=r.Adhesion||'Con nosotros';
+    var adhIco=adh==='Con nosotros'?'✅':adh==='Aún pensándolo'?'🤔':'❌';
+    var adhCol=adh==='Con nosotros'?'bk-g':adh==='Aún pensándolo'?'bk-y':'bk-r';
+    var tr=document.createElement('tr');
+    tr.innerHTML='<td><div style="display:flex;align-items:center;gap:8px">'
+      +'<div class="av" style="background:linear-gradient(135deg,#FF8C00,#FF5722);color:#fff;font-size:11px;font-weight:700">'+ini2(r.Nombre)+'</div>'
+      +'<div><div style="font-weight:700;font-size:13px">'+esc(r.Nombre)+'</div>'
+      +'<div style="font-size:10px;color:#999">'+esc(r.Condicion||'')+'</div></div></div></td>'
+      +'<td><a href="https://wa.me/57'+esc(r.Telefono||'')+'" target="_blank" style="color:#FF8C00;font-weight:500">📱 '+esc(r.Telefono||'—')+'</a></td>'
+      +'<td><span class="bk '+(CCOL[r.Condicion]||'bk-gr')+'" style="font-size:10px">'+esc(r.Condicion||'')+'</span></td>'
+      +'<td style="font-size:12px">'+esc(r.Entidad||'')+'</td>'
+      +'<td style="font-size:11px">'+esc(r.Cargo||'')+'</td>'
+      +'<td style="font-size:11px;color:#555">'+esc((r.Lider12||'').split(' ').slice(0,2).join(' '))+'</td>'
+      +'<td><span class="bk bk-o" style="font-size:10px">'+esc(r.Vigia||'—')+'</span></td>'
+      +'<td><span class="bk '+adhCol+'">'+adhIco+' '+adh+'</span></td>'
+      +'<td><div style="display:flex;gap:4px">'
+      +'<button class="btn bp sm pers-edit" data-idx="'+i+'" data-tipo="'+tipo+'" style="padding:4px 9px;font-size:11px">✏️</button>'
+      +'<button class="btn bd sm pers-del"  data-idx="'+i+'" data-tipo="'+tipo+'" data-nom="'+esc(r.Nombre||'')+'" style="padding:4px 9px;font-size:11px">🗑</button>'
+      +'</div></td>';
+    rows.push(tr);
+  }
+  tb.innerHTML='';
+  for(var k=0;k<rows.length;k++) tb.appendChild(rows[k]);
+  tb.onclick=function(e){
+    var eb=e.target.closest('.pers-edit'),db=e.target.closest('.pers-del');
+    if(eb) abrirEdicion(eb.getAttribute('data-tipo'),parseInt(eb.getAttribute('data-idx')));
+    if(db){var t=db.getAttribute('data-tipo');var dbKey=t==='vol'?'voluntarios':'eliteTeam';delR(dbKey,parseInt(db.getAttribute('data-idx')),db.getAttribute('data-nom'));}
+  };
+}
+
+function renderVol(){
+  var arr=DB.voluntarios||[];
+  setText('vol-c1',arr.filter(function(r){return r.Adhesion==='Con nosotros';}).length);
+  setText('vol-c2',arr.filter(function(r){return r.Adhesion==='Aún pensándolo';}).length);
+  setText('vol-c3',arr.filter(function(r){return r.Adhesion==='No está aquí';}).length);
+  renderPersonasTabla('tb-vol','vol',arr);
+}
+function renderEli(){
+  var arr=DB.eliteTeam||[];
+  setText('eli-c1',arr.filter(function(r){return r.Adhesion==='Con nosotros';}).length);
+  setText('eli-c2',arr.filter(function(r){return r.Adhesion==='Aún pensándolo';}).length);
+  setText('eli-c3',arr.filter(function(r){return r.Adhesion==='No está aquí';}).length);
+  renderPersonasTabla('tb-eli','eli',arr);
+}
+window.renderVol=renderVol; window.renderEli=renderEli;
+
+// ═══════════════════════════════════════════════════
+// ASISTENTE IA
+// ═══════════════════════════════════════════════════
+function sendIA() {
+  var inp=document.getElementById('ia-in');
+  var msg=inp?inp.value.trim():''; if(!msg)return;
+  if(inp)inp.value='';
+  var chat=document.getElementById('ia-chat');
+  chat.innerHTML+='<div class="im usr">'+esc(msg)+'</div>';
+  var lid='ia'+Date.now();
+  chat.innerHTML+='<div class="im bot" id="'+lid+'">💭 Analizando...</div>';
+  chat.scrollTop=chat.scrollHeight;
+  if(CFG.IA_KEY){
+    var ctx='Eres el asistente de campaña de Felipe Vanegas, alcaldía Zipaquirá 2028. Campaña: "Zipa con el Corazón". Responde en español. Datos: Referidos='+DB.referidos.length+' Equipo='+DB.equipos.length+' Tareas='+DB.tareas.length+' Compromisos='+DB.compromisos.length+' Líderes='+DB.lideres.length;
+    fetch('https://api.anthropic.com/v1/messages',{method:'POST',headers:{'Content-Type':'application/json','x-api-key':CFG.IA_KEY,'anthropic-version':'2023-06-01'},body:JSON.stringify({model:'claude-sonnet-4-6',max_tokens:600,system:ctx,messages:[{role:'user',content:msg}]})})
+      .then(function(r){return r.json();})
+      .then(function(d){var e=document.getElementById(lid);if(e)e.innerHTML=(d.content&&d.content[0]?d.content[0].text:'Sin respuesta').replace(/\n/g,'<br>');chat.scrollTop=chat.scrollHeight;})
+      .catch(function(){var e=document.getElementById(lid);if(e)e.innerHTML=localIA(msg);});
+  }else{setTimeout(function(){var e=document.getElementById(lid);if(e)e.innerHTML=localIA(msg);chat.scrollTop=chat.scrollHeight;},500);}
+}
+function localIA(msg){
+  var m=msg.toLowerCase();
+  if(m.includes('referid'))return '🤝 Referidos: '+DB.referidos.length+' total';
+  if(m.includes('compromis'))return '📋 Compromisos: '+DB.compromisos.length+' total';
+  if(m.includes('tarea'))return '✅ Tareas: '+DB.tareas.length+' total';
+  return '🤖 Tengo acceso a referidos, tareas, compromisos y más. ¿Qué necesitas?';
+}
+function askIA(p){var inp=document.getElementById('ia-in');if(inp){inp.value=p;sendIA();}}
+function clrChat(){setHTML('ia-chat','<div class="im bot">Chat limpio. ¿En qué te ayudo? 🧡</div>');}
+window.sendIA=sendIA; window.askIA=askIA; window.clrChat=clrChat;
+
+// ═══════════════════════════════════════════════════
+// MAPA
+// ═══════════════════════════════════════════════════
+var BARRIOS_ZIPA=[
+  {n:'Centro Histórico',lat:5.0232,lng:-74.0063},{n:'La Unión',lat:5.0190,lng:-74.0100},
+  {n:'San Jorge',lat:5.0280,lng:-74.0040},{n:'La Paz',lat:5.0250,lng:-74.0110},
+  {n:'Arco Iris',lat:5.0160,lng:-74.0130},{n:'El Progreso',lat:5.0310,lng:-74.0020},
+  {n:'Santa Isabel',lat:5.0150,lng:-74.0080},{n:'El Resurgir',lat:5.0200,lng:-74.0020},
+  {n:'El Tejar',lat:5.0270,lng:-74.0080},{n:'Villa del Prado',lat:5.0180,lng:-74.0050},
+  {n:'Los Cedros',lat:5.0240,lng:-74.0120},{n:'San Nicolás',lat:5.0220,lng:-74.0030},
+  {n:'La Granja',lat:5.0170,lng:-74.0140},{n:'El Carmelo',lat:5.0290,lng:-74.0060},
+  {n:'Olarte',lat:5.0140,lng:-74.0060},{n:'Bello Horizonte',lat:5.0260,lng:-74.0150},
+  {n:'La Estación',lat:5.0210,lng:-74.0090},{n:'Funza',lat:5.0300,lng:-74.0100}
+];
+window._ML=false; window._map=null; window._mapMarkers=[];
+
+function initMap(){
+  if(!CFG.MKEY)return;
+  var st=document.getElementById('mapa-st');if(st){st.className='gs-b gs-wn';st.textContent='⏳ Cargando...';}
+  if(!document.getElementById('gms')){
+    var s=document.createElement('script');s.id='gms';
+    s.src='https://maps.googleapis.com/maps/api/js?key='+CFG.MKEY+'&callback=onMapLoad&language=es';
+    s.async=true;s.onerror=function(){var st=document.getElementById('mapa-st');if(st){st.className='gs-b gs-er';st.textContent='⚠ Error Maps';}};
+    document.head.appendChild(s);
+  } else if(window.google&&window.google.maps){onMapLoad();}
+}
+window.onMapLoad=function(){
+  document.getElementById('mapa-nok').style.display='none';
+  document.getElementById('mapa-ok').style.display='block';
+  window._map=new google.maps.Map(document.getElementById('map-el'),{center:{lat:5.0226,lng:-74.0059},zoom:13});
+  window._ML=true;
+  var st=document.getElementById('mapa-st');if(st){st.className='gs-b gs-ok';st.textContent='✅ Mapa activo';}
+  setTimeout(addMapMarkers,400);
+};
+function addMapMarkers(){
+  if(!window._map)return;
+  window._mapMarkers.forEach(function(m){m.setMap(null);}); window._mapMarkers=[];
+  var beq=(DB.equipos||[]).map(function(r){return r.Barrio||'';}).filter(Boolean);
+  var bref=(DB.referidos||[]).map(function(r){return r.Barrio||'';}).filter(Boolean);
+  var ueq=[...new Set(beq)],uref=[...new Set(bref)];
+  setText('m-eq',ueq.length); setText('m-ref',uref.length);
+  BARRIOS_ZIPA.forEach(function(b){
+    var enEq=ueq.some(function(x){return x.toLowerCase().includes(b.n.toLowerCase())||b.n.toLowerCase().includes(x.toLowerCase());});
+    var enRef=uref.some(function(x){return x.toLowerCase().includes(b.n.toLowerCase())||b.n.toLowerCase().includes(x.toLowerCase());});
+    var col='#BDBDBD',scale=7;
+    if(enEq&&enRef){col='#9C27B0';scale=14;}
+    else if(enEq){col='#E91E63';scale=12;}
+    else if(enRef){col='#FFD600';scale=11;}
+    var m=new google.maps.Marker({position:{lat:b.lat,lng:b.lng},map:window._map,title:b.n,
+      icon:{path:google.maps.SymbolPath.CIRCLE,scale:scale,fillColor:col,fillOpacity:.9,strokeWeight:2,strokeColor:'#fff'}});
+    window._mapMarkers.push(m);
+  });
+}
+window.initMap=initMap; window.addMapMarkers=addMapMarkers;
+
+// ═══════════════════════════════════════════════════
+// EXPOSE ALL
+// ═══════════════════════════════════════════════════
+window.saveEq=saveEq; window.saveRef=saveRef; window.saveTar=saveTar;
+window.saveReu=saveReu; window.saveCom=saveCom; window.saveLid=saveLid;
+window.saveBit=saveBit; window.saveRed=saveRed; window.saveVol=saveVol; window.saveEli=saveEli;
+window.saveAct=saveAct; window.editR=editR; window.delR=delR;
+window.addReuTar=addReuTar; window.tarFromReu=tarFromReu;
+window.renderVol=renderVol; window.renderEli=renderEli;
+window.syncGoogleTasks=function(){toast('🔄 Sync Tasks...');GA.get('listarTasks',{lista:CFG.TASKLIST}).then(function(r){toast(r&&r.ok?'✅ '+r.total+' tareas':'⚠ '+((r&&r.error)||'error'));});};
+window.filEq=filEq||function(){};
+window.filT=filT||function(){};
+window.filLid=filLid||function(){};
+window.cambMes=cambMes||function(){};
+window.clickDia=clickDia||function(){};
+window.syncCal=syncCal||function(){};
+window.exportJSON=exportJSON||function(){};
+window.openFolder=openFolder||function(){};
+window.changePwd=changePwd||function(){};
+window.toggleRefCita=function(v){['ref-fci','ref-hci','ref-lug'].forEach(function(id){var el=document.getElementById(id);if(el&&el.closest('.fg'))el.closest('.fg').style.display=v==='si'?'':'none';});};
+
+</script>
+</body>
+</html>
