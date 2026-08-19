@@ -654,7 +654,7 @@ function abrirEdicion(tipo, idx) {
                 vol:'Editar voluntario',eli:'Editar integrante élite'};
   var fillMap = {
     eq:  function(r,sv,ss){ sv('eq-nom',r.Nombre);sv('eq-tel',r.Telefono);ss('eq-cond',r.Condicion);sv('eq-ent',r.Entidad);sv('eq-car',r.Cargo);sv('eq-lid',r.Lider12||r.Lider||'');ss('eq-vig',r.Vigia||'');ss('eq-adh',r.Adhesion||'Con nosotros');sv('eq-bar',r.Barrio);sv('eq-obs',r.Observaciones); },
-    ref: function(r,sv,ss){ sv('ref-nom',r.Nombre);sv('ref-tel',r.Telefono);sv('ref-bar',r.Barrio);sv('ref-ocu',r.Ocupacion||r['Ocupación']||'');sv('ref-vig',r.QuienRefiere||r['Tu Nombre']||'');ss('ref-est',r.Estado||'Pendiente');ss('ref-llam',r.Llamada||'Pendiente');sv('ref-tip',r.Tipificacion||r.Observaciones||r['Observaciones']||'');sv('ref-fci',r.FechaCita||'');sv('ref-hci',r.HoraCita||'');sv('ref-lug',r.Lugar||''); },
+    ref: function(r,sv,ss){ sv('ref-nom',r.Nombre);sv('ref-tel',r.Telefono);sv('ref-bar',r.Barrio);sv('ref-ocu',r.Ocupacion||r['Ocupación']||'');sv('ref-vig',r.QuienRefiere||r['Tu Nombre']||'');ss('ref-est',r.Estado||'Pendiente');ss('ref-llam',r.Llamada||'Pendiente');sv('ref-tip',r.Tipificacion||r.Observaciones||r['Observaciones']||'');sv('ref-fci',r.FechaCita||'');sv('ref-hci',r.HoraCita||'');sv('ref-lug',r.Lugar||'');ss('ref-adh',r.Adhesion||'');sv('ref-resultado',r.ResultadoCita||r.Resultado||''); },
     tar: function(r,sv,ss){ sv('tar-des',r.Descripcion);sv('tar-res',r.Responsable);sv('tar-fec',r.FechaEntrega);ss('tar-pri',r.Prioridad);ss('tar-est',r.Estado);ss('tar-cat',r.Categoria);sv('tar-reu',r.Reunion);sv('tar-obs',r.Observaciones); },
     reu: function(r,sv,ss){ sv('reu-nom',r.Nombre);sv('reu-lug',r.Lugar);sv('reu-fec',r.Fecha);sv('reu-hor',r.Hora);sv('reu-inv',r.Invitados);sv('reu-des',r.Descripcion);sv('reu-not',r.Notas);ss('reu-est',r.Estado); },
     com: function(r,sv,ss){ sv('com-nom',r.Nombre||r.Compromiso);sv('com-bar',r.Barrio);sv('com-sol',r.Solicitante);sv('com-res',r.Responsable);ss('com-est',r.Estado);sv('com-fec',r.FechaCumplimiento||r.Fecha);sv('com-pet',r.Peticion);sv('com-obs',r.Seguimiento); },
@@ -1118,7 +1118,7 @@ window.addEventListener('DOMContentLoaded',function(){
     <button class="btn bt sm" onclick="syncRefFormulario()">📋 Sync Formulario</button>
   </div>
   <div class="card"><div class="tw"><table>
-    <thead><tr><th>Nombre</th><th>Teléfono</th><th>Barrio</th><th>Quién refiere</th><th>Horarios disponibles</th><th>📞 Llamada</th><th>Cita agendada</th><th>📅 Agenda</th><th>Estado</th><th>Acciones</th></tr></thead>
+    <thead><tr><th>Nombre</th><th>Teléfono</th><th>Barrio</th><th>Quién refiere</th><th>Horarios</th><th>📞 Llamada</th><th>Cita</th><th>📅</th><th>Estado</th><th>🧡 Adhesión</th><th>Acciones</th></tr></thead>
     <tbody id="tb-ref"></tbody>
   </table></div></div>
 </div>
@@ -1411,6 +1411,18 @@ window.addEventListener('DOMContentLoaded',function(){
         <option value="si">✅ Sí — agendar en Google Calendar</option>
       </select>
     </div>
+    <div class="fg"><div class="fl">🧡 Adhesión a la campaña</div>
+      <select class="fc" id="ref-adh">
+        <option value="">— Sin definir —</option>
+        <option value="Con nosotros">✅ Con nosotros</option>
+        <option value="Aún pensándolo">🤔 Aún pensándolo</option>
+        <option value="No está con nosotros">❌ No está con nosotros</option>
+      </select>
+    </div>
+  </div>
+  <div class="fg" style="margin-top:4px">
+    <div class="fl">📝 Resultado de la reunión con Felipe</div>
+    <textarea class="fc" id="ref-resultado" placeholder="¿Qué se habló en la cita? Compromisos, posición, temas clave..." style="min-height:90px"></textarea>
   </div>
   <div style="background:var(--s7);border-radius:var(--rad-sm);padding:14px;margin-top:4px">
     <div class="fl" style="margin-bottom:10px">⏰ Horarios disponibles del referido (según formulario)</div>
@@ -2115,6 +2127,7 @@ function renderRef() {
         +'<td style="font-size:11px">'+cita+'</td>'
         +'<td style="font-size:12px;text-align:center">'+agendado+'</td>'
         +'<td><span class="bk '+estCol+'" style="font-size:10px">'+esc(estado)+'</span></td>'
+        +'<td>'+(r.Adhesion?'<span class="bk '+(r.Adhesion==='Con nosotros'?'bk-g':r.Adhesion==='Aún pensándolo'?'bk-y':'bk-r')+'" style="font-size:10px">'+esc(r.Adhesion)+'</span>':'<span style="color:#ccc;font-size:12px">—</span>')+'</td>'
         +'<td><div style="display:flex;gap:3px">'
         +'<button class="btn bp sm ref-edit-btn" data-idx="'+i+'" style="padding:3px 8px;font-size:11px">✏️</button>'
         +'<button class="btn bd sm ref-del-btn"  data-idx="'+i+'" style="padding:3px 8px;font-size:11px">🗑</button>'
@@ -2732,6 +2745,7 @@ function saveRef() {
                QuienRefiere:gv('ref-vig'),Estado:agendado==='si'?'Agendada':gv('ref-est'),
                Llamada:gv('ref-llam'),Tipificacion:gv('ref-tip'),FechaCita:gv('ref-fci'),
                HoraCita:gv('ref-hci'),Lugar:gv('ref-lug'),Horarios:hrs,Agendado:agendado,
+               Adhesion:gv('ref-adh'),ResultadoCita:gv('ref-resultado'),
                Observaciones:gv('ref-tip')};
   var idx = getIdx('m-ref');
   // Crear evento en Calendar si hay fecha de cita y está marcado como agendado
