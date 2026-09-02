@@ -266,11 +266,14 @@ textarea.fc{resize:vertical;min-height:80px;}
 <script>
 // ══════════════════════════════════════════════════════════
 // BOOTSTRAP — Corre primero, garantiza que TODO funcione
-// Incluye: CFG, VIGIAS, login, navegación, config, guardar
 // ══════════════════════════════════════════════════════════
 
-// ── Estado global compartido con el script principal
-// CFG defined in bootstrap
+var CFG = {
+  PWD: '4LC4LD32028*',
+  AS: 'https://script.google.com/macros/s/AKfycbyCtjTocrNhGU5ePNrGBETc_IiIz34tznZWjthU-V2EtoahAKFVEZlNIWMBQQnQnd2C/exec',
+  SID: '18oCKARfHEAWW6LA8uUXPS45SGcOuwkWT6rDGViiVh-M',
+  MKEY: '', IA_KEY: '', TASKLIST: ''
+};
 
 
 var VIGIAS_DEFAULT = [
@@ -729,16 +732,20 @@ var GA = {
   get: function(ac, d) {
     var p = 'accion=' + ac;
     if (d) Object.keys(d).forEach(function(k) { p += '&' + k + '=' + encodeURIComponent(d[k] || ''); });
-    return fetch(CFG.AS + '?' + p, { redirect: 'follow' })
+    var url = CFG.AS + '?' + p;
+    return fetch(url)
       .then(function(r) { return r.text(); })
       .then(function(t) {
         try { return JSON.parse(t); }
         catch(e) {
-          console.warn('Apps Script no retornó JSON:', t.substring(0, 200));
-          return { ok: false, error: 'No JSON: ' + t.substring(0, 80) };
+          console.warn('Apps Script no retornó JSON:', t.substring(0,200));
+          return { ok: false, error: 'No JSON' };
         }
       })
-      .catch(function(e) { return { ok: false, error: e.message }; });
+      .catch(function(e) {
+        console.error('GA.get fetch error:', e.message);
+        return { ok: false, error: e.message };
+      });
   },
   post: function(ac, d) {
     var fd = new FormData();
@@ -952,7 +959,7 @@ window.addEventListener('DOMContentLoaded',function(){
   </button>
   <div class="tb-tit" id="TT">🧡 Dashboard</div>
   <div style="display:flex;gap:10px;align-items:center">
-    <span class="gs-b gs-wn" id="GS" onclick="syncAll()" style="cursor:pointer">⏳ Conectando...</span>
+    <span class="gs-b gs-wn" id="GS" onclick="syncAll()" style="cursor:pointer" title="Clic para reconectar">⏳ Conectando...</span>
     <span class="gt-badge">✓ Google Tasks</span>
     <button class="btn bp sm" onclick="openM('m-act')">+ Nuevo evento</button>
     <button class="btn bs sm" onclick="syncAll()">🔄</button>
@@ -1634,13 +1641,7 @@ window.addEventListener('DOMContentLoaded',function(){
 // ═══════════════════════════════════════════════════
 // CONFIGURACIÓN GLOBAL
 // ═══════════════════════════════════════════════════
-var CFG = {
-  PWD: '4LC4LD32028*',
-  AS: 'https://script.google.com/macros/s/AKfycbyCtjTocrNhGU5ePNrGBETc_IiIz34tznZWjthU-V2EtoahAKFVEZlNIWMBQQnQnd2C/exec',
-  SID: '18oCKARfHEAWW6LA8uUXPS45SGcOuwkWT6rDGViiVh-M',
-  MKEY: '', IA_KEY: '', TASKLIST: ''
-};
-
+// CFG defined in bootstrap
 // ═══════════════════════════════════════════════════
 // VIGÍAS — editables, guardados en localStorage
 // ═══════════════════════════════════════════════════
