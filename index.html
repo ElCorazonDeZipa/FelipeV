@@ -854,6 +854,7 @@ function syncRefFormulario() {
       _toast('✅ ' + DB.referidos.length + ' referidos del formulario');
       if (typeof renderRef === 'function') renderRef();
       if (typeof renderRefProg === 'function') renderRefProg();
+  if (typeof renderCafes === 'function') renderCafes();
       if (typeof updateDash === 'function') updateDash();
     } else {
       _toast('⚠ Sin datos del formulario: ' + (r ? r.error || 'sin filas' : 'error'));
@@ -921,6 +922,7 @@ window.addEventListener('DOMContentLoaded',function(){
     <div class="ni" onclick="goMob('voluntarios',this)"><span class="ni-ic">🙋</span><span class="ni-lb">Voluntarios</span></div>
     <div class="ni" onclick="goMob('eliteTeam',this)"><span class="ni-ic">⚡</span><span class="ni-lb">Equipo Élite</span></div>
     <div class="ni" onclick="goMob('referidos',this)"><span class="ni-ic">🤝</span><span class="ni-lb">Referidos</span><span class="ni-bd" id="b-ref">0</span></div>
+    <div class="ni" onclick="goMob('cafes',this)"><span class="ni-ic">☕</span><span class="ni-lb">Resultados Cafés</span></div>
     <div class="nb-sec">Operaciones</div>
     <div class="ni" onclick="goMob('reuniones',this)"><span class="ni-ic">🏛️</span><span class="ni-lb">Reuniones</span></div>
     <div class="ni" onclick="goMob('tareas',this)"><span class="ni-ic">✅</span><span class="ni-lb">Tareas</span><span class="ni-bd" id="b-tar">0</span></div>
@@ -1121,6 +1123,69 @@ window.addEventListener('DOMContentLoaded',function(){
     <thead><tr><th>Nombre</th><th>Teléfono</th><th>Barrio</th><th>Quién refiere</th><th>Horarios</th><th>📞 Llamada</th><th>Cita</th><th>📅</th><th>Estado</th><th>🧡 Adhesión</th><th>Acciones</th></tr></thead>
     <tbody id="tb-ref"></tbody>
   </table></div></div>
+</div>
+
+<!-- ═══ CAFÉS DE PIPE ═══ -->
+<div class="pg" id="pg-cafes">
+  <div class="ph">
+    <div>
+      <div class="pt">☕ Resultados Cafés con Felipe</div>
+      <div class="ps">Personas citadas · Estado de adhesión a la campaña</div>
+    </div>
+    <div style="display:flex;gap:8px">
+      <button class="btn bs sm" onclick="renderCafes()">🔄 Actualizar</button>
+    </div>
+  </div>
+
+  <!-- Contadores -->
+  <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin-bottom:24px">
+    <div class="sc" style="border-left:4px solid #2E7D32">
+      <div class="si" style="background:#E8F5E9;font-size:22px">✅</div>
+      <div><div class="sl">Con nosotros</div><div class="sv" id="cafe-cnt-si">0</div></div>
+    </div>
+    <div class="sc" style="border-left:4px solid #FF8C00">
+      <div class="si" style="background:#FFF3E0;font-size:22px">🤔</div>
+      <div><div class="sl">Aún pensándolo</div><div class="sv" id="cafe-cnt-tal">0</div></div>
+    </div>
+    <div class="sc" style="border-left:4px solid #E53935">
+      <div class="si" style="background:#FFEBEE;font-size:22px">❌</div>
+      <div><div class="sl">No está con nosotros</div><div class="sv" id="cafe-cnt-no">0</div></div>
+    </div>
+  </div>
+
+  <div class="g3" id="cafes-cols" style="align-items:start">
+
+    <!-- CON NOSOTROS -->
+    <div class="card">
+      <div class="ch" style="background:#E8F5E9;border-radius:var(--rad) var(--rad) 0 0">
+        <span style="font-size:20px">✅</span>
+        <div class="ct" style="color:#2E7D32">Con nosotros</div>
+        <span class="bk bk-g" id="cafe-lbl-si">0</span>
+      </div>
+      <div id="cafe-list-si" style="padding:12px;max-height:60vh;overflow-y:auto"></div>
+    </div>
+
+    <!-- AÚN PENSÁNDOLO -->
+    <div class="card">
+      <div class="ch" style="background:#FFF3E0;border-radius:var(--rad) var(--rad) 0 0">
+        <span style="font-size:20px">🤔</span>
+        <div class="ct" style="color:#E65100">Aún pensándolo</div>
+        <span class="bk bk-o" id="cafe-lbl-tal">0</span>
+      </div>
+      <div id="cafe-list-tal" style="padding:12px;max-height:60vh;overflow-y:auto"></div>
+    </div>
+
+    <!-- NO ESTÁ CON NOSOTROS -->
+    <div class="card">
+      <div class="ch" style="background:#FFEBEE;border-radius:var(--rad) var(--rad) 0 0">
+        <span style="font-size:20px">❌</span>
+        <div class="ct" style="color:#C62828">No está con nosotros</div>
+        <span class="bk bk-r" id="cafe-lbl-no">0</span>
+      </div>
+      <div id="cafe-list-no" style="padding:12px;max-height:60vh;overflow-y:auto"></div>
+    </div>
+
+  </div>
 </div>
 
 <!-- ═══ REUNIONES ═══ -->
@@ -1785,7 +1850,7 @@ var PTIT = {
   redes:'📱 Redes Sociales', compromisos:'📋 Compromisos', lideres:'⭐ Líderes Estratégicos',
   mapa:'🗺️ Mapa Territorial', documentos:'📁 Documentos', bitacora:'📓 Bitácora',
   ia:'🤖 Asistente IA', config:'⚙️ Configuración',
-  voluntarios:'🙋 Voluntarios', eliteTeam:'⚡ Equipo Élite'
+  voluntarios:'🙋 Voluntarios', eliteTeam:'⚡ Equipo Élite', cafes:'☕ Resultados Cafés'
 };
 
 function go(p, el) {
@@ -1797,6 +1862,7 @@ function go(p, el) {
   window.scrollTo(0, 0);
   if (p === 'mapa' && CFG.MKEY && !window._ML) initMap();
   if (p === 'config') { renderVigiasConfig(); renderVigiasAdmin(); }
+  if (p === 'cafes') { renderCafes(); }
 }
 
 // ═══════════════════════════════════════════════════
@@ -2175,6 +2241,51 @@ function renderRefProg() {
         + (n >= 5 ? '<div style="font-size:10px;color:var(--g);font-weight:600;margin-top:4px">🎉 ¡Meta cumplida!</div>' : '') + '</div>';
     }).join('') + '</div>';
 }
+
+// ═══════════════════════════════════════════════════
+// RENDER CAFÉS
+// ═══════════════════════════════════════════════════
+function renderCafes() {
+  // Solo referidos que tuvieron cita (FechaCita set) o adhesión definida
+  var refs = DB.referidos.filter(function(r){
+    return r.Adhesion && r.Adhesion !== '';
+  });
+
+  var si  = refs.filter(function(r){ return r.Adhesion === 'Con nosotros'; });
+  var tal = refs.filter(function(r){ return r.Adhesion === 'Aún pensándolo'; });
+  var no  = refs.filter(function(r){ return r.Adhesion === 'No está con nosotros'; });
+
+  // Contadores
+  setText('cafe-cnt-si',  si.length);
+  setText('cafe-cnt-tal', tal.length);
+  setText('cafe-cnt-no',  no.length);
+  setText('cafe-lbl-si',  si.length);
+  setText('cafe-lbl-tal', tal.length);
+  setText('cafe-lbl-no',  no.length);
+
+  function mkItem(r, col) {
+    var nombre = r.Nombre || r['Nombre del referido'] || '—';
+    var quien  = r.QuienRefiere || r['Tu Nombre'] || '';
+    var fecha  = r.FechaCita || '';
+    var result = r.ResultadoCita || r.Resultado || '';
+    return '<div style="padding:10px 8px;border-bottom:1px solid var(--s6);transition:background .15s" '
+      + 'onmouseover="this.style.background='#fafafa'" onmouseout="this.style.background=''">'
+      + '<div style="font-size:13px;font-weight:700;color:var(--s1)">' + esc(nombre) + '</div>'
+      + (quien ? '<div style="font-size:11px;color:var(--s4);margin-top:2px">👤 ' + esc(quien) + '</div>' : '')
+      + (fecha ? '<div style="font-size:11px;color:' + col + ';margin-top:2px">📅 ' + esc(fecha) + '</div>' : '')
+      + (result ? '<div style="font-size:11px;color:var(--s3);margin-top:4px;line-height:1.5;background:var(--s7);padding:6px 8px;border-radius:6px;border-left:2px solid ' + col + '">' + esc(result) + '</div>' : '')
+      + '</div>';
+  }
+
+  var elSi  = document.getElementById('cafe-list-si');
+  var elTal = document.getElementById('cafe-list-tal');
+  var elNo  = document.getElementById('cafe-list-no');
+
+  if (elSi)  elSi.innerHTML  = si.length  ? si.map(function(r){ return mkItem(r,'#2E7D32'); }).join('') : '<div class="empty" style="padding:24px;font-size:12px">Sin personas en esta categoría aún</div>';
+  if (elTal) elTal.innerHTML = tal.length ? tal.map(function(r){ return mkItem(r,'#FF8C00'); }).join('') : '<div class="empty" style="padding:24px;font-size:12px">Sin personas en esta categoría aún</div>';
+  if (elNo)  elNo.innerHTML  = no.length  ? no.map(function(r){ return mkItem(r,'#E53935'); }).join('') : '<div class="empty" style="padding:24px;font-size:12px">Sin personas en esta categoría aún</div>';
+}
+window.renderCafes = renderCafes;
 
 // ═══════════════════════════════════════════════════
 // RENDER TAREAS — Kanban + Lista
@@ -3065,20 +3176,62 @@ window.onMapLoad=function(){
 function addMapMarkers(){
   if(!window._map)return;
   window._mapMarkers.forEach(function(m){m.setMap(null);}); window._mapMarkers=[];
-  var beq=(DB.equipos||[]).map(function(r){return r.Barrio||'';}).filter(Boolean);
-  var bref=(DB.referidos||[]).map(function(r){return r.Barrio||'';}).filter(Boolean);
-  var ueq=[...new Set(beq)],uref=[...new Set(bref)];
+
+  // Collect ALL barrios from equipos + voluntarios + eliteTeam
+  var allEq = (DB.equipos||[]).concat(DB.voluntarios||[]).concat(DB.eliteTeam||[]);
+  var beq = allEq.map(function(r){ return (r.Barrio||'').trim(); }).filter(Boolean);
+
+  // Referidos con adhesión definida tienen más peso
+  var allRef = DB.referidos||[];
+  var bref = allRef.map(function(r){ return (r.Barrio||'').trim(); }).filter(Boolean);
+
+  // Count per barrio
+  var cntEq={}, cntRef={};
+  beq.forEach(function(b){ cntEq[b]=(cntEq[b]||0)+1; });
+  bref.forEach(function(b){ cntRef[b]=(cntRef[b]||0)+1; });
+
+  // Unique barrios
+  var ueq=[...new Set(beq)], uref=[...new Set(bref)];
   setText('mapa-eq-cnt',ueq.length); setText('mapa-ref-cnt',uref.length);
-  BARRIOS_ZIPA.forEach(function(b){
-    var enEq=ueq.some(function(x){return x.toLowerCase().includes(b.n.toLowerCase())||b.n.toLowerCase().includes(x.toLowerCase());});
-    var enRef=uref.some(function(x){return x.toLowerCase().includes(b.n.toLowerCase())||b.n.toLowerCase().includes(x.toLowerCase());});
-    var col='#BDBDBD',scale=7;
-    if(enEq&&enRef){col='#9C27B0';scale=14;}
-    else if(enEq){col='#E91E63';scale=12;}
-    else if(enRef){col='#FFD600';scale=11;}
-    var m=new google.maps.Marker({position:{lat:b.lat,lng:b.lng},map:window._map,title:b.n,
-      icon:{path:google.maps.SymbolPath.CIRCLE,scale:scale,fillColor:col,fillOpacity:.9,strokeWeight:2,strokeColor:'#fff'}});
-    window._mapMarkers.push(m);
+
+  // Match function - flexible
+  function matches(barrioDB, barrioCatalog){
+    var a = barrioDB.toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g,'');
+    var b = barrioCatalog.toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g,'');
+    return a.includes(b) || b.includes(a) || a.split(/\s+/).some(function(w){ return w.length>3 && b.includes(w); });
+  }
+
+  BARRIOS_ZIPA.forEach(function(bz){
+    var eqCount = 0, refCount = 0;
+    ueq.forEach(function(x){ if(matches(x,bz.n)) eqCount += (cntEq[x]||1); });
+    uref.forEach(function(x){ if(matches(x,bz.n)) refCount += (cntRef[x]||1); });
+
+    var col='#BDBDBD', scale=7;
+    if(eqCount>0 && refCount>0){ col='#9C27B0'; scale=Math.min(18, 12+Math.floor((eqCount+refCount)/3)); }
+    else if(eqCount>0){ col='#E91E63'; scale=Math.min(16, 10+Math.floor(eqCount/3)); }
+    else if(refCount>0){ col='#FFD600'; scale=Math.min(15, 9+Math.floor(refCount/3)); }
+
+    // Tooltip info
+    var info = bz.n;
+    if(eqCount>0) info += '\n🩷 Equipo: '+eqCount+' personas';
+    if(refCount>0) info += '\n💛 Referidos: '+refCount+' personas';
+
+    var marker=new google.maps.Marker({
+      position:{lat:bz.lat,lng:bz.lng},
+      map:window._map,
+      title:info,
+      icon:{path:google.maps.SymbolPath.CIRCLE,scale:scale,fillColor:col,fillOpacity:.9,strokeWeight:2,strokeColor:'#fff'}
+    });
+
+    // Info window on click
+    (function(m, content){
+      m.addListener('click', function(){
+        var iw = new google.maps.InfoWindow({content:'<div style="font-family:Poppins,sans-serif;padding:4px"><strong>'+content.replace(/\n/g,'<br>')+'</strong></div>'});
+        iw.open(window._map, m);
+      });
+    })(marker, info);
+
+    window._mapMarkers.push(marker);
   });
 }
 window.initMap=initMap; window.addMapMarkers=addMapMarkers;
