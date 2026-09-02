@@ -270,20 +270,14 @@ textarea.fc{resize:vertical;min-height:80px;}
 // ══════════════════════════════════════════════════════════
 
 // ── Estado global compartido con el script principal
-var CFG = {
-  PWD: '4LC4LD32028*',
-  AS: 'https://script.google.com/macros/s/AKfycbyCtjTocrNhGU5ePNrGBETc_IiIz34tznZWjthU-V2EtoahAKFVEZlNIWMBQQnQnd2C/exec',
-  SID: '18oCKARfHEAWW6LA8uUXPS45SGcOuwkWT6rDGViiVh-M',
-  MKEY: '', IA_KEY: '', TASKLIST: ''
-};
+// CFG defined in bootstrap
 
-var VIGIAS_DEFAULT = [
+
   {nom:'Jorgito',area:'Deportes'},{nom:'Héctor',area:'Deportes'},
   {nom:'Deira',area:'Cultura'},{nom:'John Harold',area:'Cultura'},
   {nom:'Evelyn',area:'Mujer'},{nom:'Ju',area:'Administrativos'},
   {nom:'Vivi Velásquez',area:'Adulto Mayor'}
 ];
-var VIGIAS = [];
 
 // ── Helpers mínimos
 function _gv(id){var e=document.getElementById(id);return e?e.value.trim():'';}
@@ -822,9 +816,11 @@ window.loadSheet = loadSheet;
 
 // ── syncRefFormulario en bootstrap
 function syncRefFormulario() {
-  _toast('🔄 Cargando referidos del formulario...');
-  // Formulario externo ya no requerido
-  GA.get('leerHojaExt', { sid: SID, hoja: '' }).then(function(r) {
+  _toast('ℹ️ El formulario externo ya no está configurado. Usa "🔄 Sync Sheets" para cargar referidos desde Google Sheets.');
+  if (typeof renderRef === 'function') renderRef();
+  return;
+  // Código desactivado - formulario externo removido
+  GA.get('leerHojaExt', { sid: '', hoja: '' }).then(function(r) {
     if (r && r.ok && r.filas && r.filas.length) {
       DB.referidos = r.filas.map(function(row) {
         var hor = [];
@@ -1657,85 +1653,22 @@ var VIGIAS_DEFAULT = [
 ];
 var VIGIAS = [];
 
-function loadVigias() {
-  try {
-    var v = JSON.parse(localStorage.getItem('zipa_vigias') || 'null');
-    VIGIAS = v && v.length ? v : VIGIAS_DEFAULT.slice();
-  } catch(e) { VIGIAS = VIGIAS_DEFAULT.slice(); }
-}
 
-function saveVigias() {
-  try { localStorage.setItem('zipa_vigias', JSON.stringify(VIGIAS)); } catch(e) {}
-}
 
-function addVigia() {
-  var nom = gv('nv-nom'), area = gv('nv-area');
-  if (!nom) { toast('⚠ Escribe el nombre del vigía'); return; }
-  VIGIAS.push({nom: nom, area: area || 'General'});
-  saveVigias();
-  document.getElementById('nv-nom').value = '';
-  document.getElementById('nv-area').value = '';
-  renderVigiasAdmin();
-  updateVigiasSelects();
-  toast('✅ Vigía "' + nom + '" agregado');
-}
 
-function removeVigia(i) {
-  var nom = VIGIAS[i].nom;
-  VIGIAS.splice(i, 1);
-  saveVigias();
-  renderVigiasAdmin();
-  updateVigiasSelects();
-  toast('🗑 Vigía "' + nom + '" eliminado');
-}
 
-function renderVigiasAdmin() {
-  var c = document.getElementById('vigias-admin-list'); if (!c) return;
-  c.innerHTML = VIGIAS.length ? VIGIAS.map(function(v, i) {
-    return '<div style="display:flex;align-items:center;gap:10px;padding:10px;background:#fff;border-radius:8px;margin-bottom:8px;border:1px solid var(--s6)">'
-      + '<div style="width:36px;height:36px;background:linear-gradient(135deg,var(--n),var(--p));border-radius:50%;display:flex;align-items:center;justify-content:center;color:#fff;font-size:11px;font-weight:700;flex-shrink:0">' + ini2(v.nom) + '</div>'
-      + '<div style="flex:1"><div style="font-weight:600;font-size:13px">' + esc(v.nom) + '</div><div style="font-size:11px;color:var(--s4)">' + esc(v.area) + '</div></div>'
-      + '<button class="btn bd sm" data-vigia-del="' + i + '">🗑</button>'
-      + '</div>';
-  }).join('') : '<div class="empty">No hay vigías configurados</div>';
-  c.onclick = function(e) {
-    var btn = e.target.closest('[data-vigia-del]');
-    if (btn) removeVigia(parseInt(btn.getAttribute('data-vigia-del')));
-  };
-}
 
-function renderVigiasConfig() {
-  var c = document.getElementById('cfg-vigias-list'); if (!c) return;
-  c.innerHTML = VIGIAS.map(function(v) {
-    return '<div style="display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid var(--s6)">'
-      + '<div class="av" style="background:linear-gradient(135deg,var(--n),var(--p));color:#fff;font-size:11px">' + ini2(v.nom) + '</div>'
-      + '<div><div style="font-weight:600">' + esc(v.nom) + '</div><div style="font-size:11px;color:var(--s4)">' + esc(v.area) + '</div></div>'
-      + '<div style="margin-left:auto;width:8px;height:8px;border-radius:50%;background:var(--g)"></div></div>';
-  }).join('') + '<div style="margin-top:10px"><button class="btn bp sm" onclick="openM(&quot;m-vigias&quot;)">⚙️ Editar vigías</button></div>';
-}
 
-function renderDashVigias() {
-  var c = document.getElementById('d-vigias'); if (!c) return;
-  c.innerHTML = VIGIAS.map(function(v) {
-    var col = ['#FF8C00','#FF5722','#00BFA5','#5C6BC0','#FFB300','#E53935','#9C27B0'][VIGIAS.indexOf(v) % 7];
-    return '<div style="display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid var(--s6)">'
-      + '<div class="av" style="background:' + col + '20;color:' + col + ';font-weight:700;font-size:11px">' + ini2(v.nom) + '</div>'
-      + '<div style="flex:1"><div style="font-size:13px;font-weight:600">' + esc(v.nom) + '</div><div style="font-size:11px;color:var(--s4)">' + esc(v.area) + '</div></div>'
-      + '<div style="width:8px;height:8px;border-radius:50%;background:var(--g);flex-shrink:0"></div>'
-      + '</div>';
-  }).join('');
-}
 
-function updateVigiasSelects() {
-  ['eq-vig','ref-vig'].forEach(function(id) {
-    var sel = document.getElementById(id); if (!sel) return;
-    var cur = sel.value;
-    sel.innerHTML = '<option value="">-- Sin vigía --</option>' + VIGIAS.map(function(v) {
-      return '<option value="' + esc(v.nom) + '">' + esc(v.nom) + ' (' + esc(v.area) + ')</option>';
-    }).join('');
-    if (cur) sel.value = cur;
-  });
-}
+
+
+
+
+
+
+
+// updateVigiasSelects defined in bootstrap
+
 
 // ═══════════════════════════════════════════════════
 // BASE DE DATOS LOCAL
@@ -1804,24 +1737,9 @@ function initApp() {
   setTimeout(syncAll, 500);
 }
 
-function loadCfg() {
-  try {
-    var c = JSON.parse(localStorage.getItem('zipa_cfg') || '{}');
-    if (c.mkey) { CFG.MKEY = c.mkey; setVal('cfg-mkey', c.mkey); }
-    if (c.tasklist) { CFG.TASKLIST = c.tasklist; setVal('cfg-tasklist', c.tasklist); }
-    var iak = localStorage.getItem('zipa_ia_key');
-    if (iak) { CFG.IA_KEY = iak; setVal('ia-key', iak); setText('ia-key-st', '✅ API Key de Gemini cargada'); }
-  } catch(e) {}
-}
 
-function saveIAKey() {
-  var k = gv('ia-key');
-  if (!k) { toast('⚠ Ingresa tu API Key de Claude'); return; }
-  CFG.IA_KEY = k;
-  try { localStorage.setItem('zipa_ia_key', k); } catch(e) {}
-  setText('ia-key-st', '✅ API Key de Gemini guardada en este dispositivo');
-  toast('✅ API Key de Gemini guardada 🚀');
-}
+
+
 
 // ═══════════════════════════════════════════════════
 // SYNC
@@ -1853,30 +1771,13 @@ var PTIT = {
   voluntarios:'🙋 Voluntarios', eliteTeam:'⚡ Equipo Élite', cafes:'☕ Resultados Cafés'
 };
 
-function go(p, el) {
-  document.querySelectorAll('.pg').forEach(function(x) { x.classList.remove('on'); });
-  var pg = document.getElementById('pg-' + p); if (pg) pg.classList.add('on');
-  document.querySelectorAll('.ni').forEach(function(x) { x.classList.remove('on'); });
-  if (el) el.classList.add('on');
-  setText('TT', PTIT[p] || p);
-  window.scrollTo(0, 0);
-  if (p === 'mapa' && CFG.MKEY && !window._ML) initMap();
-  if (p === 'config') { renderVigiasConfig(); renderVigiasAdmin(); }
-  if (p === 'cafes') { renderCafes(); }
-}
+
 
 // ═══════════════════════════════════════════════════
 // MODALES
 // ═══════════════════════════════════════════════════
-function openM(id) {
-  var m = document.getElementById(id); if (!m) return;
-  m.classList.add('on');
-  var hoy = new Date().toISOString().split('T')[0];
-  m.querySelectorAll('input[type=date]').forEach(function(i) { if (!i.value) i.value = hoy; });
-  updateVigiasSelects();
-  if (id === 'm-vigias') { renderVigiasAdmin(); }
-}
-function closeM(id) { var m = document.getElementById(id); if (m) m.classList.remove('on'); }
+
+
 
 document.querySelectorAll('.mo').forEach(function(o) {
   o.addEventListener('click', function(e) { if (e.target === this) this.classList.remove('on'); });
@@ -1885,13 +1786,7 @@ document.addEventListener('keydown', function(e) {
   if (e.key === 'Escape') document.querySelectorAll('.mo.on').forEach(function(m) { m.classList.remove('on'); });
 });
 
-function stab(id, el) {
-  var pg = el.closest('.pg');
-  pg.querySelectorAll('.tabp').forEach(function(p) { p.classList.remove('on'); });
-  var tp = document.getElementById(id); if (tp) tp.classList.add('on');
-  pg.querySelectorAll('.tab').forEach(function(t) { t.classList.remove('on'); });
-  el.classList.add('on');
-}
+
 
 // ═══════════════════════════════════════════════════
 // CALENDAR SYNC
@@ -2009,37 +1904,17 @@ function clickDia(d) {
 // ═══════════════════════════════════════════════════
 // HELPERS
 // ═══════════════════════════════════════════════════
-function gv(id) { var e = document.getElementById(id); return e ? e.value.trim() : ''; }
-function setText(id, v) { var e = document.getElementById(id); if (e) e.textContent = v; }
-function setHTML(id, v) { var e = document.getElementById(id); if (e) e.innerHTML = v; }
-function setVal(id, v) { var e = document.getElementById(id); if (e) e.value = v || ''; }
-function setSel(id, v) {
-  var e = document.getElementById(id); if (!e || !v) return;
-  for (var i = 0; i < e.options.length; i++) {
-    if (e.options[i].value === v || e.options[i].text === v) { e.selectedIndex = i; break; }
-  }
-}
-function esc(s) {
-  return String(s || '').replace(/[&<>"]/g, function(c) {
-    return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c];
-  });
-}
-function ini2(n) { return (n || '?').split(' ').map(function(w) { return w[0] || ''; }).join('').slice(0, 2).toUpperCase(); }
-function bkEst(v) {
-  return v === 'Activo' || v === 'Realizada' || v === 'Cumplido' || v === 'Publicada' || v === 'Finalizada' ? 'bk-g'
-    : v === 'Pendiente' || v === 'Programada' || v === 'Planeada' ? 'bk-y'
-    : v === 'Seguimiento' || v === 'En proceso' || v === 'En producción' ? 'bk-b'
-    : v === 'Vencido' || v === 'Cancelada' ? 'bk-r' : 'bk-gr';
-}
-function bkPri(v) { return v === 'Urgente' ? 'bk-r' : v === 'Alta' ? 'bk-o' : v === 'Baja' ? 'bk-gr' : 'bk-b'; }
-function getIdx(modal) {
-  var h = document.querySelector('#' + modal + ' input[type=hidden]');
-  return h && h.value !== '' ? parseInt(h.value) : null;
-}
-function resetM(modal, titId, titTxt) {
-  var h = document.querySelector('#' + modal + ' input[type=hidden]'); if (h) h.value = '';
-  setText(titId, titTxt);
-}
+
+
+
+
+
+
+
+
+
+
+
 
 var _tt;
 function toast(msg) {
@@ -2264,17 +2139,17 @@ function renderCafes() {
   setText('cafe-lbl-no',  no.length);
 
   function mkItem(r, col) {
-    var nombre = r.Nombre || r['Nombre del referido'] || '—';
+    var nombre = r.Nombre || r['Nombre del referido'] || 'Sin nombre';
     var quien  = r.QuienRefiere || r['Tu Nombre'] || '';
     var fecha  = r.FechaCita || '';
     var result = r.ResultadoCita || r.Resultado || '';
-    return '<div style="padding:10px 8px;border-bottom:1px solid var(--s6);transition:background .15s" '
-      + 'onmouseover="this.style.background='#fafafa'" onmouseout="this.style.background=''">'
-      + '<div style="font-size:13px;font-weight:700;color:var(--s1)">' + esc(nombre) + '</div>'
-      + (quien ? '<div style="font-size:11px;color:var(--s4);margin-top:2px">👤 ' + esc(quien) + '</div>' : '')
-      + (fecha ? '<div style="font-size:11px;color:' + col + ';margin-top:2px">📅 ' + esc(fecha) + '</div>' : '')
-      + (result ? '<div style="font-size:11px;color:var(--s3);margin-top:4px;line-height:1.5;background:var(--s7);padding:6px 8px;border-radius:6px;border-left:2px solid ' + col + '">' + esc(result) + '</div>' : '')
-      + '</div>';
+    var html = '<div style="padding:10px 8px;border-bottom:1px solid var(--s6)">';
+    html += '<div style="font-size:13px;font-weight:700">' + esc(nombre) + '</div>';
+    if (quien) html += '<div style="font-size:11px;color:var(--s4);margin-top:2px">' + esc(quien) + '</div>';
+    if (fecha) html += '<div style="font-size:11px;margin-top:2px;color:' + col + '">📅 ' + esc(fecha) + '</div>';
+    if (result) html += '<div style="font-size:11px;margin-top:4px;padding:6px 8px;background:var(--s7);border-radius:6px;border-left:2px solid ' + col + ';color:var(--s2)">' + esc(result) + '</div>';
+    html += '</div>';
+    return html;
   }
 
   var elSi  = document.getElementById('cafe-list-si');
@@ -3039,16 +2914,6 @@ function saveEli() {
 }
 window.saveEli = saveEli;
 
-function saveAct() {
-  var tit=gv('a-tit'),fec=gv('a-fec');
-  if(!tit||!fec){toast('⚠ Completa título y fecha');return;}
-  toast('⏳ Creando evento...');
-  GA.post('crearEvento',{calendario:gv('a-cal'),titulo:tit,fecha:fec,horaInicio:gv('a-hi')||'08:00',
-    horaFin:gv('a-hf')||'09:00',lugar:gv('a-lug'),descripcion:gv('a-des'),verificarConflictos:'false'})
-    .then(function(r){if(r&&r.ok){toast('✅ Evento en Calendar 📅');closeM('m-act');if(typeof syncCal==='function')syncCal();}
-    else toast('⚠ '+(r?r.error:'Error'));});
-}
-window.saveAct = saveAct;
 
 // ═══════════════════════════════════════════════════
 // VOLUNTARIOS y ÉLITE — render
