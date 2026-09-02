@@ -419,8 +419,8 @@ function saveIAKey(){
   if(!k){_toast('⚠ Ingresa tu API Key de Claude');return;}
   CFG.IA_KEY=k;
   try{localStorage.setItem('zipa_ia_key',k);}catch(e){_toast('⚠ Error: '+e.message);return;}
-  _sv('ia-key-st','✅ API Key guardada en este dispositivo');
-  _toast('✅ API Key de Claude guardada');
+  _sv('ia-key-st','✅ API Key de Gemini guardada');
+  _toast('✅ API Key de Gemini guardada 🚀');
 }
 function testConn(){
   _toast('🔄 Probando conexión... (puede tardar hasta 15 seg)');
@@ -525,7 +525,7 @@ var _PTIT={dashboard:'🧡 Dashboard',agenda:'📅 Agenda y Calendario',equipos:
   referidos:'🤝 Referidos',reuniones:'🏛️ Reuniones',tareas:'✅ Tareas',
   redes:'📱 Redes Sociales',compromisos:'📋 Compromisos',lideres:'⭐ Líderes Estratégicos',
   mapa:'🗺️ Mapa Territorial',documentos:'📁 Documentos',bitacora:'📓 Bitácora',
-  ia:'🤖 Asistente IA',config:'⚙️ Configuración'};
+  ia:'✨ Asistente Gemini',config:'⚙️ Configuración'};
 function go(p,el){
   document.querySelectorAll('.pg').forEach(function(x){x.classList.remove('on');});
   var pg=document.getElementById('pg-'+p);if(pg)pg.classList.add('on');
@@ -933,7 +933,7 @@ window.addEventListener('DOMContentLoaded',function(){
     <div class="ni" onclick="goMob('mapa',this)"><span class="ni-ic">🗺️</span><span class="ni-lb">Mapa Territorial</span></div>
     <div class="nb-sec">Inteligencia</div>
     <div class="ni" onclick="goMob('documentos',this)"><span class="ni-ic">📁</span><span class="ni-lb">Documentos</span></div>
-    <div class="ni" onclick="goMob('ia',this)"><span class="ni-ic">🤖</span><span class="ni-lb">Asistente IA</span></div>
+    <div class="ni" onclick="goMob('ia',this)"><span class="ni-ic">✨</span><span class="ni-lb">Gemini IA</span></div>
     <div class="ni" onclick="goMob('config',this)"><span class="ni-ic">⚙️</span><span class="ni-lb">Configuración</span></div>
   </nav>
   <div class="sb-foot">
@@ -1295,10 +1295,10 @@ window.addEventListener('DOMContentLoaded',function(){
 
 <!-- ═══ ASISTENTE IA ═══ -->
 <div class="pg" id="pg-ia">
-  <div class="ph"><div><div class="pt">🤖 Asistente IA</div><div class="ps">Análisis inteligente de la campaña</div></div></div>
+  <div class="ph"><div><div class="pt">✨ Asistente Gemini</div><div class="ps">Google Gemini · Inteligencia artificial para la campaña 🧡</div></div></div>
   <div class="g2">
-    <div class="card"><div class="ch"><span>💬</span><div class="ct">Chat con el Asistente</div><button class="btn bs sm" onclick="clrChat()">🗑 Limpiar</button></div><div class="cb">
-      <div class="iac" id="ia-chat"><div class="im bot">¡Hola! 👋 Soy el asistente de campaña de <strong>Felipe Vanegas — Zipa con el Corazón 🧡</strong>. ¿Qué necesitas analizar hoy?</div></div>
+    <div class="card"><div class="ch"><span>✨</span><div class="ct">Chat con Gemini</div><button class="btn bs sm" onclick="clrChat()">🗑 Limpiar</button></div><div class="cb">
+      <div class="iac" id="ia-chat"><div class="im bot">¡Hola! 👋 Soy <strong>Gemini</strong>, tu asistente IA para la campaña de <strong>Felipe Vanegas — Zipa con el Corazón 🧡</strong>. ¿Qué necesitas analizar hoy?</div></div>
       <div class="ir"><input class="ii" id="ia-in" placeholder="Pregunta lo que necesites..." onkeypress="if(event.key==='Enter'){sendIA();this.value='';}"><button class="btn bp" onclick="sendIA()">Enviar</button></div>
     </div></div>
     <div>
@@ -1310,9 +1310,9 @@ window.addEventListener('DOMContentLoaded',function(){
         <button class="btn bs sm" onclick="askIA('¿Qué recomiendas priorizar esta semana?')">🎯 ¿Qué priorizar?</button>
         <button class="btn bp sm" onclick="askIA('Dame un resumen ejecutivo completo del estado actual de la campaña')">📄 Resumen ejecutivo</button>
       </div></div>
-      <div class="card"><div class="ch"><span>🔑</span><div class="ct">API Key Claude IA</div></div><div class="cb">
-        <div class="fg"><div class="fl">API Key (Anthropic)</div><input type="password" class="fc" id="ia-key" placeholder="sk-ant-api03-..."><div style="font-size:11px;color:var(--ro);margin-top:4px">⚠ Nunca subas esta key a GitHub</div></div>
-        <button class="btn bp sm" onclick="saveIAKey()">💾 Guardar API Key</button>
+      <div class="card"><div class="ch"><span>🔑</span><div class="ct">API Key — Google Gemini IA</div></div><div class="cb">
+        <div class="fg"><div class="fl">API Key (Google AI Studio)</div><input type="password" class="fc" id="ia-key" placeholder="AIzaSy..."><div style="font-size:11px;color:var(--s4);margin-top:4px">Obtén tu key gratis en <a href="https://aistudio.google.com/app/apikey" target="_blank" style="color:var(--n)">aistudio.google.com</a></div></div>
+        <button class="btn bp sm" onclick="saveIAKey()">💾 Guardar API Key Gemini</button>
         <div style="font-size:11px;color:var(--s4);margin-top:8px" id="ia-key-st"></div>
       </div></div>
     </div>
@@ -1810,7 +1810,7 @@ function loadCfg() {
     if (c.mkey) { CFG.MKEY = c.mkey; setVal('cfg-mkey', c.mkey); }
     if (c.tasklist) { CFG.TASKLIST = c.tasklist; setVal('cfg-tasklist', c.tasklist); }
     var iak = localStorage.getItem('zipa_ia_key');
-    if (iak) { CFG.IA_KEY = iak; setVal('ia-key', iak); setText('ia-key-st', '✅ API Key cargada'); }
+    if (iak) { CFG.IA_KEY = iak; setVal('ia-key', iak); setText('ia-key-st', '✅ API Key de Gemini cargada'); }
   } catch(e) {}
 }
 
@@ -1819,8 +1819,8 @@ function saveIAKey() {
   if (!k) { toast('⚠ Ingresa tu API Key de Claude'); return; }
   CFG.IA_KEY = k;
   try { localStorage.setItem('zipa_ia_key', k); } catch(e) {}
-  setText('ia-key-st', '✅ API Key guardada en este dispositivo');
-  toast('✅ API Key de Claude guardada');
+  setText('ia-key-st', '✅ API Key de Gemini guardada en este dispositivo');
+  toast('✅ API Key de Gemini guardada 🚀');
 }
 
 // ═══════════════════════════════════════════════════
@@ -3118,25 +3118,74 @@ function sendIA() {
   var chat=document.getElementById('ia-chat');
   chat.innerHTML+='<div class="im usr">'+esc(msg)+'</div>';
   var lid='ia'+Date.now();
-  chat.innerHTML+='<div class="im bot" id="'+lid+'">💭 Analizando...</div>';
+  chat.innerHTML+='<div class="im bot" id="'+lid+'">✨ Gemini está pensando...</div>';
   chat.scrollTop=chat.scrollHeight;
   if(CFG.IA_KEY){
-    var ctx='Eres el asistente de campaña de Felipe Vanegas, alcaldía Zipaquirá 2028. Campaña: "Zipa con el Corazón". Responde en español. Datos: Referidos='+DB.referidos.length+' Equipo='+DB.equipos.length+' Tareas='+DB.tareas.length+' Compromisos='+DB.compromisos.length+' Líderes='+DB.lideres.length;
-    fetch('https://api.anthropic.com/v1/messages',{method:'POST',headers:{'Content-Type':'application/json','x-api-key':CFG.IA_KEY,'anthropic-version':'2023-06-01'},body:JSON.stringify({model:'claude-sonnet-4-6',max_tokens:600,system:ctx,messages:[{role:'user',content:msg}]})})
-      .then(function(r){return r.json();})
-      .then(function(d){var e=document.getElementById(lid);if(e)e.innerHTML=(d.content&&d.content[0]?d.content[0].text:'Sin respuesta').replace(/\n/g,'<br>');chat.scrollTop=chat.scrollHeight;})
-      .catch(function(){var e=document.getElementById(lid);if(e)e.innerHTML=localIA(msg);});
-  }else{setTimeout(function(){var e=document.getElementById(lid);if(e)e.innerHTML=localIA(msg);chat.scrollTop=chat.scrollHeight;},500);}
+    var ctx='Eres el asistente de campaña de Felipe Vanegas para la alcaldía de Zipaquirá 2028. '
+      +'La campaña se llama "Zipa con el Corazón". Responde siempre en español, de forma concisa y útil. '
+      +'Contexto actual de la campaña: '
+      +'Referidos='+DB.referidos.length
+      +' (Con nosotros='+DB.referidos.filter(function(r){return r.Adhesion==='Con nosotros';}).length
+      +', Pensándolo='+DB.referidos.filter(function(r){return r.Adhesion==='Aún pensándolo';}).length
+      +', No='+DB.referidos.filter(function(r){return r.Adhesion==='No está con nosotros';}).length+')'
+      +' | Equipo='+DB.equipos.length
+      +' | Voluntarios='+(DB.voluntarios||[]).length
+      +' | Élite='+(DB.eliteTeam||[]).length
+      +' | Tareas='+DB.tareas.length
+      +' | Compromisos='+DB.compromisos.length
+      +' | Líderes='+DB.lideres.length
+      +' | Reuniones='+DB.reuniones.length;
+
+    // Gemini API endpoint
+    var geminiUrl = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key='+CFG.IA_KEY;
+
+    fetch(geminiUrl, {
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({
+        contents:[
+          {role:'user', parts:[{text: ctx + '\n\nPregunta del equipo de campaña: ' + msg}]}
+        ],
+        generationConfig:{ maxOutputTokens:800, temperature:0.7 }
+      })
+    })
+    .then(function(r){return r.json();})
+    .then(function(d){
+      var e=document.getElementById(lid);
+      if(!e) return;
+      if(d.candidates && d.candidates[0] && d.candidates[0].content && d.candidates[0].content.parts){
+        var texto = d.candidates[0].content.parts.map(function(p){return p.text||'';}).join('');
+        e.innerHTML = texto.replace(/\*\*(.*?)\*\*/g,'<strong>$1</strong>').replace(/\n/g,'<br>');
+      } else if(d.error){
+        e.innerHTML = '⚠ Error Gemini: '+(d.error.message||'sin detalle');
+        console.error('Gemini error:', d.error);
+      } else {
+        e.innerHTML = localIA(msg);
+      }
+      chat.scrollTop=chat.scrollHeight;
+    })
+    .catch(function(err){
+      var e=document.getElementById(lid);
+      if(e)e.innerHTML='⚠ Error de conexión: '+err.message+'<br><small>Verifica tu API Key de Gemini</small>';
+      console.error('Gemini fetch error:', err);
+    });
+  }else{
+    setTimeout(function(){
+      var e=document.getElementById(lid);
+      if(e)e.innerHTML=localIA(msg)+'<br><br><small style="color:#aaa">💡 Agrega tu API Key de Gemini en la sección IA para respuestas inteligentes</small>';
+      chat.scrollTop=chat.scrollHeight;
+    },400);
+  }
 }
 function localIA(msg){
   var m=msg.toLowerCase();
   if(m.includes('referid'))return '🤝 Referidos: '+DB.referidos.length+' total';
   if(m.includes('compromis'))return '📋 Compromisos: '+DB.compromisos.length+' total';
   if(m.includes('tarea'))return '✅ Tareas: '+DB.tareas.length+' total';
-  return '🤖 Tengo acceso a referidos, tareas, compromisos y más. ¿Qué necesitas?';
+  return '✨ Soy Gemini. Agrega tu API Key en la sección IA para respuestas inteligentes. Sin ella, solo puedo darte datos básicos de la campaña.';
 }
 function askIA(p){var inp=document.getElementById('ia-in');if(inp){inp.value=p;sendIA();}}
-function clrChat(){setHTML('ia-chat','<div class="im bot">Chat limpio. ¿En qué te ayudo? 🧡</div>');}
+function clrChat(){setHTML('ia-chat','<div class="im bot">Chat limpiado. ¿En qué te ayudo, equipo Zipa? ✨</div>');}
 window.sendIA=sendIA; window.askIA=askIA; window.clrChat=clrChat;
 
 // ═══════════════════════════════════════════════════
