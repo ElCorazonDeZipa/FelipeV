@@ -2,7 +2,7 @@
 <html lang="es">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <title>💛 Zipa con el Corazón — Zipaquirá 2028</title>
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🧡</text></svg>">
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -23,7 +23,7 @@
   --sb:240px;
 }
 *{box-sizing:border-box;margin:0;padding:0;}
-body{font-family:'Poppins',sans-serif;background:var(--bg);color:var(--s1);font-size:13px;line-height:1.6;overflow-x:hidden;}
+body{font-family:'Poppins',sans-serif;background:var(--bg);color:var(--s1);font-size:13px;line-height:1.6;overflow-x:hidden;-webkit-tap-highlight-color:transparent;}
 
 /* ═══ LOGIN ═══ */
 #LS{position:fixed;inset:0;z-index:9999;background:linear-gradient(135deg,#1A1A2E 0%,#FF8C00 60%,#FF5722 100%);display:flex;align-items:center;justify-content:center;}
@@ -232,21 +232,99 @@ textarea.fc{resize:vertical;min-height:80px;}
 /* ═══ RESPONSIVE ═══ */
 @media(max-width:900px){.dl{grid-template-columns:1fr;}.g4{grid-template-columns:1fr 1fr;}}
 .dash-stats{grid-template-columns:repeat(3,1fr)!important;}
+/* ═══ MOBILE ═══ */
 @media(max-width:768px){
-  .sb{position:fixed;top:0;left:-100%;width:280px;height:100%;z-index:500;transition:left .28s cubic-bezier(.4,0,.2,1);box-shadow:none;}
-  .sb.mob-open{left:0;box-shadow:4px 0 32px rgba(0,0,0,.4);}
-  .mob-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:499;backdrop-filter:blur(2px);}
+  /* Sidebar deslizable */
+  .sb{position:fixed;top:0;left:-100%;width:82vw;max-width:300px;height:100%;z-index:500;
+      transition:left .28s cubic-bezier(.4,0,.2,1);box-shadow:none;overflow-y:auto;}
+  .sb.mob-open{left:0;box-shadow:6px 0 40px rgba(0,0,0,.45);}
+  .mob-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:499;backdrop-filter:blur(3px);}
   .mob-overlay.on{display:block;}
-  .tb{left:0!important;}
-  .mn{margin-left:0!important;padding:16px;}
-  .g4,.g3,.g2{grid-template-columns:1fr;}
-  .kb{flex-direction:column;}
+
+  /* Topbar */
+  .tb{left:0!important;padding:0 12px;gap:8px;height:56px;}
+  .tb-tit{font-size:14px;font-weight:700;flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+  /* Ocultar google tasks badge y botón sync en móvil */
+  .gt-badge{display:none;}
+  #GS{font-size:10px;padding:4px 8px;}
+
+  /* Main content */
+  .mn{margin-left:0!important;margin-top:56px;padding:12px;}
+
+  /* Grids → 1 columna */
+  .g4,.g3,.g2{grid-template-columns:1fr;gap:10px;}
+  .dash-stats{grid-template-columns:repeat(2,1fr)!important;gap:10px;}
+
+  /* Stat cards más compactas */
+  .sc{padding:12px 14px;gap:10px;}
+  .si{width:40px;height:40px;font-size:18px;flex-shrink:0;}
+  .sv{font-size:22px;}
+
+  /* Tablas: scroll horizontal */
+  .tw{overflow-x:auto;-webkit-overflow-scrolling:touch;}
+  table{min-width:500px;font-size:12px;}
+  th,td{padding:8px 10px;}
+
+  /* Cards */
+  .card{border-radius:10px;}
+  .ch{padding:12px 14px;}
+  .cb{padding:12px 14px;}
+
+  /* Botones más grandes para touch */
+  .btn{padding:8px 14px;font-size:12px;min-height:36px;}
+  .btn.sm{padding:6px 12px;font-size:11px;min-height:32px;}
+
+  /* Page header */
+  .ph{flex-direction:column;align-items:flex-start;gap:10px;margin-bottom:16px;}
+  .pt{font-size:20px;}
+  .ps{font-size:11px;}
+
+  /* Filtros */
+  .fb{flex-wrap:wrap;gap:8px;}
+  .fi{min-width:100%;font-size:13px;}
+
+  /* Modal */
+  .mo{padding:8px;align-items:flex-end;}
+  .md{max-width:100%;width:100%;max-height:92vh;border-radius:16px 16px 0 0;margin-bottom:0;}
+  .md.lg{max-width:100%;}
+  .mb{padding:14px 16px;}
+  .mh{padding:14px 16px 12px;}
+  .mf{padding:12px 16px;}
+
+  /* Chat IA */
+  .iac{height:260px;}
+
+  /* Kanban */
+  .kb{flex-direction:column;gap:12px;}
   .kc{flex:none;width:100%;}
+
+  /* Cafés: 1 columna en móvil */
+  #cafes-cols{grid-template-columns:1fr!important;}
+
+  /* Topbar botón nuevo evento — solo ícono */
+  .btn.bp.sm span.btn-txt{display:none;}
+
+  /* Mob menu button */
   .mob-btn{display:flex!important;}
-  .tb-tit{font-size:15px;}
 }
-@media(min-width:769px){.mob-btn{display:none!important;}.mob-overlay{display:none!important;}}
-@media(max-width:480px){.mn{padding:12px;}.pt{font-size:18px;}}
+
+@media(min-width:769px){
+  .mob-btn{display:none!important;}
+  .mob-overlay{display:none!important;}
+}
+
+/* Extra pequeño */
+@media(max-width:400px){
+  .mn{padding:8px;}
+  .pt{font-size:17px;}
+  .sc{padding:10px 12px;}
+  .sv{font-size:20px;}
+  .dash-stats{grid-template-columns:repeat(2,1fr)!important;}
+  .tb{height:52px;}
+  .mn{margin-top:52px;}
+  table{font-size:11px;}
+  th,td{padding:6px 8px;}
+}
 </style>
 </head>
 <body>
@@ -918,7 +996,7 @@ window.addEventListener('DOMContentLoaded',function(){
   <div class="sb-top">
     <div class="sb-logo">🧡</div>
     <div style="flex:1"><div class="sb-nm">Zipa con el Corazón</div><div class="sb-sub2">Campaña 2028</div></div>
-    <button onclick="closeMobMenu()" style="display:none;background:rgba(255,255,255,.1);border:none;color:rgba(255,255,255,.7);font-size:20px;cursor:pointer;border-radius:8px;width:32px;height:32px;align-items:center;justify-content:center;flex-shrink:0;" class="mob-btn" id="sb-close">×</button>
+    <button onclick="closeMobMenu()" style="display:none;background:rgba(255,255,255,.15);border:none;color:#fff;font-size:22px;cursor:pointer;border-radius:8px;width:34px;height:34px;align-items:center;justify-content:center;flex-shrink:0;line-height:1;" class="mob-btn" id="sb-close">×</button>
   </div>
   <nav class="sb-nav">
     <div class="nb-sec">Principal</div>
@@ -954,17 +1032,17 @@ window.addEventListener('DOMContentLoaded',function(){
 <!-- ═══ TOPBAR ═══ -->
 <div class="mob-overlay" id="mob-overlay" onclick="closeMobMenu()"></div>
 <header class="tb">
-  <button class="mob-btn" id="mob-btn" onclick="toggleMobMenu()" style="display:none;background:none;border:none;cursor:pointer;padding:6px;border-radius:8px;color:var(--s1);flex-direction:column;gap:5px;align-items:center;justify-content:center;width:38px;height:38px;">
-    <span style="display:block;width:20px;height:2px;background:var(--s1);border-radius:2px;transition:.2s"></span>
-    <span style="display:block;width:20px;height:2px;background:var(--s1);border-radius:2px;transition:.2s"></span>
-    <span style="display:block;width:20px;height:2px;background:var(--s1);border-radius:2px;transition:.2s"></span>
+  <button class="mob-btn" id="mob-btn" onclick="toggleMobMenu()" style="display:none;background:var(--s7);border:1px solid var(--s6);cursor:pointer;padding:6px;border-radius:8px;color:var(--s1);flex-direction:column;gap:4px;align-items:center;justify-content:center;width:38px;height:38px;flex-shrink:0;">
+    <span style="display:block;width:18px;height:2px;background:var(--s2);border-radius:2px"></span>
+    <span style="display:block;width:18px;height:2px;background:var(--s2);border-radius:2px"></span>
+    <span style="display:block;width:18px;height:2px;background:var(--s2);border-radius:2px"></span>
   </button>
   <div class="tb-tit" id="TT">🧡 Dashboard</div>
-  <div style="display:flex;gap:10px;align-items:center">
-    <span class="gs-b gs-wn" id="GS" onclick="syncAll()" style="cursor:pointer" title="Clic para reconectar">⏳ Conectando...</span>
-    <span class="gt-badge">✓ Google Tasks</span>
-    <button class="btn bp sm" onclick="openM('m-act')">+ Nuevo evento</button>
-    <button class="btn bs sm" onclick="syncAll()">🔄</button>
+  <div style="display:flex;gap:8px;align-items:center">
+    <span class="gs-b gs-wn" id="GS" onclick="syncAll()" style="cursor:pointer;white-space:nowrap" title="Clic para reconectar">⏳ Conectando...</span>
+    <span class="gt-badge" style="white-space:nowrap">✓ Tasks</span>
+    <button class="btn bp sm" onclick="openM('m-act')" style="white-space:nowrap">+ Evento</button>
+    <button class="btn bs sm" onclick="syncAll()" title="Sincronizar datos">🔄</button>
   </div>
 </header>
 
