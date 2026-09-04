@@ -534,8 +534,8 @@ function go(p,el){
   window.scrollTo(0,0);
   if(p==='mapa'&&CFG.MKEY&&!window._ML&&typeof initMap==='function')initMap();
   if(p==='config'){renderVigiasConfig();renderVigiasAdmin();}
-  // Trigger renders from main script if available
-  var renders={reuniones:'renderReu',lideres:'renderLid',bitacora:'renderBit'};
+  // Trigger renders when navigating
+  var renders={reuniones:'renderReu',lideres:'renderLid',bitacora:'renderBit',cafes:'renderCafes'};
   if(renders[p]&&typeof window[renders[p]]==='function')window[renders[p]]();
 }
 function openM(id){
@@ -816,6 +816,8 @@ function loadSheet(hoja) {
         'EliteTeam':'renderEli'
       }[hoja];
       if (renderFn && typeof window[renderFn] === 'function') window[renderFn]();
+      // Si son referidos, actualizar también la página de Cafés
+      if (dbKey === 'referidos' && typeof renderCafes === 'function') renderCafes();
       // Actualizar dashboard y badges del sidebar después de cada hoja
       if (typeof updateDash === 'function') updateDash();
     }
@@ -2125,13 +2127,23 @@ function renderRefProg() {
 // ═══════════════════════════════════════════════════
 function renderCafes() {
   // Solo referidos que tuvieron cita (FechaCita set) o adhesión definida
-  var refs = DB.referidos.filter(function(r){
-    return r.Adhesion && r.Adhesion !== '';
+  // Leer adhesión — puede venir de Sheets como 'Adhesion' o ser seteado en el app
+  var todos = DB.referidos || [];
+  var conAdh = todos.filter(function(r){
+    return r.Adhesion && r.Adhesion.trim() !== '';
   });
 
-  var si  = refs.filter(function(r){ return r.Adhesion === 'Con nosotros'; });
-  var tal = refs.filter(function(r){ return r.Adhesion === 'Aún pensándolo'; });
-  var no  = refs.filter(function(r){ return r.Adhesion === 'No está con nosotros'; });
+  // Si no hay ninguno con adhesión, mostrar TODOS los referidos que tienen cita
+  var refs = conAdh.length > 0 ? conAdh : todos.filter(function(r){
+    return r.FechaCita && r.FechaCita !== '';
+  });
+
+  var si  = refs.filter(function(r){ return (r.Adhesion||'').indexOf('Con nosotros') >= 0; });
+  var tal = refs.filter(function(r){ return (r.Adhesion||'').indexOf('pensándolo') >= 0 || (r.Adhesion||'').indexOf('pensandolo') >= 0; });
+  var no  = refs.filter(function(r){ return (r.Adhesion||'').indexOf('No está') >= 0 || (r.Adhesion||'').indexOf('No esta') >= 0; });
+  
+  // Sin adhesión = los que tienen cita pero no se ha definido adhesión aún
+  var sinAdh = todos.filter(function(r){ return r.FechaCita && r.FechaCita !== '' && (!r.Adhesion || r.Adhesion.trim() === ''); });
 
   // Contadores
   setText('cafe-cnt-si',  si.length);
@@ -2140,6 +2152,8 @@ function renderCafes() {
   setText('cafe-lbl-si',  si.length);
   setText('cafe-lbl-tal', tal.length);
   setText('cafe-lbl-no',  no.length);
+  // Info en consola para debug
+  console.log('Cafés: total referidos='+todos.length+', conCita='+(todos.filter(function(r){return r.FechaCita;}).length)+', conAdh='+conAdh.length+', si='+si.length+', tal='+tal.length+', no='+no.length);
 
   function mkItem(r, col) {
     var nombre = r.Nombre || r['Nombre del referido'] || 'Sin nombre';
