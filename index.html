@@ -2126,24 +2126,22 @@ function renderRefProg() {
 // RENDER CAFÉS
 // ═══════════════════════════════════════════════════
 function renderCafes() {
-  // Solo referidos que tuvieron cita (FechaCita set) o adhesión definida
-  // Leer adhesión — puede venir de Sheets como 'Adhesion' o ser seteado en el app
   var todos = DB.referidos || [];
-  var conAdh = todos.filter(function(r){
-    return r.Adhesion && r.Adhesion.trim() !== '';
-  });
 
-  // Si no hay ninguno con adhesión, mostrar TODOS los referidos que tienen cita
-  var refs = conAdh.length > 0 ? conAdh : todos.filter(function(r){
-    return r.FechaCita && r.FechaCita !== '';
-  });
+  // Clasificar: buscar adhesion en cualquier variante del campo
+  function getAdh(r) {
+    return (r.Adhesion || r.adhesion || r.ADHESION || '').trim();
+  }
+  function getNombre(r) {
+    return r.Nombre || r['Nombre del referido'] || r.nombre || 'Sin nombre';
+  }
 
-  var si  = refs.filter(function(r){ return (r.Adhesion||'').indexOf('Con nosotros') >= 0; });
-  var tal = refs.filter(function(r){ return (r.Adhesion||'').indexOf('pensándolo') >= 0 || (r.Adhesion||'').indexOf('pensandolo') >= 0; });
-  var no  = refs.filter(function(r){ return (r.Adhesion||'').indexOf('No está') >= 0 || (r.Adhesion||'').indexOf('No esta') >= 0; });
-  
-  // Sin adhesión = los que tienen cita pero no se ha definido adhesión aún
-  var sinAdh = todos.filter(function(r){ return r.FechaCita && r.FechaCita !== '' && (!r.Adhesion || r.Adhesion.trim() === ''); });
+  // Grupos por adhesión
+  var si  = todos.filter(function(r){ var a=getAdh(r); return a==='Con nosotros'; });
+  var tal = todos.filter(function(r){ var a=getAdh(r); return a==='Aún pensándolo'||a==='Aun pensandolo'||a==='Aún pensándolo'; });
+  var no  = todos.filter(function(r){ var a=getAdh(r); return a==='No está con nosotros'||a==='No esta con nosotros'; });
+  // Sin adhesión pero con cita realizada
+  var sin = todos.filter(function(r){ var a=getAdh(r); return a==='' && (r.FechaCita||r.fechacita||'')!==''; });
 
   // Contadores
   setText('cafe-cnt-si',  si.length);
@@ -2152,31 +2150,49 @@ function renderCafes() {
   setText('cafe-lbl-si',  si.length);
   setText('cafe-lbl-tal', tal.length);
   setText('cafe-lbl-no',  no.length);
-  // Info en consola para debug
-  console.log('Cafés: total referidos='+todos.length+', conCita='+(todos.filter(function(r){return r.FechaCita;}).length)+', conAdh='+conAdh.length+', si='+si.length+', tal='+tal.length+', no='+no.length);
 
-  function mkItem(r, col) {
-    var nombre = r.Nombre || r['Nombre del referido'] || 'Sin nombre';
-    var quien  = r.QuienRefiere || r['Tu Nombre'] || '';
-    var fecha  = r.FechaCita || '';
-    var result = r.ResultadoCita || r.Resultado || '';
-    var html = '<div style="padding:10px 8px;border-bottom:1px solid var(--s6)">';
-    html += '<div style="font-size:13px;font-weight:700">' + esc(nombre) + '</div>';
-    if (quien) html += '<div style="font-size:11px;color:var(--s4);margin-top:2px">' + esc(quien) + '</div>';
-    if (fecha) html += '<div style="font-size:11px;margin-top:2px;color:' + col + '">📅 ' + esc(fecha) + '</div>';
-    if (result) html += '<div style="font-size:11px;margin-top:4px;padding:6px 8px;background:var(--s7);border-radius:6px;border-left:2px solid ' + col + ';color:var(--s2)">' + esc(result) + '</div>';
+  console.log('[Cafes] total='+todos.length+' si='+si.length+' tal='+tal.length+' no='+no.length+' sinAdh='+sin.length);
+  if(todos.length>0) console.log('[Cafes] primer referido:', JSON.stringify(todos[0]));
+
+  function mkCard(r, col, badge) {
+    var nombre  = getNombre(r);
+    var quien   = r.QuienRefiere || r['Tu Nombre'] || '';
+    var fecha   = r.FechaCita || r.fechacita || '';
+    var barrio  = r.Barrio || r.barrio || '';
+    var tel     = r.Telefono || r.telefono || '';
+    var result  = r.ResultadoCita || r.Resultado || r.resultadocita || '';
+
+    var html = '<div style="padding:12px 10px;border-bottom:1px solid var(--s6)">';
+    html += '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:4px">';
+    html += '<div style="font-size:13px;font-weight:700;color:var(--s1)">'+esc(nombre)+'</div>';
+    if(badge) html += '<span class="bk" style="font-size:9px;background:'+col+'20;color:'+col+'">'+badge+'</span>';
+    html += '</div>';
+    if(quien)  html += '<div style="font-size:11px;color:var(--s4)">👤 '+esc(quien)+'</div>';
+    if(barrio) html += '<div style="font-size:11px;color:var(--s4)">📍 '+esc(barrio)+'</div>';
+    if(tel)    html += '<div style="font-size:11px;color:var(--s4)">📱 '+esc(tel)+'</div>';
+    if(fecha)  html += '<div style="font-size:11px;color:'+col+';margin-top:3px">📅 '+esc(fecha)+'</div>';
+    if(result) html += '<div style="font-size:11px;margin-top:6px;padding:6px 8px;background:var(--s7);border-radius:6px;border-left:3px solid '+col+';color:var(--s2);line-height:1.5">'+esc(result)+'</div>';
     html += '</div>';
     return html;
   }
+
+  function empty() { return '<div style="text-align:center;padding:32px 16px;color:var(--s4);font-size:12px">Sin personas en esta categoría aún</div>'; }
 
   var elSi  = document.getElementById('cafe-list-si');
   var elTal = document.getElementById('cafe-list-tal');
   var elNo  = document.getElementById('cafe-list-no');
 
-  if (elSi)  elSi.innerHTML  = si.length  ? si.map(function(r){ return mkItem(r,'#2E7D32'); }).join('') : '<div class="empty" style="padding:24px;font-size:12px">Sin personas en esta categoría aún</div>';
-  if (elTal) elTal.innerHTML = tal.length ? tal.map(function(r){ return mkItem(r,'#FF8C00'); }).join('') : '<div class="empty" style="padding:24px;font-size:12px">Sin personas en esta categoría aún</div>';
-  if (elNo)  elNo.innerHTML  = no.length  ? no.map(function(r){ return mkItem(r,'#E53935'); }).join('') : '<div class="empty" style="padding:24px;font-size:12px">Sin personas en esta categoría aún</div>';
+  if(elSi)  elSi.innerHTML  = si.length  ? si.map(function(r){return mkCard(r,'#2E7D32','✅');}).join('') : empty();
+  if(elTal) elTal.innerHTML = tal.length ? tal.map(function(r){return mkCard(r,'#FF8C00','🤔');}).join('') : empty();
+  if(elNo)  elNo.innerHTML  = no.length  ? no.map(function(r){return mkCard(r,'#E53935','❌');}).join('') : empty();
+
+  // Si hay referidos sin adhesión, mostrarlos debajo de "Con nosotros" con aviso
+  if(sin.length > 0 && elSi) {
+    elSi.innerHTML += '<div style="padding:8px 10px;background:#FFF9C4;font-size:11px;color:#F57F17;font-weight:600">⏳ '+sin.length+' con cita sin clasificar aún:</div>';
+    elSi.innerHTML += sin.map(function(r){return mkCard(r,'#999','sin adh');}).join('');
+  }
 }
+window.renderCafes = renderCafes;
 window.renderCafes = renderCafes;
 
 // ═══════════════════════════════════════════════════
