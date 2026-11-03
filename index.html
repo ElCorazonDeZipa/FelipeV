@@ -396,6 +396,11 @@ function updateVigiasSelects(){
     }).join('');
     if(cur)sel.value=cur;
   }
+  ['vol-vig','eli-vig'].forEach(function(id){
+    var s=document.getElementById(id); if(!s)return; var cu=s.value;
+    s.innerHTML='<option value="">-- Sin vigía --</option>'+VIGIAS.map(function(v){return '<option value="'+esc(v.nom)+'">'+esc(v.nom)+' ('+esc(v.area)+')</option>';}).join('');
+    if(cu)s.value=cu;
+  });
   // ref-vig → datalist con miembros del equipo (texto libre)
   var dl=document.getElementById('ref-vig-list');
   if(dl && typeof DB!=='undefined' && DB.equipos){
@@ -728,7 +733,7 @@ function abrirEdicion(tipo, idx) {
   var lblMap = {eq:'Editar persona del equipo',ref:'Editar referido',
                 tar:'Editar tarea',reu:'Editar reunión',com:'Editar compromiso',
                 lid:'Editar líder',bit:'Editar entrada',red:'Editar publicación',
-                vol:'Editar voluntario',eli:'Editar integrante élite'};
+                vol:'Editar voluntario',eli:'Editar integrante · Campamento base'};
   var fillMap = {
     eq:  function(r,sv,ss){ sv('eq-nom',r.Nombre);sv('eq-tel',r.Telefono);ss('eq-cond',r.Condicion);sv('eq-ent',r.Entidad);sv('eq-car',r.Cargo);sv('eq-lid',r.Lider12||r.Lider||'');ss('eq-vig',r.Vigia||'');ss('eq-adh',r.Adhesion||'Con nosotros');sv('eq-bar',r.Barrio);sv('eq-obs',r.Observaciones); },
     ref: function(r,sv,ss){ sv('ref-nom',r.Nombre);sv('ref-tel',r.Telefono);sv('ref-bar',r.Barrio);sv('ref-ocu',r.Ocupacion||r['Ocupación']||'');sv('ref-vig',r.QuienRefiere||r['Tu Nombre']||'');ss('ref-est',r.Estado||'Pendiente');ss('ref-llam',r.Llamada||'Pendiente');sv('ref-tip',r.Tipificacion||r.Observaciones||r['Observaciones']||'');sv('ref-fci',r.FechaCita||'');sv('ref-hci',r.HoraCita||'');sv('ref-lug',r.Lugar||'');ss('ref-adh',r.Adhesion||'');sv('ref-resultado',r.ResultadoCita||r.Resultado||''); },
@@ -1005,7 +1010,7 @@ window.addEventListener('DOMContentLoaded',function(){
     <div class="nb-sec">Equipo</div>
     <div class="ni" onclick="goMob('equipos',this)"><span class="ni-ic">👥</span><span class="ni-lb">Equipo</span></div>
     <div class="ni" onclick="goMob('voluntarios',this)"><span class="ni-ic">🙋</span><span class="ni-lb">Voluntarios</span></div>
-    <div class="ni" onclick="goMob('eliteTeam',this)"><span class="ni-ic">🏕️</span><span class="ni-lb">Campamento Base</span></div>
+    <div class="ni" onclick="goMob('eliteTeam',this)"><span class="ni-ic">🏕️</span><span class="ni-lb">Campamento base</span></div>
     <div class="ni" onclick="goMob('referidos',this)"><span class="ni-ic">🤝</span><span class="ni-lb">Referidos</span><span class="ni-bd" id="b-ref">0</span></div>
     <div class="ni" onclick="goMob('cafes',this)"><span class="ni-ic">☕</span><span class="ni-lb">Resultados Cafés</span></div>
     <div class="nb-sec">Operaciones</div>
@@ -1487,7 +1492,7 @@ window.addEventListener('DOMContentLoaded',function(){
     <div><div class="pt">🏕️ Campamento base</div><div class="ps">Integrantes clave de la campaña</div></div>
     <div style="display:flex;gap:10px">
       <button class="btn bs sm" onclick="openM('m-vigias')">⚙️ Vigías</button>
-      <button class="btn bp sm" onclick="openNewModal('m-eli','m-eli-t','Agregar integrante élite')">+ Agregar integrante</button>
+      <button class="btn bp sm" onclick="openNewModal('m-eli','m-eli-t','Agregar integrante · Campamento base')">+ Agregar integrante</button>
     </div>
   </div>
   <div class="g3" style="margin-bottom:20px">
@@ -1538,6 +1543,52 @@ window.addEventListener('DOMContentLoaded',function(){
   </div>
   <div class="fg"><div class="fl">Observaciones</div><textarea class="fc" id="eq-obs" placeholder="Notas sobre este contacto..."></textarea></div>
 </div><div class="mf"><button class="btn bs" onclick="closeM('m-eq')">Cancelar</button><button class="btn bp" onclick="saveEq()">✅ Guardar</button></div></div></div>
+
+<div class="mo" id="m-vol"><div class="md lg"><div class="mh"><span class="mico">🙋</span><div class="mt" id="m-vol-t">Agregar voluntario</div><button class="mx" onclick="closeM('m-vol')">×</button></div><div class="mb">
+  <input type="hidden" id="vol-idx" value="">
+  <div class="g2">
+    <div class="fg"><div class="fl">Nombre completo *</div><input class="fc" id="vol-nom" placeholder="Nombres y Apellidos"></div>
+    <div class="fg"><div class="fl">WhatsApp</div><input class="fc" id="vol-tel" placeholder="3XX XXXXXXX"></div>
+    <div class="fg"><div class="fl">Condición</div><select class="fc" id="vol-cond"><option>Contratista</option><option>Funcionario</option><option>Equipo MCI</option><option>EQUIPO VISION DE CIUDAD</option><option>M180</option></select></div>
+    <div class="fg"><div class="fl">Entidad</div><input class="fc" id="vol-ent" placeholder="SFDS, IMCRDZ..."></div>
+    <div class="fg"><div class="fl">Cargo / Rol</div><input class="fc" id="vol-car" placeholder="Cargo en la entidad"></div>
+    <div class="fg"><div class="fl">Líder 12</div><input class="fc" id="vol-lid" placeholder="Nombre del Líder 12"></div>
+    <div class="fg"><div class="fl">Vigía asignado 🧡</div><select class="fc" id="vol-vig" onchange=""></select></div>
+    <div class="fg"><div class="fl">Adhesión a la campaña</div>
+      <select class="fc" id="vol-adh">
+        <option value="Con nosotros">✅ Con nosotros</option>
+        <option value="Aún pensándolo">🤔 Aún pensándolo</option>
+        <option value="No está aquí">❌ No está aquí</option>
+      </select>
+    </div>
+    <div class="fg"><div class="fl">Barrio (opcional)</div><input class="fc" id="vol-bar" placeholder="Barrio o sector"></div>
+  </div>
+  <div class="fg"><div class="fl">Observaciones</div><textarea class="fc" id="vol-obs" placeholder="Notas sobre este contacto..."></textarea></div>
+</div><div class="mf"><button class="btn bs" onclick="closeM('m-vol')">Cancelar</button><button class="btn bp" onclick="saveVol()">✅ Guardar</button></div></div></div>
+
+
+<div class="mo" id="m-eli"><div class="md lg"><div class="mh"><span class="mico">🏕️</span><div class="mt" id="m-eli-t">Agregar integrante · Campamento base</div><button class="mx" onclick="closeM('m-eli')">×</button></div><div class="mb">
+  <input type="hidden" id="eli-idx" value="">
+  <div class="g2">
+    <div class="fg"><div class="fl">Nombre completo *</div><input class="fc" id="eli-nom" placeholder="Nombres y Apellidos"></div>
+    <div class="fg"><div class="fl">WhatsApp</div><input class="fc" id="eli-tel" placeholder="3XX XXXXXXX"></div>
+    <div class="fg"><div class="fl">Condición</div><select class="fc" id="eli-cond"><option>Contratista</option><option>Funcionario</option><option>Equipo MCI</option><option>EQUIPO VISION DE CIUDAD</option><option>M180</option></select></div>
+    <div class="fg"><div class="fl">Entidad</div><input class="fc" id="eli-ent" placeholder="SFDS, IMCRDZ..."></div>
+    <div class="fg"><div class="fl">Cargo / Rol</div><input class="fc" id="eli-car" placeholder="Cargo en la entidad"></div>
+    <div class="fg"><div class="fl">Líder 12</div><input class="fc" id="eli-lid" placeholder="Nombre del Líder 12"></div>
+    <div class="fg"><div class="fl">Vigía asignado 🧡</div><select class="fc" id="eli-vig" onchange=""></select></div>
+    <div class="fg"><div class="fl">Adhesión a la campaña</div>
+      <select class="fc" id="eli-adh">
+        <option value="Con nosotros">✅ Con nosotros</option>
+        <option value="Aún pensándolo">🤔 Aún pensándolo</option>
+        <option value="No está aquí">❌ No está aquí</option>
+      </select>
+    </div>
+    <div class="fg"><div class="fl">Barrio (opcional)</div><input class="fc" id="eli-bar" placeholder="Barrio o sector"></div>
+  </div>
+  <div class="fg"><div class="fl">Observaciones</div><textarea class="fc" id="eli-obs" placeholder="Notas sobre este contacto..."></textarea></div>
+</div><div class="mf"><button class="btn bs" onclick="closeM('m-eli')">Cancelar</button><button class="btn bp" onclick="saveEli()">✅ Guardar</button></div></div></div>
+
 
 <!-- Referidos -->
 <div class="mo" id="m-ref"><div class="md lg"><div class="mh"><span class="mico">🤝</span><div class="mt" id="m-ref-t">Nuevo referido</div><button class="mx" onclick="closeM('m-ref')">×</button></div><div class="mb">
@@ -2151,7 +2202,12 @@ function renderRef() {
         +'<td style="font-size:11px">'+cita+'</td>'
         +'<td style="font-size:12px;text-align:center">'+agendado+'</td>'
         +'<td><span class="bk '+estCol+'" style="font-size:10px">'+esc(estado)+'</span></td>'
-        +'<td>'+(r.Adhesion?'<span class="bk '+(r.Adhesion==='Con nosotros'?'bk-g':r.Adhesion==='Aún pensándolo'?'bk-y':'bk-r')+'" style="font-size:10px">'+esc(r.Adhesion)+'</span>':'<span style="color:#ccc;font-size:12px">—</span>')+'</td>'
+        +'<td><select class="ref-adh-quick" data-idx="'+i+'" style="font-size:11px;padding:4px 6px;border:1px solid '+(r.Adhesion==='Con nosotros'?'#4CAF50':r.Adhesion==='Aún pensándolo'?'#FF8C00':r.Adhesion?'#E53935':'#ddd')+';border-radius:6px;background:'+(r.Adhesion==='Con nosotros'?'#E8F5E9':r.Adhesion==='Aún pensándolo'?'#FFF3E0':r.Adhesion?'#FFEBEE':'#fff')+';color:'+(r.Adhesion==='Con nosotros'?'#2E7D32':r.Adhesion==='Aún pensándolo'?'#E65100':r.Adhesion?'#C62828':'#999')+';cursor:pointer;font-family:Poppins,sans-serif;font-weight:600">'
+        +'<option value="">— sin definir —</option>'
+        +'<option value="Con nosotros"'+(r.Adhesion==='Con nosotros'?' selected':'')+'>✅ Con nosotros</option>'
+        +'<option value="Aún pensándolo"'+(r.Adhesion==='Aún pensándolo'?' selected':'')+'>🤔 Aún pensándolo</option>'
+        +'<option value="No está con nosotros"'+(r.Adhesion==='No está con nosotros'?' selected':'')+'>❌ No está con nosotros</option>'
+        +'</select></td>'
         +'<td><div style="display:flex;gap:3px">'
         +'<button class="btn bp sm ref-edit-btn" data-idx="'+i+'" style="padding:3px 8px;font-size:11px">✏️</button>'
         +'<button class="btn bd sm ref-del-btn"  data-idx="'+i+'" style="padding:3px 8px;font-size:11px">🗑</button>'
@@ -2174,6 +2230,42 @@ function renderRef() {
       var nom2 = DB.referidos[idx2] ? (DB.referidos[idx2].Nombre||DB.referidos[idx2]['Nombre del referido']||'referido') : 'referido';
       delR('referidos', idx2, nom2);
     }
+  };
+
+  // Cambio rápido de adhesión desde la tabla
+  tb.onchange = function(e) {
+    var sel = e.target.closest('.ref-adh-quick');
+    if (!sel) return;
+    var idx3 = parseInt(sel.getAttribute('data-idx'));
+    var ref = DB.referidos[idx3];
+    if (!ref) return;
+    var nuevoVal = sel.value;
+    ref.Adhesion = nuevoVal;
+    // Guardar en Sheets
+    if (ref._fila) {
+      GA.post('actualizarFila', {
+        hoja: 'Referidos',
+        id: ref._fila,
+        datos: JSON.stringify({Adhesion: nuevoVal})
+      }).then(function(r) {
+        if (r && r.ok) {
+          _toast('✅ Adhesión guardada: ' + (nuevoVal || 'sin definir'));
+        } else {
+          _toast('⚠ Error guardando: ' + (r ? r.error : 'sin respuesta'));
+        }
+      });
+    } else {
+      _toast('⚠ Este referido no tiene fila en Sheets — guárdalo primero desde el modal');
+    }
+    // Actualizar color del select
+    var col = nuevoVal==='Con nosotros'?'#4CAF50':nuevoVal==='Aún pensándolo'?'#FF8C00':nuevoVal?'#E53935':'#ddd';
+    var bg  = nuevoVal==='Con nosotros'?'#E8F5E9':nuevoVal==='Aún pensándolo'?'#FFF3E0':nuevoVal?'#FFEBEE':'#fff';
+    var tc  = nuevoVal==='Con nosotros'?'#2E7D32':nuevoVal==='Aún pensándolo'?'#E65100':nuevoVal?'#C62828':'#999';
+    sel.style.borderColor = col;
+    sel.style.background  = bg;
+    sel.style.color       = tc;
+    // Actualizar cafés
+    if (typeof renderCafes === 'function') renderCafes();
   };
 }
 
@@ -2756,7 +2848,7 @@ var EDIT = {
     fill: function(r) { setVal('red-fec',r.Fecha);setSel('red-red',r.Red);setSel('red-tipo',r.Tipo||r.TipoContenido);setVal('red-tem',r.Tema);setVal('red-res',r.Responsable);setSel('red-est',r.Estado);setVal('red-desc',r.Descripcion);setVal('red-met',r.Metricas); }},
   vol: {modal:'m-vol', tit:'m-vol-t', lbl:'Editar voluntario',
     fill: function(r) { setVal('vol-nom',r.Nombre);setVal('vol-tel',r.Telefono);setSel('vol-cond',r.Condicion);setVal('vol-ent',r.Entidad);setVal('vol-car',r.Cargo);setVal('vol-lid',r.Lider12||'');setSel('vol-vig',r.Vigia||'');setSel('vol-adh',r.Adhesion||'Con nosotros');setVal('vol-bar',r.Barrio);setVal('vol-obs',r.Observaciones); }},
-  eli: {modal:'m-eli', tit:'m-eli-t', lbl:'Editar integrante élite',
+  eli: {modal:'m-eli', tit:'m-eli-t', lbl:'Editar integrante · Campamento base',
     fill: function(r) { setVal('eli-nom',r.Nombre);setVal('eli-tel',r.Telefono);setSel('eli-cond',r.Condicion);setVal('eli-ent',r.Entidad);setVal('eli-car',r.Cargo);setVal('eli-lid',r.Lider12||'');setSel('eli-vig',r.Vigia||'');setSel('eli-adh',r.Adhesion||'Con nosotros');setVal('eli-bar',r.Barrio);setVal('eli-obs',r.Observaciones); }}
 };
 
